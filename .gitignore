@@ -1,3 +1,11 @@
+# Ignore build directory
+/build
+CMakeLists.txt.user
+
+# Ignore CMake files
+CMakeFiles/
+CMakeCache.txt
+
 # Prerequisites
 *.d
 
@@ -30,3 +38,7 @@
 *.exe
 *.out
 *.app
+
+# Ignore log files and temporary files
+*.log
+*.tmp
