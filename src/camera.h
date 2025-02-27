@@ -38,16 +38,10 @@ public:
 
 private:
     glm::mat4 m_projection;
-    glm::mat4 m_view;
 
-    glm::vec3 m_position = glm::vec3(0.0f, 0.0f, 3.0f); // Default camera position
-    glm::vec3 m_lookAt = glm::vec3(0.0f, 0.0f, 0.0f);   // Default look-at point
-    glm::vec3 m_up = glm::vec3(0.0f, 1.0f, 0.0f);       // Default up direction
-
-    float m_fov; // Field of view
+    float m_fov;
     float m_width, m_height, m_near, m_far;
     float m_aspect;
-
 
     void updateProjectionMatrix() {
         m_projection = glm::perspective(glm::radians(m_fov), m_width / m_height, m_near, m_far);

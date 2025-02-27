@@ -5,6 +5,7 @@
 #include "UI.h"
 #include "HDRI.h"
 #include "textureLoading.h"
+#include "inputs.h"
 
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>
@@ -23,6 +24,8 @@
 // Include STB-image library
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+Inputs* g_input = 0;
 
 class Application : public kgfw::Object
 {
@@ -58,6 +61,9 @@ public:
 
 		// Create perspective-projection camera with screen size 640x480
 		m_camera = new Camera(fov, 640/480, 0.1f, 100.0f);
+
+		// Input class
+		g_input = new Inputs(m_uiDraw, m_camera);
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -95,10 +101,6 @@ public:
 		glCullFace(GL_BACK);
 	}
 
-	void printCombinations(std::string str1, std::string str2) {
-		std::cout << str1 << " " << str2 << std::endl;
-	}
-
 	~Application() {
 		// Delete shaders
 		delete m_shader;
@@ -123,6 +125,10 @@ public:
 		// Delete Camera
 		delete m_camera;
 		m_camera = 0;
+
+		// Delete g_input
+		delete g_input;
+		g_input = 0;
 
 		//Delete all textures
 		for (Texture* texture : m_textures)
@@ -240,7 +246,7 @@ public:
 		}
 
 		if (!isHidden) {
-			renderIcons();
+			renderIcons(); // Render all the point lamp icons
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
 	}
@@ -265,7 +271,7 @@ public:
 			//directionToCamera.y = 0.0f; // Only if you want the plane to stay vertical
 
 			// Scaling depending on the distance
-			float iconDistance = glm::length(cameraPos - m_uiDraw->getPointLightPos()[i]);
+			float iconDistance = glm::length(g_input->getCameraPos() - m_uiDraw->getPointLightPos()[i]);
 
 			// Divide the scale by the icon's distance by the iconSize. Icon's scale will stay the same regardless of the position of the camera.
 			float iconSize = 25.0f;
@@ -296,105 +302,15 @@ public:
 
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	{
+		// TODO: get rid of app cast
 		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-
-		if (app && app->mouseEnabled == false) {
-
-			//Min FOV
-			app->fov -= (float)yoffset;
-			if (app->fov < 1.0f)
-				app->fov = 1.0f;
-
-			//Max FOV
-			if (app->fov > 45.0f)
-				app->fov = 45.0f;
-
-			// Apply the new FOV to the camera
-			app->m_camera->setFOV(app->fov);
-
-			//std::cout << "New FOV: " << app->fov << std::endl;
-		}
+		g_input->scroll_callback(window, xoffset, yoffset, app->m_camera->getFOV());
 	}
 
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	{
-		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-
-		if (app && app->mouseEnabled == false) {
-			float xpos = static_cast<float>(xposIn);
-			float ypos = static_cast<float>(yposIn);
-
-			if (app->firstMouse) {
-				app->lastX = xpos;
-				app->lastY = ypos;
-				app->firstMouse = false;
-			}
-
-			float xoffset = xpos - app->lastX;
-			float yoffset = app->lastY - ypos; // reversed since y-coordinates go from bottom to top
-			app->lastX = xpos;
-			app->lastY = ypos;
-
-			//Mouse sensitivity
-			float sensitivity = 0.1f;
-			xoffset *= sensitivity;
-			yoffset *= sensitivity;
-
-			app->yaw += xoffset;
-			app->pitch += yoffset;
-
-			// make sure that when pitch is out of bounds, screen doesn't get flipped
-			if (app->pitch > 89.0f)
-				app->pitch = 89.0f;
-			if (app->pitch < -89.0f)
-				app->pitch = -89.0f;
-
-			// update the front vector
-			glm::vec3 front;
-			front.x = cos(glm::radians(app->yaw)) * cos(glm::radians(app->pitch));
-			front.y = sin(glm::radians(app->pitch));
-			front.z = sin(glm::radians(app->yaw)) * cos(glm::radians(app->pitch));
-			app->cameraFront = glm::normalize(front);
-
-			//std::cout << glm::to_string(app->cameraFront) << std::endl;
-		}
+		g_input->mouse_callback(window, xposIn, yposIn);
 	}
-
-	static void focus_callback(GLFWwindow* window, Application* app) {
-		//Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-
-		// Toggle mouse cursor with 'E'
-		if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !app->togglePressed && !ImGui::GetIO().WantTextInput) {
-			app->togglePressed = true;
-			app->mouseEnabled = !app->mouseEnabled; // Set mouseEnabled to what it's not
-
-			if (app->mouseEnabled) {
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-				app->m_uiDraw->setImGuiAlpha(0.9f);
-			}
-			else {
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				app->m_uiDraw->setImGuiAlpha(0.3f);
-				app->firstMouse = true;
-			}
-		}
-		// Using GLFW_RELEASE to avoid detecting multiple presses for the toggle
-		else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
-			app->togglePressed = false;
-	}
-
-	static void hide_callback(GLFWwindow* window, Application* app) {
-		// Flip-flop for setting ImGui window hidden
-		if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && !app->togglePressedHide && !ImGui::GetIO().WantTextInput) {
-			app->togglePressedHide = true;
-			//m_uiDraw->toggleIsHidden();
-			app->isHidden = !app->isHidden;
-		}
-		else if (glfwGetKey(window, GLFW_KEY_H) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
-			app->togglePressedHide = false;
-	}
-
-	//static void movement_callback()
 
 	void update(float deltaTime, GLFWwindow* window) {
 		//Mesh rotation
@@ -417,38 +333,8 @@ public:
 			m_uiDraw->toggleDoOnce();
 		}
 
-		// Added to check, if we've got text inputs active. Don't go inside == true
-		if (!ImGui::GetIO().WantTextInput)
-		{
-			// Camera movement
-			// "Sprint"
-			float cameraSpeed = 1.0 * deltaTime;
-			if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-				cameraSpeed = 2.5 * deltaTime;
-
-			// Movement controls
-			if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-				cameraPos += cameraSpeed * cameraFront;
-			else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-				cameraPos -= cameraSpeed * cameraFront;
-			if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-				cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-			else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-				cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-			if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-				cameraPos += cameraSpeed * cameraUp;
-			else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-				cameraPos -= cameraSpeed * cameraUp;
-		}
-
-		//Update camera position and LookAt direction
-		m_camera->setPosition(cameraPos);
-		m_camera->setLookAt(cameraPos + cameraFront);
-
-		//Update view matrix
-		m_camera->setViewMatrix(cameraPos + cameraFront);
-
-		//m_camera->getProjectionMatrix();
+		// TODO: callback for movement?
+		g_input->movement(window, deltaTime);
 	}
 
 private:
@@ -476,26 +362,15 @@ private:
 	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
 	GLuint						m_texture;
 
-	// Camera movement
-	glm::vec3 cameraPos =		glm::vec3(0.0f, 0.5f, 1.0f), cameraFront = glm::vec3(0.0f, 0.0f, -1.0f), cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
-	// Is mouse active?
-	bool firstMouse = true;
-	bool mouseEnabled = false;
-	float yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
-	float pitch = 0.0f;
-	float lastX = 800.0f / 2.0;
-	float lastY = 600.0 / 2.0;
 	float fov = 40.0f;
 
 	std::vector<Texture*>		m_textures;		// Vector of texture pointers
-
-	bool togglePressed =		false;
-	bool togglePressedHide =	false;
 	bool isHidden =				false;
 };
 
 // Global pointer to the application
 Application* g_app = 0;
+
 
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -549,20 +424,19 @@ int main(void) {
 
 	// Specify the key callback as c++-lambda to glfw
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-		// Close window if escape is pressed by the user.
-		//if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) {
-		//	glfwSetWindowShouldClose(window, GLFW_TRUE);
-		//}
 
 		switch (key) {
 		case GLFW_KEY_ESCAPE:
+			// Close window if escape is pressed by the user.
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 			break;
 		case GLFW_KEY_E:
-			Application::focus_callback(window, g_app);
+			// ImGui focus toggle
+			g_input->focus_callback(window);
 			break;
 		case GLFW_KEY_H:
-			Application::hide_callback(window, g_app);
+			// Hide ImGui
+			g_input->hide_callback(window);
 			break;
 		}
 
