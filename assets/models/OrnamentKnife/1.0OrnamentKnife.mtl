@@ -1,0 +1,48 @@
+# Blender 3.3.1 MTL File: 'GoofyAhhKnifeVULKAN.blend'
+# www.blender.org
+
+newmtl Blade2
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Blade1_BaseColor.png
+map_Ns D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Blade1_Roughness.png
+map_refl D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Blade1_Metallic.png
+map_Bump -bm 1.000000 D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Blade1_Normal.png
+
+newmtl Grip
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Grip_BaseColor.png
+map_Ns D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Grip_Roughness.png
+map_refl D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Grip_Metallic.png
+map_Bump -bm 1.000000 D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_Grip_Normal.png
+
+newmtl GripDetail
+Ka 1.000000 1.000000 1.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_GripDetail_BaseColor.png
+map_Ns D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_GripDetail_Roughness.png
+map_refl D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_GripDetail_Metallic.png
+map_Bump -bm 1.000000 D:/Blender/Saves/TheGame/StuffAndStuff/GoofyAhhKnife/Textures/GoofyAhhKnife_GripDetail_Normal.png
+
+newmtl Screws
+Ns 250.000000
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
