@@ -34,9 +34,11 @@ public:
     void renderCube();
 	void renderQuad();
 	void setMaterial(Material* material);
-	void setName(const std::string name);
+	void setDisplayName(const std::string name);
+	void setBackgroundName(const std::string name);
 
-	std::string getName() const;
+	std::string getDisplayName() const;
+	std::string getBackgroundName() const;
 	Material* getMaterial();
 
 private:
@@ -45,5 +47,6 @@ private:
 	GLuint m_VBO;
 	size_t m_indiceCount;
 	Material* m_material = 0;
-	std::string m_meshName;
+	std::string m_meshDisplayName;
+	std::string m_meshBackgroundName;
 };

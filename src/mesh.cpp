@@ -43,12 +43,20 @@ Material* Mesh::getMaterial() {
 	return m_material;
 }
 
-void Mesh::setName(const std::string name) {
-	m_meshName = name;
+void Mesh::setDisplayName(const std::string name) {
+	m_meshDisplayName = name;
 }
 
-std::string Mesh::getName() const {
-	return m_meshName;
+std::string Mesh::getDisplayName() const {
+	return m_meshDisplayName;
+}
+
+void Mesh::setBackgroundName(const std::string name) {
+	m_meshBackgroundName = name;
+}
+
+std::string Mesh::getBackgroundName() const {
+	return m_meshBackgroundName;
 }
 
 //void Mesh::Render(Shader* shader, const glm::vec3& viewPos, glm::vec3 LightP, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, GLuint textureId)

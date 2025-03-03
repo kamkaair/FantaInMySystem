@@ -122,13 +122,12 @@ public:
 		delete m_texLoading;
 		m_texLoading = 0;
 
+		delete g_input;
+		g_input = 0;
+
 		// Delete Camera
 		delete m_camera;
 		m_camera = 0;
-
-		// Delete g_input
-		delete g_input;
-		g_input = 0;
 
 		//Delete all textures
 		for (Texture* texture : m_textures)
@@ -302,14 +301,13 @@ public:
 
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		// TODO: get rid of app cast
 		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-		g_input->scroll_callback(window, xoffset, yoffset, app->m_camera->getFOV());
+		g_input->inputScroll(window, xoffset, yoffset, app->m_camera->getFOV());
 	}
 
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	{
-		g_input->mouse_callback(window, xposIn, yposIn);
+		g_input->inputMouse(window, xposIn, yposIn);
 	}
 
 	void update(float deltaTime, GLFWwindow* window) {
@@ -334,7 +332,7 @@ public:
 		}
 
 		// TODO: callback for movement?
-		g_input->movement(window, deltaTime);
+		g_input->inputMovement(window, deltaTime);
 	}
 
 private:
@@ -432,11 +430,11 @@ int main(void) {
 			break;
 		case GLFW_KEY_E:
 			// ImGui focus toggle
-			g_input->focus_callback(window);
+			g_input->inputFocus(window);
 			break;
 		case GLFW_KEY_H:
 			// Hide ImGui
-			g_input->hide_callback(window);
+			g_input->inputHide(window);
 			break;
 		}
 

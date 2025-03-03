@@ -182,25 +182,30 @@ void UI::ImGuiDraw()
 
 					//std::to_string(i)).c_str())
 					//			m_meshes.back()->setMaterial(m_materials[0]);
-					if (ImGui::TreeNode(("Mesh " + m_meshes[i]->getName()).c_str()))
+					if (ImGui::TreeNode(("Mesh " + m_meshes[i]->getDisplayName()).c_str()))
 					{
-						if (ImGui::Button("Hide mesh", ImVec2(128, 32))) {
-							meshHide = !meshHide;
-							if (meshHide) {
-								//m_hiddenMeshes.push_back(m_meshes[i]);
-								m_meshes.erase(m_meshes.begin() + i);
-								printf("erase mesh");
-								//meshHide = false;
-							}
+						//if (ImGui::Button("Hide mesh", ImVec2(128, 32))) {
+						//	meshHide = !meshHide;
+						//	if (meshHide) {
+						//		//m_hiddenMeshes.push_back(m_meshes[i]);
+						//		m_meshes.erase(m_meshes.begin() + i);
+						//		printf("erase mesh");
+						//		//meshHide = false;
+						//	}
 
-							else {
-								m_meshes.push_back(m_meshes[i]);
-								printf("add mesh");
-								//m_hiddenMeshes.erase(m_hiddenMeshes.begin() + i);
-								//meshHide = true;
-							}
-							
-						}
+						//	else {
+						//		m_meshes.push_back(m_meshes[i]);
+						//		printf("add mesh");
+						//		//m_hiddenMeshes.erase(m_hiddenMeshes.begin() + i);
+						//		//meshHide = true;
+						//	}
+						//	
+						//}
+
+						//std::string koko = "Object Name: " + m_meshes[i]->getBackgroundName();
+						//ImGui::Text(koko.c_str());
+						ImGui::Text(m_meshes[i]->getBackgroundName().c_str());
+						ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
 						glm::vec3 pos = meshes->getPosition();
 						if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
@@ -322,7 +327,7 @@ void UI::ImGuiDraw()
 				{
 					for (size_t i = 0; i < m_meshes.size(); i++)
 					{
-						ImGui::Text("Mesh %s", m_meshes[i]->getName().c_str());
+						ImGui::Text("Mesh %s", m_meshes[i]->getDisplayName().c_str());
 						ImGui::Text("Vertex count: %d", m_texLoading->getVertices()[i]);
 						//ImGui::Text("Vertex count: " + std::to_string(m_texLoading->getVertices()[i]).c_str());
 

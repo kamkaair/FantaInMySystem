@@ -28,8 +28,6 @@ public:
     glm::mat4 getModelMatrix() const;
     glm::mat4 GameObject::getViewMatrix() const;
 
-    glm::mat4 ZoomFunc(float fov, float width, float height, float bimbim, float bambam);
-
 private:
     // Model position, rotation and scale
     glm::vec3 m_position;           // Store position of plane here

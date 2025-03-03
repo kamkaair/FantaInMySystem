@@ -4,7 +4,7 @@ Inputs::Inputs(UI* ui, Camera* camera) : m_uiDraw(ui), m_camera(camera), Object(
 
 Inputs::~Inputs(){}
 
-void Inputs::focus_callback(GLFWwindow* window) {
+void Inputs::inputFocus(GLFWwindow* window) {
 	// Toggle mouse cursor with 'E'
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !togglePressed && !ImGui::GetIO().WantTextInput) {
 		togglePressed = true;
@@ -25,7 +25,7 @@ void Inputs::focus_callback(GLFWwindow* window) {
 		togglePressed = false;
 }
 
-void Inputs::hide_callback(GLFWwindow* window) {
+void Inputs::inputHide(GLFWwindow* window) {
 	// Flip-flop for setting ImGui window hidden
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && !togglePressedHide && !ImGui::GetIO().WantTextInput) {
 		togglePressedHide = true;
@@ -36,7 +36,7 @@ void Inputs::hide_callback(GLFWwindow* window) {
 		togglePressedHide = false;
 }
 
-void Inputs::scroll_callback(GLFWwindow* window, double xoffset, double yoffset, float fov)
+void Inputs::inputScroll(GLFWwindow* window, double xoffset, double yoffset, float fov)
 {
 	if (mouseEnabled == false) {
 
@@ -56,7 +56,7 @@ void Inputs::scroll_callback(GLFWwindow* window, double xoffset, double yoffset,
 	}
 }
 
-void Inputs::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
+void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseEnabled == false) {
 		float xpos = static_cast<float>(xposIn);
@@ -98,7 +98,7 @@ void Inputs::mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	}
 }
 
-void Inputs::movement(GLFWwindow* window, float deltaTime) {
+void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
 	if (!ImGui::GetIO().WantTextInput)
 	{
 		// Camera movement

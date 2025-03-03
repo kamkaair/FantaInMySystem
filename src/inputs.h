@@ -7,11 +7,11 @@ public:
 	Inputs(UI* ui, Camera* camera);
 	~Inputs();
 
-	void focus_callback(GLFWwindow* window);
-	void hide_callback(GLFWwindow* window);
-	void scroll_callback(GLFWwindow* window, double xoffset, double yoffset, float fov);
-	void mouse_callback(GLFWwindow* window, double xposIn, double yposIn);
-	void movement(GLFWwindow* window, float deltaTime);
+	void inputFocus(GLFWwindow* window);
+	void inputHide(GLFWwindow* window);
+	void inputScroll(GLFWwindow* window, double xoffset, double yoffset, float fov);
+	void inputMouse(GLFWwindow* window, double xposIn, double yposIn);
+	void inputMovement(GLFWwindow* window, float deltaTime);
 
 	glm::vec3 getCameraPos() { return cameraPos; }
 	glm::vec3 getCameraFront() { return cameraFront; }

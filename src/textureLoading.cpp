@@ -200,6 +200,22 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	return newMesh;
 }
 
+void setName(Mesh* meshRef, const std::string& name) {
+	if (meshRef) {
+		meshRef->setDisplayName(name);
+		std::cout << name << std::endl;
+	}
+	else { printf("Error: Mesh reference is null\n"); }
+}
+
+void setNameBack(Mesh* meshRef, const std::string& name) {
+	if (meshRef) {
+		meshRef->setBackgroundName(name);
+		std::cout << name << std::endl;
+	}
+	else { printf("Error: Mesh reference is null\n"); }
+}
+
 void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::vector<Material*>& loadedMaterials) {
 	// process each mesh located at the current node
 	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -207,18 +223,18 @@ void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const
 		// the node object only contains indices to index the actual objects in the scene.
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		meshes->push_back(processMesh(mesh, scene, loadedMaterials)); // Pass scene here
+
+		setNameBack(meshes->back(), node->mName.C_Str());
+
+		// Use (*var)[i] to deference the pointer!!
+		//setName((*meshes)[i], node->mName.C_Str());
+		//std::cout << node->mName.C_Str() << std::endl;
 	}
+
 	// after we've processed all of the meshes (if any) we then recursively process each of the children nodes
 	for (unsigned int i = 0; i < node->mNumChildren; i++) {
 		processNode(meshes, node->mChildren[i], scene, loadedMaterials);
 	}
-}
-
-void setName(Mesh* meshRef, const std::string& name) {
-	if (meshRef) {
-		meshRef->setName(name);
-	}
-	else { printf("Error: Mesh reference is null\n"); }
 }
 
 std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std::vector<Material*>& loadedMaterials, const std::string& meshName) {
