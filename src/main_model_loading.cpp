@@ -284,6 +284,9 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
 
+		//unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+		//glDrawBuffers(1, attachments);
+
 		return gPosition;
 	}
 
@@ -379,8 +382,8 @@ public:
 		//gAlbedo = createSSAOgAlbedo();
 
 		// tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
-		//unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-		//glDrawBuffers(3, attachments);
+		//unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
+		//glDrawBuffers(1, attachments);
 
 		ssaoKernel = createSampleKernel();
 		noiseTexture = createNoiseTexture();
@@ -389,15 +392,21 @@ public:
 	}
 
 	void renderSSAO() {
+		m_SSAO->bind();
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
-		//glActiveTexture(GL_TEXTURE1);
-		//glBindTexture(GL_TEXTURE_2D, gPosition);
-		//glActiveTexture(GL_TEXTURE2);
-		//glBindTexture(GL_TEXTURE_2D, gNormal);
+		m_SSAO->setUniform("texNoise", 0);
+
+		// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
+		//m_SSAO->setUniform("projection", m_camera->getProjectionMatrix() * m_camera->getViewMatrix());
+		m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
+		m_SSAO->setUniform("view", m_camera->getViewMatrix());
+
+		// Model matrix
+		//m_SSAO->setUniform("M", m_camera->getModelMatrix());
 
 		m_meshRender->renderQuad();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -505,7 +514,7 @@ private:
 	// Class references
 	Camera*         			m_camera;
 	//Texture*					m_textureBack;			// Texture pointer
-	Texture*					m_iconTexture;
+	Texture*					m_iconTexture = 0;
 	Mesh*						m_meshRender;
 	UI*							m_uiDraw;
 	HDRI*						m_HDRI;

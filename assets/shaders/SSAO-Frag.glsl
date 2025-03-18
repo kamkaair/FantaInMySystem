@@ -1,13 +1,11 @@
 	#version 330 core
 	
-	in vec3 fragPosIn;
+	in vec3 fragPos;
 	in vec2 texCoords;
-	in vec3 normalIn;
+	in vec3 normal;
 	out float FragColor;
 	
 	uniform sampler2D texNoise;
-	uniform sampler2D gPosition;
-	uniform sampler2D gNormal;
 	
 	uniform vec3 samples[64];
 	uniform mat4 projection;
@@ -22,8 +20,8 @@
 	
 	void main()
 	{
-		vec3 fragPos   = texture(gPosition, texCoords).xyz;
-		vec3 normal    = texture(gNormal, texCoords).rgb;
+		//vec3 fragPos   = texture(fragPos, texCoords).xyz;
+		//vec3 normal    = texture(normal, texCoords).rgb;
 		vec3 randomVec = texture(texNoise, texCoords * noiseScale).xyz;  
 		
 		vec3 tangent   = normalize(randomVec - normal * dot(randomVec, normal));
@@ -34,15 +32,14 @@
 		for(int i = 0; i < kernelSize; i++) 
 		{
 		    // get sample position
-			vec3 samplePos = TBN * samples[i]; // from tangent to view-space
-			samplePos = fragPos + samplePos * radius;
+			vec3 samplePos = fragPos + TBN * samples[i] * radius; // from tangent to view-space
 			
 			vec4 offset = vec4(samplePos, 1.0);
 			offset      = projection * offset;    // from view to clip-space
 			offset.xyz /= offset.w;               // perspective divide
 			offset.xyz  = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0  
 			
-			float sampleDepth = texture(fragPosIn, offset.xy).z; 
+			float sampleDepth = samplePos.z; // texture(gPosition, offset.xy).z; 
 			
 			// Range check
 			float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
