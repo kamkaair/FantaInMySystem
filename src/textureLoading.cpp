@@ -203,7 +203,7 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 void setName(Mesh* meshRef, const std::string& name) {
 	if (meshRef) {
 		meshRef->setDisplayName(name);
-		std::cout << name << std::endl;
+		//std::cout << name << std::endl;
 	}
 	else { printf("Error: Mesh reference is null\n"); }
 }
@@ -211,7 +211,7 @@ void setName(Mesh* meshRef, const std::string& name) {
 void setNameBack(Mesh* meshRef, const std::string& name) {
 	if (meshRef) {
 		meshRef->setBackgroundName(name);
-		std::cout << name << std::endl;
+		//std::cout << name << std::endl;
 	}
 	else { printf("Error: Mesh reference is null\n"); }
 }

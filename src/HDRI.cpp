@@ -88,17 +88,6 @@ GLuint HDRI::createCubemapFromHDR(GLuint hdrTexture) {
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // enable pre-filter mipmap sampling (combatting visible dots artifact)
 	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	// Load the cubemap projection and views for the 6 directions
-	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-	glm::mat4 captureViews[] = {
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-	};
-
 	// Bind the cubemap shader and set up uniforms
 	m_cubemapShader->bind();
 	m_cubemapShader->setUniform("equirectangularMap", 0); // Set texture unit 0 to HDR texture
@@ -118,7 +107,7 @@ GLuint HDRI::createCubemapFromHDR(GLuint hdrTexture) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Render a cube that will use the shader and project the HDR texture to the cubemap face
-		m_renderCube->renderCube();
+		m_meshRender->renderCube();
 	}
 
 	// Cleanup
@@ -150,17 +139,6 @@ GLuint HDRI::createIrradianceMap(GLuint cubemap) {
 	glBindRenderbuffer(GL_RENDERBUFFER, captureRBO);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT24, 32, 32);
 
-	// Set up projection and views for capturing the irradiance map
-	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-	glm::mat4 captureViews[] = {
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-	};
-
 	m_IrradianceShader->bind();
 	m_IrradianceShader->setUniform("projection", captureProjection);
 	m_IrradianceShader->setUniform("environmentMap", 0); // environment cubemap on texture unit 0
@@ -176,7 +154,7 @@ GLuint HDRI::createIrradianceMap(GLuint cubemap) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, irradianceMap, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		m_renderCube->renderCube(); // Render cube to generate irradiance map
+		m_meshRender->renderCube(); // Render cube to generate irradiance map
 	}
 
 	// Unbind framebuffer
@@ -206,17 +184,6 @@ GLuint HDRI::createPrefilterMap(GLuint cubemap) {
 	// generate mipmaps for the cubemap so OpenGL automatically allocates the required memory.
 	glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
-	// Set up projection and views for capturing the irradiance map
-	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
-	glm::mat4 captureViews[] = {
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f,  0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(-1.0f, 0.0f,  0.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  1.0f,  0.0f), glm::vec3(0.0f,  0.0f,  1.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f,  0.0f), glm::vec3(0.0f,  0.0f, -1.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f,  1.0f), glm::vec3(0.0f, -1.0f,  0.0f)),
-		glm::lookAt(glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f,  0.0f, -1.0f), glm::vec3(0.0f, -1.0f,  0.0f))
-	};
-
 	// pbr: run a quasi monte-carlo simulation on the environment lighting to create a prefilter (cube)map.
 	// ----------------------------------------------------------------------------------------------------
 	m_Prefilter->bind();
@@ -244,7 +211,7 @@ GLuint HDRI::createPrefilterMap(GLuint cubemap) {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, prefilterMap, mip);
 
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			m_renderCube->renderCube();
+			m_meshRender->renderCube();
 		}
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -275,7 +242,7 @@ GLuint HDRI::createBRDF()
 	glViewport(0, 0, 512, 512);
 	m_brdf->bind();
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	m_renderCube->renderQuad();
+	m_meshRender->renderQuad();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -388,7 +355,7 @@ void HDRI::renderSkybox(Camera* m_camera) {
 	glBindTexture(GL_TEXTURE_CUBE_MAP, m_cubemapTexture);
 
 	// Render the cube
-	m_renderCube->renderCube();
+	m_meshRender->renderCube();
 	glDepthFunc(GL_LESS);
 }
 
@@ -402,6 +369,6 @@ void HDRI::renderBackgroundImage(Camera* m_camera, Texture* backgroundImage, Sha
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, backgroundImage->getTextureId());
 
-	m_renderCube->renderQuad();
+	m_meshRender->renderQuad();
 	glEnable(GL_DEPTH_TEST);
 }

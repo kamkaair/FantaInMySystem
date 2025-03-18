@@ -88,6 +88,8 @@ public:
 		// Load the HDR texture and create all the HDRI maps
 		m_HDRI->ProcessHDRI("/HDRI/newport_loft.hdr");
 
+		bunchaHOOPLAA();
+
 		// Set up lights and color
 		initializeLights();
 
@@ -114,6 +116,9 @@ public:
 
 		delete m_backImage;
 		m_backImage = 0;
+
+		delete m_SSAO;
+		m_SSAO = 0;
 
 		// Delete references
 		delete m_HDRI;
@@ -182,15 +187,20 @@ public:
 		std::string brdfFrag = utils::loadShader(std::string(ASSET_DIR) + "/shaders/brdfFrag.glsl");
 		m_brdf = new Shader(brdfVert, brdfFrag);
 
-		// Load the background shaders
+		// Load the billboard icon shaders
 		std::string iconVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/iconVert.glsl");
 		std::string iconFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/iconFrag.glsl");
 		m_icon = new Shader(iconVertSource, iconFragSource);
 
-		// Load the background shaders
+		// Load the 2d-texture background shaders
 		std::string BackImageVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundImageVert.glsl");
 		std::string BackImageFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundImageFrag.glsl");
 		m_backImage = new Shader(BackImageVertSource, BackImageFragSource);
+
+		// Load SSAO shaders
+		std::string SSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
+		std::string SSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Frag.glsl");
+		m_SSAO = new Shader(SSAOVertSource, SSAOFragSource);
 	}
 
 	void render(GLFWwindow* window) {
@@ -234,6 +244,8 @@ public:
 			// m_HDRI->renderSkybox(m_camera);
 		}
 
+		renderSSAO();
+
 		if (!m_uiDraw->getMeshes().empty()) {
 			std::vector<GLuint> textureIds;
 			for (Texture* texture : m_textures) {
@@ -257,10 +269,52 @@ public:
 		return a + f * (b - a);
 	}
 
+	GLuint createSSAOgPosition() {
+		// position color buffer
+		// Probably have to be viewport's resolution
+		//int SCR_WIDTH = 128, SCR_HEIGHT = 128;
+		GLuint gPosition = 0;
+
+		glGenTextures(1, &gPosition);
+		glBindTexture(GL_TEXTURE_2D, gPosition);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
+
+		return gPosition;
+	}
+
+	GLuint createSSAOgNormal() {
+		// normal color buffer
+		glGenTextures(1, &gNormal);
+		glBindTexture(GL_TEXTURE_2D, gNormal);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
+
+		return gNormal;
+	}
+
+	GLuint createSSAOgAlbedo() {
+		// color + specular color buffer
+		glGenTextures(1, &gAlbedo);
+		glBindTexture(GL_TEXTURE_2D, gAlbedo);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
+
+		return gAlbedo;
+	}
+
 	std::vector<glm::vec3> createSampleKernel() {
 		std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 		std::default_random_engine generator;
-		std::vector<glm::vec3> ssaoKernel;
+		//std::vector<glm::vec3> ssaoKernel;
 		for (unsigned int i = 0; i < 64; ++i)
 		{
 			glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
@@ -276,7 +330,7 @@ public:
 		return ssaoKernel;
 	}
 
-	std::vector<glm::vec3> createNoiseTexture() {
+	GLuint createNoiseTexture() {
 		std::vector<glm::vec3> ssaoNoise;
 		// Added these scrunklers down here again, might have to make them use the same randomFloats as the createSampleKernel()
 		std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
@@ -287,7 +341,7 @@ public:
 			glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
 			ssaoNoise.push_back(noise);
 		}
-		unsigned int noiseTexture; glGenTextures(1, &noiseTexture);
+		GLuint noiseTexture; glGenTextures(1, &noiseTexture);
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -295,27 +349,11 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-		return ssaoNoise;
+		return noiseTexture;
 	}
 
-	//GLuint createSSAOgMaps() {
-	//	// Probably have to be viewport's resolution
-	//	//int SCR_WIDTH = 128, SCR_HEIGHT = 128;
-	//	GLuint gPosition = 0;
-
-	//	glGenTextures(1, &gPosition);
-	//	glBindTexture(GL_TEXTURE_2D, gPosition);
-	//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	//	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-	//	return gPosition;
-	//}
-
 	GLuint createSsaoFBO() {
-		GLuint ssaoFBO;
+		//GLuint ssaoFBO;
 		glGenFramebuffers(1, &ssaoFBO);
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 
@@ -323,7 +361,7 @@ public:
 	}
 
 	GLuint createSsaoColorBuffer() {
-		GLuint ssaoColorBuffer;
+		//GLuint ssaoColorBuffer;
 		glGenTextures(1, &ssaoColorBuffer);
 		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
@@ -333,6 +371,36 @@ public:
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
 
 		return ssaoColorBuffer;
+	}
+
+	void bunchaHOOPLAA() {
+		//gPosition = createSSAOgPosition();
+		//gNormal = createSSAOgNormal();
+		//gAlbedo = createSSAOgAlbedo();
+
+		// tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
+		//unsigned int attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+		//glDrawBuffers(3, attachments);
+
+		ssaoKernel = createSampleKernel();
+		noiseTexture = createNoiseTexture();
+		ssaoFBO = createSsaoFBO();
+		ssaoColorBuffer = createSsaoColorBuffer();
+	}
+
+	void renderSSAO() {
+		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+		glClear(GL_COLOR_BUFFER_BIT);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, noiseTexture);
+		//glActiveTexture(GL_TEXTURE1);
+		//glBindTexture(GL_TEXTURE_2D, gPosition);
+		//glActiveTexture(GL_TEXTURE2);
+		//glBindTexture(GL_TEXTURE_2D, gNormal);
+
+		m_meshRender->renderQuad();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void initializeLights()
@@ -380,7 +448,7 @@ public:
 			glActiveTexture(GL_TEXTURE0);
 			glBindTexture(GL_TEXTURE_2D, m_iconTexture->getTextureId());
 
-			m_renderCube->renderQuad();
+			m_meshRender->renderQuad();
 		}
 	}
 
@@ -432,18 +500,22 @@ private:
 	Shader* m_brdf;
 	Shader* m_icon;
 	Shader* m_backImage;
+	Shader* m_SSAO;
 
 	// Class references
 	Camera*         			m_camera;
 	//Texture*					m_textureBack;			// Texture pointer
 	Texture*					m_iconTexture;
-	Mesh*						m_renderCube;
+	Mesh*						m_meshRender;
 	UI*							m_uiDraw;
 	HDRI*						m_HDRI;
 	TextureLoading*				m_texLoading;
 
 	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
 	GLuint						m_texture;
+
+	GLuint						ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0, gPosition = 0, gNormal = 0, gAlbedo = 0;
+	std::vector<glm::vec3>		ssaoKernel;
 
 	float fov = 40.0f;
 	float randomFloat = 0.0f;
