@@ -6,6 +6,7 @@
 	out float FragColor;
 	
 	uniform sampler2D texNoise;
+	uniform sampler2D gPosition;
 	
 	uniform vec3 samples[64];
 	uniform mat4 projection;
@@ -20,7 +21,7 @@
 	
 	void main()
 	{
-		//vec3 fragPos   = texture(fragPos, texCoords).xyz;
+		vec3 fragPosu   = texture(gPosition, texCoords).xyz;
 		//vec3 normal    = texture(normal, texCoords).rgb;
 		vec3 randomVec = texture(texNoise, texCoords * noiseScale).xyz;  
 		
@@ -32,20 +33,21 @@
 		for(int i = 0; i < kernelSize; i++) 
 		{
 		    // get sample position
-			vec3 samplePos = fragPos + TBN * samples[i] * radius; // from tangent to view-space
+			vec3 samplePos = fragPosu + TBN * samples[i] * radius; // from tangent to view-space
 			
 			vec4 offset = vec4(samplePos, 1.0);
 			offset      = projection * offset;    // from view to clip-space
 			offset.xyz /= offset.w;               // perspective divide
 			offset.xyz  = offset.xyz * 0.5 + 0.5; // transform to range 0.0 - 1.0  
 			
-			float sampleDepth = samplePos.z; // texture(gPosition, offset.xy).z; 
+			//float sampleDepth = samplePos.z; // texture(gPosition, offset.xy).z; 
+			float sampleDepth = texture(gPosition, offset.xy).z; 
 			
 			// Range check
-			float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPos.z - sampleDepth));
+			float rangeCheck = smoothstep(0.0, 1.0, radius / abs(fragPosu.z - sampleDepth));
 			occlusion       += (sampleDepth >= samplePos.z + bias ? 1.0 : 0.0) * rangeCheck; 
 		}
 		
 		occlusion = 1.0 - (occlusion / kernelSize);
-		FragColor = occlusion;  
+		FragColor = occlusion;
 	}

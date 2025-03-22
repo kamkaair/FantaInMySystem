@@ -361,7 +361,6 @@ public:
 	}
 
 	GLuint createSsaoFBO() {
-		//GLuint ssaoFBO;
 		glGenFramebuffers(1, &ssaoFBO);
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 
@@ -386,13 +385,14 @@ public:
 		//gPosition = createSSAOgPosition();
 		//gNormal = createSSAOgNormal();
 		//gAlbedo = createSSAOgAlbedo();
-
+		
 		// tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
 		//unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
 		//glDrawBuffers(1, attachments);
 
 		ssaoFBO = createSsaoFBO();
 		ssaoKernel = createSampleKernel();
+		gPosition = createSSAOgPosition();
 		noiseTexture = createNoiseTexture();
 		ssaoColorBuffer = createSsaoColorBuffer();
 	}
@@ -405,6 +405,10 @@ public:
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
 		m_SSAO->setUniform("texNoise", 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, gPosition);
+		m_SSAO->setUniform("gPosition", 1);
 
 		// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
 		//m_SSAO->setUniform("projection", m_camera->getProjectionMatrix() * m_camera->getViewMatrix());
