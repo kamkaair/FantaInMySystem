@@ -34,6 +34,7 @@ void Inputs::inputHide(GLFWwindow* window) {
 	}
 	else if (glfwGetKey(window, GLFW_KEY_H) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
 		togglePressedHide = false;
+	//return isHidden;
 }
 
 void Inputs::inputScroll(GLFWwindow* window, double xoffset, double yoffset, float fov)

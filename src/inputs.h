@@ -16,6 +16,7 @@ public:
 	glm::vec3 getCameraPos() { return cameraPos; }
 	glm::vec3 getCameraFront() { return cameraFront; }
 	glm::vec3 getCameraUp() { return cameraUp; }
+	bool getImGuiVisibility() { return isHidden; }
 
 	void setCameraPos(glm::vec3 newPos) { cameraPos = newPos; }
 

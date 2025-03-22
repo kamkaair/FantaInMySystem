@@ -15,7 +15,9 @@
 	uniform sampler2D MetallicMap;
 	uniform sampler2D RoughnessMap;
 	uniform sampler2D NormalMap;
-	//uniform sampler2D AoMap;
+	
+	uniform sampler2D ssao;
+	
 	uniform float LampStrength;
 	uniform float HdrExposure = 1.0f;
 	uniform float HdrContrast = 2.2f;
@@ -148,6 +150,8 @@
     if (useMetallicTexture) {
 		metallic  = texture(MetallicMap, texCoord).r;
     }
+	
+	float OcclusionSSAO = texture(ssao, texCoord).r;
 
 	//float distanceFactor = clamp(length(viewPos - fragPos) / 1, 0.0, 1.0);
 
@@ -218,7 +222,7 @@
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 	
-    vec3 ambient = (kD * diffuse + specular);
+    vec3 ambient = (kD * diffuse * OcclusionSSAO + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 
 	vec4 sharpening = sharpen(DiffuseMap, texCoord, texCoord) * 0.2; // Sharpening to FragColor
@@ -232,9 +236,4 @@
 	//Color out
 	FragColor = vec4(color, 1.0);
 	//FragColor = sharpen(DiffuseMap, texCoord, vec2(HueChange, HueChange));
-	
-	//vec3 irradianc = texture(irradianceMap, N).rgb * 2;
-	//FragColor = vec4(vec3(prefilteredColor), 1.0);  // DEBUG
-	//FragColor = vec4(Lo, 1.0);  // DEBUG
-	//FragColor = vec4(fragPos * 0.5 + 0.5, 1.0);  // Output normalized normal in color space
 	};

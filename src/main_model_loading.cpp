@@ -254,11 +254,16 @@ public:
 
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_shader);
+
+				glActiveTexture(GL_TEXTURE7);
+				glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+				m_shader->setUniform("ssao", 7);
+
 				mesh->Render(m_shader, m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 			}
 		}
 
-		if (!isHidden) {
+		if (!g_input->getImGuiVisibility()) {
 			renderIcons(); // Render all the point lamp icons
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
@@ -364,7 +369,6 @@ public:
 	}
 
 	GLuint createSsaoColorBuffer() {
-		//GLuint ssaoColorBuffer;
 		glGenTextures(1, &ssaoColorBuffer);
 		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
@@ -372,6 +376,8 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "SSAO Framebuffer not complete!" << std::endl;
 
 		return ssaoColorBuffer;
 	}
@@ -385,16 +391,16 @@ public:
 		//unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
 		//glDrawBuffers(1, attachments);
 
+		ssaoFBO = createSsaoFBO();
 		ssaoKernel = createSampleKernel();
 		noiseTexture = createNoiseTexture();
-		ssaoFBO = createSsaoFBO();
 		ssaoColorBuffer = createSsaoColorBuffer();
 	}
 
 	void renderSSAO() {
-		m_SSAO->bind();
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 		glClear(GL_COLOR_BUFFER_BIT);
+		m_SSAO->bind();
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
