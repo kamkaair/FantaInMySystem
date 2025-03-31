@@ -152,7 +152,7 @@
     }
 	
 	float OcclusionSSAO = texture(ssao, texCoord).r;
-
+	vec3 occ = texture(ssao, texCoord).rgb;
 	//float distanceFactor = clamp(length(viewPos - fragPos) / 1, 0.0, 1.0);
 
 	vec3 N = getNormalFromMap();
@@ -222,7 +222,8 @@
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 	
-    vec3 ambient = (kD * diffuse * OcclusionSSAO + specular);
+    //vec3 ambient = (kD * diffuse + specular);
+	vec3 ambient = (kD * diffuse * OcclusionSSAO + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 
 	vec4 sharpening = sharpen(DiffuseMap, texCoord, texCoord) * 0.2; // Sharpening to FragColor
@@ -235,5 +236,6 @@
 	
 	//Color out
 	FragColor = vec4(color, 1.0);
+	//FragColor = vec4(occ, 1.0);
 	//FragColor = sharpen(DiffuseMap, texCoord, vec2(HueChange, HueChange));
 	};

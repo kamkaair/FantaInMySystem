@@ -6,6 +6,7 @@
 #include "HDRI.h"
 #include "textureLoading.h"
 #include "inputs.h"
+#include "GBuffer.h"
 
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>
@@ -49,6 +50,8 @@ public:
 		, m_camera(nullptr)
 	{
 		bindShaders();
+
+		m_GBuffer = new GBuffer(width, height);
 
 		// texloading function class
 		m_texLoading = new TextureLoading();
@@ -103,7 +106,7 @@ public:
 		
 		//Back face culling
 		//glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);
+		glCullFace(GL_BACK);	
 	}
 
 	~Application() {
@@ -197,6 +200,11 @@ public:
 		std::string BackImageFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundImageFrag.glsl");
 		m_backImage = new Shader(BackImageVertSource, BackImageFragSource);
 
+		// Load the geometry passes (for deferred rendering)
+		std::string GeometryVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassVert.glsl");
+		std::string GeometryFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassFrag.glsl");
+		m_SSAO = new Shader(GeometryVertSource, GeometryFragSource);
+
 		// Load SSAO shaders
 		std::string SSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
 		std::string SSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Frag.glsl");
@@ -251,15 +259,17 @@ public:
 			for (Texture* texture : m_textures) {
 				textureIds.push_back(texture->getTextureId());
 			}
-
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_shader);
 
+				m_shader->bind();
 				glActiveTexture(GL_TEXTURE7);
 				glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 				m_shader->setUniform("ssao", 7);
 
+
 				mesh->Render(m_shader, m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
+
 			}
 		}
 
@@ -274,55 +284,10 @@ public:
 		return a + f * (b - a);
 	}
 
-	GLuint createSSAOgPosition() {
-		// position color buffer
-		// Probably have to be viewport's resolution
-		//int SCR_WIDTH = 128, SCR_HEIGHT = 128;
-		GLuint gPosition = 0;
-
-		glGenTextures(1, &gPosition);
-		glBindTexture(GL_TEXTURE_2D, gPosition);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
-
-		//unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
-		//glDrawBuffers(1, attachments);
-
-		return gPosition;
-	}
-
-	GLuint createSSAOgNormal() {
-		// normal color buffer
-		glGenTextures(1, &gNormal);
-		glBindTexture(GL_TEXTURE_2D, gNormal);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
-
-		return gNormal;
-	}
-
-	GLuint createSSAOgAlbedo() {
-		// color + specular color buffer
-		glGenTextures(1, &gAlbedo);
-		glBindTexture(GL_TEXTURE_2D, gAlbedo);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
-
-		return gAlbedo;
-	}
-
 	std::vector<glm::vec3> createSampleKernel() {
 		std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 		std::default_random_engine generator;
-		//std::vector<glm::vec3> ssaoKernel;
+
 		for (unsigned int i = 0; i < 64; ++i)
 		{
 			glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
@@ -381,18 +346,24 @@ public:
 		return ssaoColorBuffer;
 	}
 
+	GLuint createGBuffer() {
+		glGenFramebuffers(1, &gBuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
+
+		return gBuffer;
+	}
+
 	void bunchaHOOPLAA() {
+		gBuffer = createGBuffer();
 		//gPosition = createSSAOgPosition();
 		//gNormal = createSSAOgNormal();
-		//gAlbedo = createSSAOgAlbedo();
-		
-		// tell OpenGL which color attachments we'll use (of this framebuffer) for rendering 
-		//unsigned int attachments[1] = { GL_COLOR_ATTACHMENT0 };
-		//glDrawBuffers(1, attachments);
+
+		unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+		glDrawBuffers(2, attachments);
 
 		ssaoFBO = createSsaoFBO();
 		ssaoKernel = createSampleKernel();
-		gPosition = createSSAOgPosition();
+
 		noiseTexture = createNoiseTexture();
 		ssaoColorBuffer = createSsaoColorBuffer();
 	}
@@ -402,6 +373,10 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT);
 		m_SSAO->bind();
 
+		// Send kernel + rotation 
+		for (unsigned int i = 0; i < 64; ++i)
+			m_SSAO->setUniform("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
+
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
 		m_SSAO->setUniform("texNoise", 0);
@@ -410,10 +385,14 @@ public:
 		glBindTexture(GL_TEXTURE_2D, gPosition);
 		m_SSAO->setUniform("gPosition", 1);
 
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, gNormal);
+		m_SSAO->setUniform("gNormal", 2);
+
 		// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
 		//m_SSAO->setUniform("projection", m_camera->getProjectionMatrix() * m_camera->getViewMatrix());
-		m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
-		m_SSAO->setUniform("view", m_camera->getViewMatrix());
+		//m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
+		//m_SSAO->setUniform("view", m_camera->getViewMatrix());
 
 		// Model matrix
 		//m_SSAO->setUniform("M", m_camera->getModelMatrix());
@@ -529,8 +508,9 @@ private:
 	UI*							m_uiDraw;
 	HDRI*						m_HDRI;
 	TextureLoading*				m_texLoading;
+	GBuffer*					m_GBuffer;
 
-	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
+	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0, gBuffer = 0;
 	GLuint						m_texture;
 
 	GLuint						ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0, gPosition = 0, gNormal = 0, gAlbedo = 0;
