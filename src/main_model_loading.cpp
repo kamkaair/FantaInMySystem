@@ -60,7 +60,8 @@ public:
 		m_HDRI = new HDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI);
+		//m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI);
+		m_uiDraw = new UI(m_lightPass, m_backImage, m_texLoading, m_HDRI);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -91,14 +92,15 @@ public:
 		// Load the HDR texture and create all the HDRI maps
 		m_HDRI->ProcessHDRI("/HDRI/newport_loft.hdr");
 
-		bunchaHOOPLAA();
+		//bunchaHOOPLAA();
 
 		// Set up lights and color
 		initializeLights();
 
 		// Alpha blending
-		glEnable(GL_BLEND);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		//glEnable(GL_BLEND);
+		glDisable(GL_BLEND);
+		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Enable depth buffering
 		glEnable(GL_DEPTH_TEST);
@@ -159,11 +161,11 @@ public:
 
 	void bindShaders() {
 		// Load the main vertex and fragment shaders
-		std::string vertexShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/vertShader.glsl");
-		std::string fragmentShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/fragShader.glsl");
+		//std::string vertexShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/vertShader.glsl");
+		//std::string fragmentShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/fragShader.glsl");
 
 		// Build and compile our shader program
-		m_shader = new Shader(vertexShaderSource, fragmentShaderSource);
+		//m_shader = new Shader(vertexShaderSource, fragmentShaderSource);
 
 		// Load the cubemap shaders
 		std::string CubemapVertexSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/cubemap_vert.glsl");
@@ -203,7 +205,12 @@ public:
 		// Load the geometry passes (for deferred rendering)
 		std::string GeometryVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassVert.glsl");
 		std::string GeometryFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassFrag.glsl");
-		m_SSAO = new Shader(GeometryVertSource, GeometryFragSource);
+		m_geometryPass = new Shader(GeometryVertSource, GeometryFragSource);
+
+		// Load the geometry passes (for deferred rendering)
+		std::string LightingVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightVert.glsl");
+		std::string LightingFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightFrag.glsl");
+		m_lightPass = new Shader(LightingVertSource, LightingFragSource);
 
 		// Load SSAO shaders
 		std::string SSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
@@ -239,44 +246,145 @@ public:
 
 		// Render skybox, the background image or clear color
 		switch (m_uiDraw->getBackgroundMode()) {
-		case 0:
-			m_HDRI->renderSkybox(m_camera);
-			break;
-		case 1:
-			m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage);
-			break;
-		case 2:
-			// The second case won't run background renders
-			break;
-		//default:
-			// m_HDRI->renderSkybox(m_camera);
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
-
-		renderSSAO();
 
 		if (!m_uiDraw->getMeshes().empty()) {
 			std::vector<GLuint> textureIds;
 			for (Texture* texture : m_textures) {
 				textureIds.push_back(texture->getTextureId());
 			}
+
+			// Forward rendering
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_shader);
-
-				m_shader->bind();
-				glActiveTexture(GL_TEXTURE7);
-				glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
-				m_shader->setUniform("ssao", 7);
-
-
 				mesh->Render(m_shader, m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
-
 			}
 		}
+
+		renderSSAO();
 
 		if (!g_input->getImGuiVisibility()) {
 			renderIcons(); // Render all the point lamp icons
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
+	}
+
+	void deferredRendering (GLFWwindow* window) {
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glfwGetFramebufferSize(window, &width, &height);
+		m_camera->setAspectRatio(width, height);
+		framebuffer_size_callback(window, width, height);
+		glViewport(0, 0, width, height);
+		checkGLError();
+
+		// 1. Geometry pass: render scene's geometry/color data into gbuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		m_geometryPass->bind();
+		for (Mesh* mesh : m_uiDraw->getMeshes()) {
+			mesh->RenderGBuffer(m_geometryPass, m_camera->getViewMatrix(),
+				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
+		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// 2. SSAO pass
+		//renderSSAO();
+
+		// 3. Lighting pass: calculate lighting using gbuffer and SSAO
+		glClear(GL_COLOR_BUFFER_BIT);
+		m_lightPass->bind();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGAlbedo());
+		//glActiveTexture(GL_TEXTURE3);
+		//glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+
+		m_lightPass->setUniform("gPosition", 0);
+		m_lightPass->setUniform("gNormal", 1);
+		m_lightPass->setUniform("gAlbedoSpec", 2);
+		//m_lightPass->setUniform("ssao", 3);
+		
+		// Set light uniforms
+		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
+			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].position",
+				m_uiDraw->getPointLightPos()[i]);
+			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].color",
+				m_uiDraw->getPointLightColor()[i]);
+			// Set attenuation parameters...
+		}
+		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
+		m_lightPass->setUniform("viewPos", m_camera->getPosition());
+
+		// Render quad
+		renderQuad();
+
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
+
+		// Render UI
+		//if (!g_input->getImGuiVisibility()) {
+		//	renderIcons();
+		//	m_uiDraw->ImGuiDraw();
+		//}
+	}
+
+	void renderQuad()
+	{
+		static GLuint quadVAO = 0, quadVBO, quadEBO;
+		if (quadVAO == 0)
+		{
+			// Vertex data: positions and texture coordinates
+			float quadVertices[] = {
+				// positions        // texture Coords
+				-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,   // Top-left
+				-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,   // Bottom-left
+				 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,   // Bottom-right
+				 1.0f,  1.0f, 0.0f, 1.0f, 1.0f    // Top-right
+			};
+
+			// Indices for two triangles that form the quad
+			unsigned int quadIndices[] = {
+				0, 1, 2,   // First triangle
+				0, 2, 3    // Second triangle
+			};
+
+			// Generate and bind VAO, VBO, and EBO
+			glGenVertexArrays(1, &quadVAO);
+			glGenBuffers(1, &quadVBO);
+			glGenBuffers(1, &quadEBO);  // New: Generate EBO
+
+			glBindVertexArray(quadVAO);
+
+			// Bind VBO and send vertex data
+			glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+
+			// Bind EBO and send index data
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);  // New: Bind EBO
+			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), &quadIndices, GL_STATIC_DRAW);
+
+			// Set vertex attribute pointers
+			// Positions
+			glEnableVertexAttribArray(0);
+			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+			// Texture coordinates
+			glEnableVertexAttribArray(1);
+			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
+
+			glBindVertexArray(0);
+		}
+
+		// Bind and render the quad using glDrawElements
+		glBindVertexArray(quadVAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);  // 6 indices for 2 triangles
+		glBindVertexArray(0);
 	}
 
 	float SSAOLerp(float a, float b, float f)
@@ -346,21 +454,7 @@ public:
 		return ssaoColorBuffer;
 	}
 
-	GLuint createGBuffer() {
-		glGenFramebuffers(1, &gBuffer);
-		glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
-
-		return gBuffer;
-	}
-
 	void bunchaHOOPLAA() {
-		gBuffer = createGBuffer();
-		//gPosition = createSSAOgPosition();
-		//gNormal = createSSAOgNormal();
-
-		unsigned int attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
-		glDrawBuffers(2, attachments);
-
 		ssaoFBO = createSsaoFBO();
 		ssaoKernel = createSampleKernel();
 
@@ -381,13 +475,13 @@ public:
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
 		m_SSAO->setUniform("texNoise", 0);
 
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, gPosition);
-		m_SSAO->setUniform("gPosition", 1);
+		//glActiveTexture(GL_TEXTURE1);
+		//glBindTexture(GL_TEXTURE_2D, gPosition);
+		//m_SSAO->setUniform("gPosition", 1);
 
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, gNormal);
-		m_SSAO->setUniform("gNormal", 2);
+		//glActiveTexture(GL_TEXTURE2);
+		//glBindTexture(GL_TEXTURE_2D, gNormal);
+		//m_SSAO->setUniform("gNormal", 2);
 
 		// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
 		//m_SSAO->setUniform("projection", m_camera->getProjectionMatrix() * m_camera->getViewMatrix());
@@ -491,14 +585,20 @@ private:
 
 	// Shaders
 	Shader* m_shader;				// Pointer to the Shader object
+
 	Shader* m_cubemapShader;		// Pointer to the Shader object
 	Shader* m_BackgroundShader;		// Pointer to the Shader object
 	Shader* m_IrradianceShader;
 	Shader* m_Prefilter;
 	Shader* m_brdf;
+
 	Shader* m_icon;
 	Shader* m_backImage;
+
 	Shader* m_SSAO;
+	Shader* m_lightPass;
+	Shader* m_geometryPass;
+
 
 	// Class references
 	Camera*         			m_camera;
@@ -510,10 +610,10 @@ private:
 	TextureLoading*				m_texLoading;
 	GBuffer*					m_GBuffer;
 
-	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0, gBuffer = 0;
+	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
 	GLuint						m_texture;
 
-	GLuint						ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0, gPosition = 0, gNormal = 0, gAlbedo = 0;
+	GLuint						ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0;
 	std::vector<glm::vec3>		ssaoKernel;
 
 	float fov = 40.0f;
@@ -615,7 +715,8 @@ int main(void) {
 	while (!glfwWindowShouldClose(window)) {
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
-		g_app->render(window);
+		//g_app->render(window);
+		g_app->deferredRendering(window);
 		glfwSwapBuffers(window);
 
 		// Poll other window events.

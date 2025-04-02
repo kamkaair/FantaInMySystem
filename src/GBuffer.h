@@ -14,6 +14,11 @@ public:
 	GLuint createGNormal();
 	GLuint createDepthBuffer();
 
+	GLuint getGPosition() { return gPosition; }
+	GLuint getGAlbedo() { return gAlbedo; }
+	GLuint getGNormal() { return gNormal; }
+	GLuint getGBuffer() { return gBuffer; }
+
 private:
 	int width, height;
 

@@ -59,6 +59,29 @@ std::string Mesh::getBackgroundName() const {
 	return m_meshBackgroundName;
 }
 
+void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
+	const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const
+{
+	shader->bind();
+	shader->setUniform("model", modelMatrix);
+	shader->setUniform("view", viewMatrix);
+	shader->setUniform("projection", projectionMatrix);
+
+	if (m_material) {
+		shader->setUniform("diffuseColor", m_material->diffuseColor);
+
+		// Bind material textures
+		const std::vector<GLuint>& textureIds = m_material->getTextures();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, textureIds[0]); // Diffuse
+		shader->setUniform("texture_diffuse1", 0);
+	}
+
+	glBindVertexArray(m_VAO);
+	glDrawElements(GL_TRIANGLES, m_indiceCount, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
+}
+
 //void Mesh::Render(Shader* shader, const glm::vec3& viewPos, glm::vec3 LightP, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, GLuint textureId)
 void Mesh::Render(Shader* shader, const glm::vec3& viewPos, std::vector<glm::vec3> LightP, std::vector<glm::vec3> LightColor, const glm::mat4& viewMatrix, const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const
 {
