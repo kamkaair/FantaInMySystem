@@ -342,7 +342,7 @@ public:
 		}
 		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
 		//m_lightPass->setUniform("viewPos", m_camera->getPosition());
-		m_lightPass->setUniform("view", m_camera->getPosition().x, m_camera->getPosition().y, m_camera->getPosition().z);
+		m_lightPass->setUniform("view", m_camera->getPosition());
 
 		// Render quad
 		m_meshRender->renderQuad();
