@@ -63,9 +63,12 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 	const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const
 {
 	shader->bind();
-	shader->setUniform("model", modelMatrix);
-	shader->setUniform("view", viewMatrix);
-	shader->setUniform("projection", projectionMatrix);
+	// Set uniform values to the shader
+	// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
+	shader->setUniform("VP", projectionMatrix * viewMatrix);
+
+	// Model matrix
+	shader->setUniform("M", getModelMatrix());
 
 	if (m_material) {
 		shader->setUniform("diffuseColor", m_material->diffuseColor);

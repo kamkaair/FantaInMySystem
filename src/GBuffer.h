@@ -19,6 +19,8 @@ public:
 	GLuint getGNormal() { return gNormal; }
 	GLuint getGBuffer() { return gBuffer; }
 
+	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
+
 private:
 	int width, height;
 

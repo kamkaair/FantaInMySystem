@@ -125,6 +125,12 @@ public:
 		delete m_SSAO;
 		m_SSAO = 0;
 
+		delete m_geometryPass;
+		m_geometryPass = 0;
+
+		delete m_lightPass;
+		m_lightPass = 0;
+
 		// Delete references
 		delete m_HDRI;
 		m_HDRI = 0;
@@ -137,6 +143,9 @@ public:
 
 		delete g_input;
 		g_input = 0;
+
+		delete m_GBuffer;
+		m_GBuffer = 0;
 
 		// Delete Camera
 		delete m_camera;
@@ -272,12 +281,18 @@ public:
 	}
 
 	void deferredRendering (GLFWwindow* window) {
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glfwGetFramebufferSize(window, &width, &height);
 		m_camera->setAspectRatio(width, height);
 		framebuffer_size_callback(window, width, height);
 		glViewport(0, 0, width, height);
 		checkGLError();
+
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
 
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
@@ -288,6 +303,9 @@ public:
 				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
+		glReadBuffer(GL_COLOR_ATTACHMENT0);  // Check positions
 
 		// 2. SSAO pass
 		//renderSSAO();
@@ -313,78 +331,27 @@ public:
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].position",
 				m_uiDraw->getPointLightPos()[i]);
+
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].color",
 				m_uiDraw->getPointLightColor()[i]);
-			// Set attenuation parameters...
+			
+			// Set attenuation factors for the point light
+			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);   // Constant attenuation
+			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);    // Linear attenuation
+			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f); // Quadratic attenuation
 		}
 		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
-		m_lightPass->setUniform("viewPos", m_camera->getPosition());
+		//m_lightPass->setUniform("viewPos", m_camera->getPosition());
+		m_lightPass->setUniform("view", m_camera->getPosition().x, m_camera->getPosition().y, m_camera->getPosition().z);
 
 		// Render quad
-		renderQuad();
-
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
+		m_meshRender->renderQuad();
 
 		// Render UI
-		//if (!g_input->getImGuiVisibility()) {
-		//	renderIcons();
-		//	m_uiDraw->ImGuiDraw();
-		//}
-	}
-
-	void renderQuad()
-	{
-		static GLuint quadVAO = 0, quadVBO, quadEBO;
-		if (quadVAO == 0)
-		{
-			// Vertex data: positions and texture coordinates
-			float quadVertices[] = {
-				// positions        // texture Coords
-				-1.0f,  1.0f, 0.0f, 0.0f, 1.0f,   // Top-left
-				-1.0f, -1.0f, 0.0f, 0.0f, 0.0f,   // Bottom-left
-				 1.0f, -1.0f, 0.0f, 1.0f, 0.0f,   // Bottom-right
-				 1.0f,  1.0f, 0.0f, 1.0f, 1.0f    // Top-right
-			};
-
-			// Indices for two triangles that form the quad
-			unsigned int quadIndices[] = {
-				0, 1, 2,   // First triangle
-				0, 2, 3    // Second triangle
-			};
-
-			// Generate and bind VAO, VBO, and EBO
-			glGenVertexArrays(1, &quadVAO);
-			glGenBuffers(1, &quadVBO);
-			glGenBuffers(1, &quadEBO);  // New: Generate EBO
-
-			glBindVertexArray(quadVAO);
-
-			// Bind VBO and send vertex data
-			glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
-
-			// Bind EBO and send index data
-			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadEBO);  // New: Bind EBO
-			glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), &quadIndices, GL_STATIC_DRAW);
-
-			// Set vertex attribute pointers
-			// Positions
-			glEnableVertexAttribArray(0);
-			glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
-			// Texture coordinates
-			glEnableVertexAttribArray(1);
-			glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float)));
-
-			glBindVertexArray(0);
+		if (!g_input->getImGuiVisibility()) {
+			renderIcons();
+			m_uiDraw->ImGuiDraw();
 		}
-
-		// Bind and render the quad using glDrawElements
-		glBindVertexArray(quadVAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);  // 6 indices for 2 triangles
-		glBindVertexArray(0);
 	}
 
 	float SSAOLerp(float a, float b, float f)

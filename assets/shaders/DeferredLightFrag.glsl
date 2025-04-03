@@ -17,9 +17,9 @@
 		float quadratic;
 	};
 
-	uniform PointLight pointLights[32];
+	uniform PointLight pointLights[12];
 	uniform int NUM_POINT_LIGHTS;
-	uniform vec3 viewPos;
+	uniform vec3 view;
 
 	void main()
 	{             
@@ -31,9 +31,9 @@
 		//float AmbientOcclusion = texture(ssao, TexCoords).r;
 		
 		// Then calculate lighting as usual
-		//vec3 lighting = Diffuse * 0.1 * AmbientOcclusion; // hard-coded ambient component
-		vec3 lighting = Diffuse * 0.1; // hard-coded ambient component
-		vec3 viewDir = normalize(viewPos - FragPos);
+		//vec3 lighting = Diffuse * 0.1 * AmbientOcclusion;
+		vec3 lighting = Diffuse * 0.4;
+		vec3 viewDir = normalize(view - FragPos);
 		
 		for(int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
@@ -52,7 +52,7 @@
 			
 			diffuse *= attenuation;
 			specular *= attenuation;
-			lighting += diffuse + specular;
+			lighting += diffuse; // + specular 
 		}
 		
 		FragColor = vec4(lighting, 1.0);

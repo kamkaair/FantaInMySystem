@@ -38,19 +38,19 @@ public:
 
 
 private:
-	GLuint	captureFBO, captureRBO;
-	GLuint	m_cubemapTexture, m_HDRTexture, m_irradianceMapTexture, m_prefilterTexture, m_brdfTexture;
-	GLuint	m_texture;
+	GLuint	captureFBO = 0, captureRBO = 0;
+	GLuint	m_cubemapTexture = 0, m_HDRTexture = 0, m_irradianceMapTexture = 0, m_prefilterTexture = 0, m_brdfTexture = 0;
+	GLuint	m_texture = 0;
 
-	Texture* m_backgroundTexture;
+	Texture* m_backgroundTexture = 0;
 
-	Shader* m_cubemapShader;		// Pointer to the Shader object
-	Shader* m_BackgroundShader;		// Pointer to the Shader object
-	Shader* m_IrradianceShader;
-	Shader* m_Prefilter;
-	Shader* m_brdf;
+	Shader* m_cubemapShader = 0;		// Pointer to the Shader object
+	Shader* m_BackgroundShader = 0;		// Pointer to the Shader object
+	Shader* m_IrradianceShader = 0;
+	Shader* m_Prefilter = 0;
+	Shader* m_brdf = 0;
 
-	Mesh* m_meshRender;
+	Mesh* m_meshRender = 0;
 
 	// Load the cubemap projection and views for the 6 directions
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);
