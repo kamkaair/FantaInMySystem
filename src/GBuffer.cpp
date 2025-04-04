@@ -1,6 +1,15 @@
 #include "GBuffer.h"
 
 GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), Object(__FUNCTION__) {
+	constructGBuffer();
+}
+
+// TODO: seems that the cleanup doesn't delete everything (memory usage rises up after reconstructing G-Buffer)
+GBuffer::~GBuffer() {
+	CleanUpGBuffer();
+}
+
+void GBuffer::constructGBuffer() {
 	// This constructor sets up the G-Buffer
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -9,7 +18,7 @@ GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), 
 	gNormal = createGNormal();
 	gAlbedo = createGAlbedo();
 
-	GLuint attachments[3] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
 	glDrawBuffers(3, attachments);
 
 	rboDepth = createDepthBuffer();
@@ -19,14 +28,6 @@ GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), 
 		std::cout << "Framebuffer not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-GBuffer::~GBuffer() {
-	glDeleteFramebuffers(1, &gBuffer);
-	glDeleteTextures(1, &gPosition);
-	glDeleteTextures(1, &gNormal);
-	glDeleteTextures(1, &gAlbedo);
-	glDeleteRenderbuffers(1, &rboDepth);
 }
 
 GLuint GBuffer::createGPosition() {
@@ -79,4 +80,12 @@ GLuint GBuffer::createDepthBuffer() {
 		std::cout << "Framebuffer not complete!" << std::endl;
 
 	return rboDepth;
+}
+
+void GBuffer::CleanUpGBuffer() {
+	if (gBuffer != 0) { glDeleteFramebuffers(1, &gBuffer); gBuffer = 0; }
+	if (gPosition != 0) { glDeleteTextures(1, &gPosition); gPosition = 0; }
+	if (gNormal != 0) { glDeleteTextures(1, &gNormal); gNormal = 0; }
+	if (gAlbedo != 0) { glDeleteTextures(1, &gAlbedo); gAlbedo = 0; }
+	if (rboDepth != 0) { glDeleteRenderbuffers(1, &rboDepth); rboDepth = 0; }
 }

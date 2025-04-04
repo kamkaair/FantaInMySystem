@@ -3,11 +3,13 @@
 UI::UI(Shader* shader,
 	Shader* backImage,
 	TextureLoading* texLoad,
-	HDRI* hdri)
+	HDRI* hdri,
+	GBuffer* gbuffer)
 	: m_shader(shader),
 	m_backImage(backImage),
 	m_texLoading(texLoad),
 	m_HDRI(hdri),
+	m_GBuffer(gbuffer),
 	ImGuiAlpha(0.3f), 
 	Object(__FUNCTION__) {}
 
@@ -130,6 +132,23 @@ void UI::ImGuiDraw()
 	ImGui::Checkbox("Enable rotation", &meshRotationEnabled);
 
 	ImGui::Checkbox("Deferred rendering", &deferredRendering);
+
+	// Disable or enable blending whether using forward or deferred rendering
+	//deferredRendering ? glDisable(GL_BLEND) : glEnable(GL_BLEND);
+
+	if(deferredRendering) {
+		glDisable(GL_BLEND);
+		ImGui::InputInt("Width", &width);
+		ImGui::InputInt("Height", &height);
+		if(ImGui::Button("Set Resolution")) {
+			m_GBuffer->CleanUpGBuffer();
+			m_GBuffer->setResolution(width, height);
+			m_GBuffer->constructGBuffer();
+		}
+	}
+	else {
+		glEnable(GL_BLEND);
+	}
 
 	if (ImGui::Checkbox("Wireframe mode", &wireFrame))
 	{

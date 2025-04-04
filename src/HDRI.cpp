@@ -292,30 +292,15 @@ void HDRI::ProcessHDRI(const char* hdr)
 void HDRI::cleanUpHDRI()
 {
 	// Delete the old HDR texture/maps
-	if (m_texture != 0) {
-		glDeleteTextures(1, &m_texture);
-		m_texture = 0;
-	}
+	if (m_texture != 0) { glDeleteTextures(1, &m_texture); m_texture = 0; }
 
-	if (m_cubemapTexture != 0) {
-		glDeleteTextures(1, &m_cubemapTexture);
-		m_cubemapTexture = 0;
-	}
+	if (m_cubemapTexture != 0) { glDeleteTextures(1, &m_cubemapTexture); m_cubemapTexture = 0; }
 
-	if (m_irradianceMapTexture != 0) {
-		glDeleteTextures(1, &m_irradianceMapTexture);
-		m_irradianceMapTexture = 0;
-	}
+	if (m_irradianceMapTexture != 0) { glDeleteTextures(1, &m_irradianceMapTexture); m_irradianceMapTexture = 0; }
 
-	if (m_prefilterTexture != 0) {
-		glDeleteTextures(1, &m_prefilterTexture);
-		m_prefilterTexture = 0;
-	}
+	if (m_prefilterTexture != 0) { glDeleteTextures(1, &m_prefilterTexture); m_prefilterTexture = 0; }
 
-	if (m_brdfTexture != 0) {
-		glDeleteTextures(1, &m_brdfTexture);
-		m_brdfTexture = 0;
-	}
+	if (m_brdfTexture != 0) { glDeleteTextures(1, &m_brdfTexture); m_brdfTexture = 0; }
 }
 
 void HDRI::cleanBackgroundTexture() {

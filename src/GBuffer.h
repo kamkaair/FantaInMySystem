@@ -20,6 +20,8 @@ public:
 	GLuint getGBuffer() { return gBuffer; }
 
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
+	void CleanUpGBuffer();
+	void constructGBuffer();
 
 private:
 	int width, height;

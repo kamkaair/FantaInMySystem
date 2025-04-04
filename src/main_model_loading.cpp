@@ -60,8 +60,7 @@ public:
 		m_HDRI = new HDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI);
-		//m_uiDraw = new UI(m_lightPass, m_backImage, m_texLoading, m_HDRI);
+		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI, m_GBuffer);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -97,9 +96,9 @@ public:
 		// Set up lights and color
 		initializeLights();
 
-		// Alpha blending - disabled for now due to the implementation of deferred rendering
-		//glEnable(GL_BLEND);
-		glDisable(GL_BLEND);
+		// Alpha blending
+		glEnable(GL_BLEND);
+		//glDisable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Enable depth buffering

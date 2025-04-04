@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "textureLoading.h"
 #include "HDRI.h"
+#include "GBuffer.h"
 
 struct SettingsMaterial {
 	glm::vec3 diffuseColor = glm::vec3(1.0f);  // Default white color
@@ -43,7 +44,8 @@ public:
 	UI(Shader* shader,
 		Shader* backImage,
 		TextureLoading* texLoad,
-		HDRI* hdri);
+		HDRI* hdri,
+		GBuffer* gbuffer);
 	~UI();
 
 	void ImGuiStyleSetup();
@@ -76,29 +78,20 @@ private:
 	std::vector<Mesh*> m_meshes; // Mesh reference
 	TextureLoading* m_texLoading;
 	HDRI* m_HDRI;
+	GBuffer* m_GBuffer;
 
 	std::vector<glm::vec3> pointLightPos; // Reference to point light positions
 	std::vector<glm::vec3> pointLightColor; // Reference to point light colors
 	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
-	float lampStrength = 0.0f;
-	float HdrContrast = 2.2f;
-	float HdrExposure = 1.0f;
-	float ImGuiAlpha = 0.3f;
-	float HueChange = 1.0f;
-	float backExposure = 1.0f;
-	float backContrast = 2.2f;
+	float lampStrength = 0.0f, HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
+		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
 
-	float totalScale = 0.0f;
-
+	int width = 640, height = 480,
+		backgroundMode = 0;
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
-	int backgroundMode = 0;
-	bool meshRotationEnabled = true;
-	bool doOnce = true;
-	bool wireFrame = false;
-	bool scaleLock = false;
-	bool meshHide = false;
-	bool deferredRendering = false;
+
+	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, deferredRendering = false;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };
