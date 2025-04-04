@@ -61,6 +61,8 @@ public:
 	void toggleWireframe() { wireFrame = !wireFrame; }
 	void setImGuiAlpha(float alpha) { ImGuiAlpha = alpha; }
 
+	bool getRenderMode() { return deferredRendering; }
+
 	// Add '&' to get the REFERENCE!!!
 	std::vector<Mesh*>& getMeshes() { return m_meshes; }
 	std::vector<glm::vec3>& getPointLightPos() { return pointLightPos; }
@@ -96,6 +98,7 @@ private:
 	bool wireFrame = false;
 	bool scaleLock = false;
 	bool meshHide = false;
+	bool deferredRendering = false;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };

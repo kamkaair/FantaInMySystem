@@ -60,8 +60,8 @@ public:
 		m_HDRI = new HDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
 		// the UI class, contains ImGui and such
-		//m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI);
-		m_uiDraw = new UI(m_lightPass, m_backImage, m_texLoading, m_HDRI);
+		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI);
+		//m_uiDraw = new UI(m_lightPass, m_backImage, m_texLoading, m_HDRI);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -97,10 +97,10 @@ public:
 		// Set up lights and color
 		initializeLights();
 
-		// Alpha blending
+		// Alpha blending - disabled for now due to the implementation of deferred rendering
 		//glEnable(GL_BLEND);
 		glDisable(GL_BLEND);
-		//glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Enable depth buffering
 		glEnable(GL_DEPTH_TEST);
@@ -170,11 +170,11 @@ public:
 
 	void bindShaders() {
 		// Load the main vertex and fragment shaders
-		//std::string vertexShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/vertShader.glsl");
-		//std::string fragmentShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/fragShader.glsl");
+		std::string vertexShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/vertShader.glsl");
+		std::string fragmentShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/fragShader.glsl");
 
 		// Build and compile our shader program
-		//m_shader = new Shader(vertexShaderSource, fragmentShaderSource);
+		m_shader = new Shader(vertexShaderSource, fragmentShaderSource);
 
 		// Load the cubemap shaders
 		std::string CubemapVertexSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/cubemap_vert.glsl");
@@ -228,7 +228,6 @@ public:
 	}
 
 	void render(GLFWwindow* window) {
-
 		// Query the size of the framebuffer (window content) from glfw.
 		glfwGetFramebufferSize(window, &width, &height);
 
@@ -272,7 +271,7 @@ public:
 			}
 		}
 
-		renderSSAO();
+		//renderSSAO();
 
 		if (!g_input->getImGuiVisibility()) {
 			renderIcons(); // Render all the point lamp icons
@@ -547,6 +546,10 @@ public:
 		g_input->inputMovement(window, deltaTime);
 	}
 
+	UI* getUI() {
+		return m_uiDraw;
+	}
+
 private:
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -682,8 +685,10 @@ int main(void) {
 	while (!glfwWindowShouldClose(window)) {
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
+		!g_app->getUI()->getRenderMode() ? g_app->render(window) : g_app->deferredRendering(window);
+
 		//g_app->render(window);
-		g_app->deferredRendering(window);
+		//g_app->deferredRendering(window);
 		glfwSwapBuffers(window);
 
 		// Poll other window events.

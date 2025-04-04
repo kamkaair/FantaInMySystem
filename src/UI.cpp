@@ -129,6 +129,8 @@ void UI::ImGuiDraw()
 
 	ImGui::Checkbox("Enable rotation", &meshRotationEnabled);
 
+	ImGui::Checkbox("Deferred rendering", &deferredRendering);
+
 	if (ImGui::Checkbox("Wireframe mode", &wireFrame))
 	{
 		//Wireframe check
@@ -408,10 +410,10 @@ void UI::ImGuiDraw()
 				//}
 
 				// COMMENTED OUT FOR NOW
-				//if (ImGui::SliderFloat("Lamp Strength", &lampStrength, 0.0f, 100.0f))  // Directly modify pointLightColor
-				//{
-				//	m_shader->setUniform("LampStrength", lampStrength); // Pass the float value to the shader
-				//}
+				if (ImGui::SliderFloat("Lamp Strength", &lampStrength, 0.0f, 100.0f))  // Directly modify pointLightColor
+				{
+					m_shader->setUniform("LampStrength", lampStrength); // Pass the float value to the shader
+				}
 				ImGui::TreePop();
 			}
 			ImGui::Separator();
@@ -463,28 +465,28 @@ void UI::ImGuiDraw()
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
 				// COMMENTED OUT FOR NOW
-				//if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
-				//	m_shader->setUniform("HdrExposure", HdrExposure);
-				//}
+				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
+					m_shader->setUniform("HdrExposure", HdrExposure);
+				}
 
-				//if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
-				//	m_shader->setUniform("HdrContrast", HdrContrast);
-				//}
+				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
+					m_shader->setUniform("HdrContrast", HdrContrast);
+				}
 
 
-				//if (ImGui::SliderFloat("Hue", &HueChange, -10.0f, 10.0f)) {
-				//	m_shader->setUniform("HueChange", HueChange);
-				//}
+				if (ImGui::SliderFloat("Hue", &HueChange, -10.0f, 10.0f)) {
+					m_shader->setUniform("HueChange", HueChange);
+				}
 
-				//// Load selected HDR file and generate the maps for them
-				//if (ImGui::Button("Reset Exposure/Contrast")) {
-				//	HdrContrast = 2.2f;
-				//	m_shader->setUniform("HdrContrast", HdrContrast);
-				//	HdrExposure = 1.0f;
-				//	m_shader->setUniform("HdrExposure", HdrExposure);
-				//	HueChange = 0.0f;
-				//	m_shader->setUniform("HueChange", HueChange);
-				//}
+				// Load selected HDR file and generate the maps for them
+				if (ImGui::Button("Reset Exposure/Contrast")) {
+					HdrContrast = 2.2f;
+					m_shader->setUniform("HdrContrast", HdrContrast);
+					HdrExposure = 1.0f;
+					m_shader->setUniform("HdrExposure", HdrExposure);
+					HueChange = 0.0f;
+					m_shader->setUniform("HueChange", HueChange);
+				}
 
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
