@@ -7,32 +7,17 @@
 	in vec2 texCoord;
 	in vec3 normal;
 
-	uniform samplerCube irradianceMap;
-	uniform samplerCube prefilterMap;
+	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
-
-	uniform sampler2D DiffuseMap;
-	uniform sampler2D MetallicMap;
-	uniform sampler2D RoughnessMap;
-	uniform sampler2D NormalMap;
+	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap;
+	//uniform sampler2D ssao;
 	
-	uniform float LampStrength;
-	uniform float HdrExposure = 1.0f;
-	uniform float HdrContrast = 2.2f;
+	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
 	
-	uniform vec3 u_DiffuseColor;
-	uniform float u_Roughness;
-	uniform float u_Metallic;
-	
-	uniform float HueChange;
-	
-	uniform bool useDiffuseTexture = true;
-	uniform bool useMetallicTexture = true;
-	uniform bool useRoughnessTexture = true;
-	
+	uniform vec3 u_DiffuseColor, objectColor;
+	uniform float u_Roughness, u_Metallic;
+	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
 	uniform int NUM_POINT_LIGHTS;
-	
-	uniform vec3 objectColor;
 
 	// Point light structure in GLSL
 	struct PointLight {
@@ -150,6 +135,8 @@
     }
 	
 	//float distanceFactor = clamp(length(viewPos - fragPos) / 1, 0.0, 1.0);
+	//float AmbientOcclusion = texture(ssao, texCoord).r;
+	//vec3 AmbientOcclusion = texture(ssao, texCoord).rgb;
 
 	vec3 N = getNormalFromMap();
 	vec3 V = normalize(viewPos - fragPos);
@@ -218,6 +205,7 @@
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 	
+	//vec3 ambient = (kD * diffuse + specular) * AmbientOcclusion;
     vec3 ambient = (kD * diffuse + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 

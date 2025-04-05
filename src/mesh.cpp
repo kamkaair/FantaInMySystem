@@ -70,19 +70,55 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 	// Model matrix
 	shader->setUniform("M", getModelMatrix());
 
-	if (m_material) {
-		shader->setUniform("diffuseColor", m_material->diffuseColor);
+	//if (m_material) {
+	//	shader->setUniform("diffuseColor", m_material->diffuseColor);
 
-		// Bind material textures
+	//	// Bind material textures
+	//	const std::vector<GLuint>& textureIds = m_material->getTextures();
+	//	glActiveTexture(GL_TEXTURE0);
+	//	glBindTexture(GL_TEXTURE_2D, textureIds[0]); // Diffuse
+	//	shader->setUniform("texture_diffuse1", 0);
+	//}
+
+	// Bind material textures
+	if (m_material) {
+
 		const std::vector<GLuint>& textureIds = m_material->getTextures();
+		// Ensure you bind the textures with the appropriate uniforms
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, textureIds[0]); // Diffuse
-		shader->setUniform("texture_diffuse1", 0);
+		glBindTexture(GL_TEXTURE_2D, textureIds[0]);  // DiffuseMap
+		shader->setUniform("DiffuseMap", 0);
+
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, textureIds[1]);  // MetallicMap
+		shader->setUniform("MetallicMap", 1);
+
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, textureIds[2]);  // RoughnessMap
+		shader->setUniform("RoughnessMap", 2);
+
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, textureIds[3]);  // NormalMap
+		shader->setUniform("NormalMap", 3);
+
 	}
 
 	glBindVertexArray(m_VAO);
 	glDrawElements(GL_TRIANGLES, m_indiceCount, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
+
+	// always good practice to set everything back to defaults once configured.
+	//glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// Unbind textures
+	if (m_material) {
+		const std::vector<GLuint>& textureIds = m_material->getTextures();
+		for (int i = 0; i < textureIds.size(); ++i) {
+			glActiveTexture(GL_TEXTURE1 + i);
+			glBindTexture(GL_TEXTURE_2D, 0);
+		}
+	}
 }
 
 //void Mesh::Render(Shader* shader, const glm::vec3& viewPos, glm::vec3 LightP, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, GLuint textureId)

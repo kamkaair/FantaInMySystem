@@ -98,7 +98,6 @@ public:
 
 		// Alpha blending
 		glEnable(GL_BLEND);
-		//glDisable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 		// Enable depth buffering
@@ -266,6 +265,12 @@ public:
 			// Forward rendering
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_shader);
+
+				//m_shader->bind();
+				//glActiveTexture(GL_TEXTURE7);
+				//glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+				//m_shader->setUniform("ssao", 7);
+
 				mesh->Render(m_shader, m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 			}
 		}
@@ -297,6 +302,7 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_geometryPass->bind();
 		for (Mesh* mesh : m_uiDraw->getMeshes()) {
+			//m_HDRI->setHDRITextures(m_shader);
 			mesh->RenderGBuffer(m_geometryPass, m_camera->getViewMatrix(),
 				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 		}
@@ -440,21 +446,15 @@ public:
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
 		m_SSAO->setUniform("texNoise", 0);
 
-		//glActiveTexture(GL_TEXTURE1);
-		//glBindTexture(GL_TEXTURE_2D, gPosition);
-		//m_SSAO->setUniform("gPosition", 1);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
+		m_SSAO->setUniform("gPosition", 1);
 
-		//glActiveTexture(GL_TEXTURE2);
-		//glBindTexture(GL_TEXTURE_2D, gNormal);
-		//m_SSAO->setUniform("gNormal", 2);
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
+		m_SSAO->setUniform("gNormal", 2);
 
-		// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
-		//m_SSAO->setUniform("projection", m_camera->getProjectionMatrix() * m_camera->getViewMatrix());
-		//m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
-		//m_SSAO->setUniform("view", m_camera->getViewMatrix());
-
-		// Model matrix
-		//m_SSAO->setUniform("M", m_camera->getModelMatrix());
+		m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
 
 		m_meshRender->renderQuad();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
