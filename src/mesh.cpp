@@ -65,10 +65,8 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 	shader->bind();
 	// Set uniform values to the shader
 	// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
-	shader->setUniform("VP", projectionMatrix * viewMatrix);
-
-	// Model matrix
 	shader->setUniform("M", getModelMatrix());
+	shader->setUniform("VP", projectionMatrix * viewMatrix);
 
 	//if (m_material) {
 	//	shader->setUniform("diffuseColor", m_material->diffuseColor);
@@ -100,7 +98,6 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, textureIds[3]);  // NormalMap
 		shader->setUniform("NormalMap", 3);
-
 	}
 
 	glBindVertexArray(m_VAO);

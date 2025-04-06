@@ -17,9 +17,10 @@ void GBuffer::constructGBuffer() {
 	gPosition = createGPosition();
 	gNormal = createGNormal();
 	gAlbedo = createGAlbedo();
+	gMetalRough = createGMetallicRoughness();
 
-	GLuint attachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
-	glDrawBuffers(3, attachments);
+	GLuint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, attachments);
 
 	rboDepth = createDepthBuffer();
 
@@ -67,6 +68,18 @@ GLuint GBuffer::createGAlbedo() {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
 
 	return gAlbedo;
+}
+
+GLuint GBuffer::createGMetallicRoughness() {
+	// Albedo color buffer (currently optional for SSAO, but useful for deferred in general)
+	glGenTextures(1, &gMetalRough);
+	glBindTexture(GL_TEXTURE_2D, gMetalRough);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, width, height, 0, GL_RG, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMetalRough, 0);
+
+	return gMetalRough;
 }
 
 GLuint GBuffer::createDepthBuffer() {

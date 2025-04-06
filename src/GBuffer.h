@@ -13,11 +13,13 @@ public:
 	GLuint createGAlbedo();
 	GLuint createGNormal();
 	GLuint createDepthBuffer();
+	GLuint createGMetallicRoughness();
 
 	GLuint getGPosition() { return gPosition; }
 	GLuint getGAlbedo() { return gAlbedo; }
 	GLuint getGNormal() { return gNormal; }
 	GLuint getGBuffer() { return gBuffer; }
+	GLuint getGMetallicRoughness() { return gBuffer; }
 
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
 	void CleanUpGBuffer();
@@ -29,5 +31,5 @@ private:
 	// Buffers
 	GLuint gBuffer = 0, ssaoFBO = 0, rboDepth = 0;
 	// Maps
-	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0;
+	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0;
 };

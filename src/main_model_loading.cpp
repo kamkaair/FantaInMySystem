@@ -323,13 +323,16 @@ public:
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
 		glActiveTexture(GL_TEXTURE2);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGAlbedo());
+		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		//glActiveTexture(GL_TEXTURE3);
 		//glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 
 		m_lightPass->setUniform("gPosition", 0);
 		m_lightPass->setUniform("gNormal", 1);
 		m_lightPass->setUniform("gAlbedoSpec", 2);
-		//m_lightPass->setUniform("ssao", 3);
+		m_lightPass->setUniform("gMetallicRoughness", 3);
+		//m_lightPass->setUniform("ssao", 4);
 		
 		// Set light uniforms
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {

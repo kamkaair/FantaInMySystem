@@ -2,7 +2,7 @@
 	#version 330 core
 	out vec4 FragColor;
 
-	in vec3 FragPos;
+	in vec3 fragPos;
 	in vec2 texCoord;
 	in vec3 normal;
 	
@@ -10,9 +10,9 @@
 	//uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
 	// G-Buffer
-	uniform sampler2D gPosition, gNormal, gAlbedoSpec;
+	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// PBR
-	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap;
+	//uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap;
 	// SSAO
 	//uniform sampler2D ssao;
 	
@@ -37,8 +37,8 @@
 	{
 	vec3 tangentNormal = texture(gNormal, texCoord).xyz * 2.0 - 1.0;
 
-	vec3 Q1 = dFdx(FragPos);
-	vec3 Q2 = dFdy(FragPos);
+	vec3 Q1 = dFdx(fragPos);
+	vec3 Q2 = dFdy(fragPos);
 	vec2 st1 = dFdx(texCoord);
 	vec2 st2 = dFdy(texCoord);
 
@@ -103,15 +103,13 @@
 	void main()
 	{             
 		// Retrieve data from gbuffer
-		//vec3 FragPos = texture(gPosition, texCoord).rgb;
-		//vec3 Normal = texture(gNormal, texCoord).rgb;
-		//vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
+		vec3 FragPos = texture(gPosition, texCoord).rgb;
+		//vec3 N = normalize(texture(gNormal, texCoord).rgb);
+		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
+		float metallic = texture(gMetallicRoughness, texCoord).r;
+		float roughness = texture(gMetallicRoughness, texCoord).g;
 		//float Specular = texture(gAlbedoSpec, texCoord).a;
 		//float AmbientOcclusion = texture(ssao, texCoord).r;
-		
-		vec3 albedo = (pow(texture(DiffuseMap, texCoord).rgb, vec3(2.2)));
-		float roughness = texture(RoughnessMap, texCoord).r;
-		float metallic  = texture(MetallicMap, texCoord).r;
 		
 		// PBR		
 		vec3 N = getNormalFromMap();
