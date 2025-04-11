@@ -13,7 +13,25 @@
 	uniform sampler2D DiffuseMap;
 	uniform sampler2D MetallicMap;
 	uniform sampler2D RoughnessMap;
-	//uniform sampler2D NormalMap;
+	uniform sampler2D NormalMap;
+	
+	//Normal map function
+	vec3 getNormalFromMap()
+	{
+		vec3 tangentNormal = texture(NormalMap, texCoord).xyz * 2.0 - 1.0;
+
+		vec3 Q1 = dFdx(fragPos);
+		vec3 Q2 = dFdy(fragPos);
+		vec2 st1 = dFdx(texCoord);
+		vec2 st2 = dFdy(texCoord);
+
+		vec3 N = normalize(normal);
+		vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);
+		vec3 B = -normalize(cross(N, T));
+		mat3 TBN = mat3(T, B, N);
+
+		return normalize(TBN * tangentNormal);
+	}
 
 	void main()
 	{    
@@ -21,7 +39,9 @@
 		gPosition = fragPos;
 		
 		// Also store the per-fragment normals into the gbuffer
-		gNormal = normalize(normal);
+		//gNormal = normalize(normal);
+		vec3 N = texture(NormalMap, texCoord).rgb == vec3(0.0) ? normalize(normal) : getNormalFromMap();
+		gNormal = N;
 		
 		// And the diffuse per-fragment color
 		gAlbedoSpec.rgb = (pow(texture(DiffuseMap, texCoord).rgb, vec3(2.2)));

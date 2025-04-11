@@ -68,16 +68,6 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 	shader->setUniform("M", getModelMatrix());
 	shader->setUniform("VP", projectionMatrix * viewMatrix);
 
-	//if (m_material) {
-	//	shader->setUniform("diffuseColor", m_material->diffuseColor);
-
-	//	// Bind material textures
-	//	const std::vector<GLuint>& textureIds = m_material->getTextures();
-	//	glActiveTexture(GL_TEXTURE0);
-	//	glBindTexture(GL_TEXTURE_2D, textureIds[0]); // Diffuse
-	//	shader->setUniform("texture_diffuse1", 0);
-	//}
-
 	// Bind material textures
 	if (m_material) {
 

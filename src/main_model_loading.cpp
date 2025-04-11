@@ -226,6 +226,10 @@ public:
 	}
 
 	void render(GLFWwindow* window) {
+		!m_uiDraw->getRenderMode() ? forwardRendering(window) : deferredRendering(window);
+	}
+
+	void forwardRendering(GLFWwindow* window) {
 		// Query the size of the framebuffer (window content) from glfw.
 		glfwGetFramebufferSize(window, &width, &height);
 
@@ -548,10 +552,6 @@ public:
 		g_input->inputMovement(window, deltaTime);
 	}
 
-	UI* getUI() {
-		return m_uiDraw;
-	}
-
 private:
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -687,7 +687,7 @@ int main(void) {
 	while (!glfwWindowShouldClose(window)) {
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
-		!g_app->getUI()->getRenderMode() ? g_app->render(window) : g_app->deferredRendering(window);
+		g_app->render(window);
 
 		//g_app->render(window);
 		//g_app->deferredRendering(window);
