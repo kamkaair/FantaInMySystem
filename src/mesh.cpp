@@ -116,7 +116,7 @@ void Mesh::Render(Shader* shader, const glm::vec3& viewPos, std::vector<glm::vec
 
 	// Set uniform values to the shader
 	// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
-	shader->setUniform("MVP", projectionMatrix * viewMatrix);
+	shader->setUniform("VP", projectionMatrix * viewMatrix);
 
 	// Model matrix
 	shader->setUniform("M", getModelMatrix());

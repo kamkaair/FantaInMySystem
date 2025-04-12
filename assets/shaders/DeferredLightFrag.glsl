@@ -2,9 +2,9 @@
 	#version 330 core
 	out vec4 FragColor;
 
-	in vec3 fragPos;
+	//in vec3 fragPos;
 	in vec2 texCoord;
-	in vec3 normal;
+	//in vec3 normal;
 	
 	// HDRI
 	//uniform samplerCube irradianceMap, prefilterMap;
@@ -86,11 +86,13 @@
 		vec3 FragPos = texture(gPosition, texCoord).rgb;
 		vec3 N = normalize(texture(gNormal, texCoord).rgb);
 		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
+		float Specular = texture(gAlbedoSpec, texCoord).a;
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		float roughness = texture(gMetallicRoughness, texCoord).g;
 		//float AmbientOcclusion = texture(ssao, texCoord).r;
 		
-		// PBR		
+		// PBR	
+		// View direction		
 		vec3 V = normalize(view - FragPos);
 		vec3 R = reflect(-V, N);
 
@@ -101,32 +103,42 @@
 		vec3 Lo = vec3(0.0);
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
-
+			
 			// calculate per-light radiance - light calculations
+			// Light direction
 			vec3 L = normalize(pointLights[i].position - FragPos);
+			vec3 diffuse = max(dot(N, L), 0.0) * albedo * pointLights[i].color;
+			// Halfway direction
 			vec3 H = normalize(V + L);
+			float spec = pow(max(dot(N, H), 0.0), 16.0);
+            vec3 specular = pointLights[i].color * spec * Specular;
+			
 			float distance = length(pointLights[i].position - FragPos);
 			float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + 
 										   pointLights[i].quadratic * (distance * distance));
 			
 			vec3 radiance = pointLights[i].color * attenuation * LampStrength;
+			diffuse *= attenuation;
+            specular *= attenuation;
 
 			// Cook-Torrance BRDF
-			float NDF = DistributionGGX(N, H, roughness);
-			float G = GeometrySmith(N, V, L, roughness);	
-			vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0); 
+			// float NDF = DistributionGGX(N, H, roughness);
+			// float G = GeometrySmith(N, V, L, roughness);	
+			// vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0); 
 
-			vec3 numerator = NDF * G * F;
-			float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
-			vec3 specular = numerator / denominator;
+			// vec3 numerator = NDF * G * F;
+			// float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+			// vec3 specular = numerator / denominator;
 
-			vec3 kS = F;
-			vec3 kD = vec3(1.0) - kS;
-			kD *= 1.0 - metallic;
-			float NdotL = max(dot(N, L), 0.0);
+			// vec3 kS = F;
+			// vec3 kD = vec3(1.0) - kS;
+			// kD *= 1.0 - metallic;
+			// float NdotL = max(dot(N, L), 0.0);
 
-			Lo += (kD * albedo / PI + specular) * radiance * NdotL;
-
+			// Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+			//Lo += diffuse + specular;
+			
+			Lo += diffuse + specular;
 		}
 		
 		// ambient lighting (we now use IBL as the ambient term)

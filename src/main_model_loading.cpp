@@ -332,6 +332,9 @@ public:
 		//glActiveTexture(GL_TEXTURE3);
 		//glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 
+		//m_lightPass->setUniform("M", m_camera->getModelMatrix());
+		//m_lightPass->setUniform("VP", m_camera->getViewMatrix() * m_camera->getProjectionMatrix());
+
 		m_lightPass->setUniform("gPosition", 0);
 		m_lightPass->setUniform("gNormal", 1);
 		m_lightPass->setUniform("gAlbedoSpec", 2);
