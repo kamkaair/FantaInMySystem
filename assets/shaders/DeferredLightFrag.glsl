@@ -14,7 +14,7 @@
 	// SSAO
 	//uniform sampler2D ssao;
 	
-	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
+	uniform float LampStrength = 5, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
 
@@ -84,9 +84,9 @@
 	{             
 		// Retrieve data from gbuffer
 		vec3 FragPos = texture(gPosition, texCoord).rgb;
-		vec3 N = normalize(texture(gNormal, texCoord).rgb);
+		vec3 N = texture(gNormal, texCoord).rgb;
 		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
-		float Specular = texture(gAlbedoSpec, texCoord).a;
+		//float Specular = texture(gAlbedoSpec, texCoord).a;
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		float roughness = texture(gMetallicRoughness, texCoord).g;
 		//float AmbientOcclusion = texture(ssao, texCoord).r;
@@ -94,6 +94,7 @@
 		// PBR	
 		// View direction		
 		vec3 V = normalize(view - FragPos);
+		// Reflection
 		vec3 R = reflect(-V, N);
 
 		vec3 F0 = vec3(0.04);
@@ -111,7 +112,7 @@
 			// Halfway direction
 			vec3 H = normalize(V + L);
 			float spec = pow(max(dot(N, H), 0.0), 16.0);
-            vec3 specular = pointLights[i].color * spec * Specular;
+            //vec3 specular = pointLights[i].color * spec * Specular;
 			
 			float distance = length(pointLights[i].position - FragPos);
 			float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + 
@@ -119,16 +120,16 @@
 			
 			vec3 radiance = pointLights[i].color * attenuation * LampStrength;
 			diffuse *= attenuation;
-            specular *= attenuation;
+            //specular *= attenuation;
 
 			// Cook-Torrance BRDF
-			// float NDF = DistributionGGX(N, H, roughness);
-			// float G = GeometrySmith(N, V, L, roughness);	
-			// vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0); 
+			float NDF = DistributionGGX(N, H, roughness);
+			float G = GeometrySmith(N, V, L, roughness);	
+			vec3 F    = fresnelSchlick(max(dot(H, V), 0.0), F0); 
 
-			// vec3 numerator = NDF * G * F;
-			// float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
-			// vec3 specular = numerator / denominator;
+			vec3 numerator = NDF * G * F;
+			float denominator = 4.0 * max(dot(N, V), 0.0) * max(dot(N, L), 0.0) + 0.0001; // + 0.0001 to prevent divide by zero
+			vec3 specular = numerator / denominator;
 
 			// vec3 kS = F;
 			// vec3 kD = vec3(1.0) - kS;
@@ -136,9 +137,8 @@
 			// float NdotL = max(dot(N, L), 0.0);
 
 			// Lo += (kD * albedo / PI + specular) * radiance * NdotL;
+			Lo += (diffuse + specular) * radiance;
 			//Lo += diffuse + specular;
-			
-			Lo += diffuse + specular;
 		}
 		
 		// ambient lighting (we now use IBL as the ambient term)
@@ -180,5 +180,5 @@
 		color = pow(color, vec3(1.0 / HdrContrast));
 		
 		//Color out
-		FragColor = vec4(color, 1.0);
+		FragColor = vec4(Lo, 1.0);
 	}
