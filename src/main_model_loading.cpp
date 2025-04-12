@@ -296,17 +296,11 @@ public:
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
-
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		m_geometryPass->bind();
 		for (Mesh* mesh : m_uiDraw->getMeshes()) {
-			//m_HDRI->setHDRITextures(m_shader);
 			mesh->RenderGBuffer(m_geometryPass, m_camera->getViewMatrix(),
 				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 		}
@@ -318,27 +312,32 @@ public:
 		// 2. SSAO pass
 		//renderSSAO();
 
+		// HDRI
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
+
 		// 3. Lighting pass: calculate lighting using gbuffer and SSAO
 		glClear(GL_COLOR_BUFFER_BIT);
 		m_lightPass->bind();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGAlbedo());
+		m_HDRI->setHDRITextures(m_lightPass);
+
 		glActiveTexture(GL_TEXTURE3);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
+		glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
+		glActiveTexture(GL_TEXTURE5);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGAlbedo());
+		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		//glActiveTexture(GL_TEXTURE3);
 		//glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 
-		//m_lightPass->setUniform("M", m_camera->getModelMatrix());
-		//m_lightPass->setUniform("VP", m_camera->getViewMatrix() * m_camera->getProjectionMatrix());
-
-		m_lightPass->setUniform("gPosition", 0);
-		m_lightPass->setUniform("gNormal", 1);
-		m_lightPass->setUniform("gAlbedoSpec", 2);
-		m_lightPass->setUniform("gMetallicRoughness", 3);
+		m_lightPass->setUniform("gPosition", 3);
+		m_lightPass->setUniform("gNormal", 4);
+		m_lightPass->setUniform("gAlbedoSpec", 5);
+		m_lightPass->setUniform("gMetallicRoughness", 6);
 		//m_lightPass->setUniform("ssao", 4);
 		
 		// Set light uniforms
