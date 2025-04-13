@@ -2,9 +2,7 @@
 	#version 330 core
 	out vec4 FragColor;
 
-	//in vec3 fragPos;
 	in vec2 texCoord;
-	//in vec3 normal;
 	
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
@@ -14,7 +12,7 @@
 	// SSAO
 	//uniform sampler2D ssao;
 	
-	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
+	uniform float LampStrength = 5, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
 
@@ -99,7 +97,7 @@
 		vec3 F0 = vec3(0.04);
 		F0 = mix(F0, albedo, metallic);
 
-		//For loop
+		// Direct lighting loop
 		vec3 Lo = vec3(0.0);
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
@@ -116,7 +114,7 @@
 										   pointLights[i].quadratic * (distance * distance));
 			
 			vec3 radiance = pointLights[i].color * attenuation * LampStrength;
-			diffuse *= attenuation;
+			//diffuse *= attenuation;
 
 			// Cook-Torrance BRDF
 			float NDF = DistributionGGX(N, H, roughness);
@@ -158,6 +156,7 @@
 		const float MAX_REFLECTION_LOD = 3.0;
 		vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;  
 		vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+		vec3 brdfDEBUG = texture(brdfLUT, texCoord).rgb;
 		
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		

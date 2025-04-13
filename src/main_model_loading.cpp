@@ -299,8 +299,18 @@ public:
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// HDRI
+		//switch (m_uiDraw->getBackgroundMode()) {
+		//case 0: m_HDRI->renderSkybox(m_camera); break;
+		//case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		//}
+
 		m_geometryPass->bind();
 		for (Mesh* mesh : m_uiDraw->getMeshes()) {
+			// HDRI textures to the lighting shader
+			//m_lightPass->bind();
+			//m_HDRI->setHDRITextures(m_lightPass);
 			mesh->RenderGBuffer(m_geometryPass, m_camera->getViewMatrix(),
 				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 		}
@@ -318,11 +328,15 @@ public:
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
 
+		for (Mesh* mesh : m_uiDraw->getMeshes()) {
+			// HDRI textures to the lighting shader
+			m_lightPass->bind();
+			m_HDRI->setHDRITextures(m_lightPass);
+		}
+
 		// 3. Lighting pass: calculate lighting using gbuffer and SSAO
 		glClear(GL_COLOR_BUFFER_BIT);
 		m_lightPass->bind();
-		m_HDRI->setHDRITextures(m_lightPass);
-
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
 		glActiveTexture(GL_TEXTURE4);
@@ -638,7 +652,7 @@ int main(void) {
 	// Create application
 	g_app = new Application();
 
-	glClearColor(0.2, 0.2, 0.2, 1.0);
+	//glClearColor(0.2, 0.2, 0.2, 1.0);
 
 	// Disable cursor
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
