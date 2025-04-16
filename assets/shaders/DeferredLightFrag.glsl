@@ -12,7 +12,7 @@
 	// SSAO
 	//uniform sampler2D ssao;
 	
-	uniform float LampStrength = 5, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
+	uniform float LampStrength = 25, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
 
@@ -83,8 +83,10 @@
 		// Retrieve data from gbuffer
 		vec3 FragPos = texture(gPosition, texCoord).rgb;
 		vec3 N = texture(gNormal, texCoord).rgb;
+		vec3 NN = normalize(texture(gNormal, texCoord).rgb);
 		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
 		float metallic = texture(gMetallicRoughness, texCoord).r;
+		vec3 metallics = texture(gMetallicRoughness, texCoord).rgb;
 		float roughness = texture(gMetallicRoughness, texCoord).g;
 		//float AmbientOcclusion = texture(ssao, texCoord).r;
 		
@@ -138,7 +140,7 @@
 		
 		vec3 kS = F;
 		vec3 kD = vec3(1.0) - kS;
-		kD *= 1.0 - metallic;
+		kD *= 1.0 - metallic; // kD I believe is broken.
 		
 		// HDRI
 		vec3 irradiance = texture(irradianceMap, N).rgb;

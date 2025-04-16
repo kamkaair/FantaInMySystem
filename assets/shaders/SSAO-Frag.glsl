@@ -35,7 +35,7 @@
 		{
 			// get sample position
 			vec3 samplePos = TBN * samples[i]; // from tangent to view-space
-			samplePos = fragPos + samplePos * radius; 
+			samplePos = fragPos + samplePos * radius;
 			
 			// project sample position (to sample texture) (to get position on screen/texture)
 			vec4 offset = vec4(samplePos, 1.0);

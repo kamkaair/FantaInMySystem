@@ -209,12 +209,12 @@ public:
 		std::string BackImageFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundImageFrag.glsl");
 		m_backImage = new Shader(BackImageVertSource, BackImageFragSource);
 
-		// Load the geometry passes (for deferred rendering)
+		// Load the geometry pass (for deferred rendering)
 		std::string GeometryVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassVert.glsl");
 		std::string GeometryFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassFrag.glsl");
 		m_geometryPass = new Shader(GeometryVertSource, GeometryFragSource);
 
-		// Load the geometry passes (for deferred rendering)
+		// Load the lighting pass (for deferred rendering)
 		std::string LightingVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightVert.glsl");
 		std::string LightingFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightFrag.glsl");
 		m_lightPass = new Shader(LightingVertSource, LightingFragSource);
@@ -301,16 +301,16 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// HDRI
-		//switch (m_uiDraw->getBackgroundMode()) {
-		//case 0: m_HDRI->renderSkybox(m_camera); break;
-		//case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		//}
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
 
 		m_geometryPass->bind();
 		for (Mesh* mesh : m_uiDraw->getMeshes()) {
 			// HDRI textures to the lighting shader
-			//m_lightPass->bind();
-			//m_HDRI->setHDRITextures(m_lightPass);
+			m_lightPass->bind();
+			m_HDRI->setHDRITextures(m_lightPass);
 			mesh->RenderGBuffer(m_geometryPass, m_camera->getViewMatrix(),
 				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 		}
@@ -328,11 +328,11 @@ public:
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
 
-		for (Mesh* mesh : m_uiDraw->getMeshes()) {
-			// HDRI textures to the lighting shader
-			m_lightPass->bind();
-			m_HDRI->setHDRITextures(m_lightPass);
-		}
+		//for (Mesh* mesh : m_uiDraw->getMeshes()) {
+		//	// HDRI textures to the lighting shader
+		//	m_lightPass->bind();
+		//	m_HDRI->setHDRITextures(m_lightPass);
+		//}
 
 		// 3. Lighting pass: calculate lighting using gbuffer and SSAO
 		glClear(GL_COLOR_BUFFER_BIT);

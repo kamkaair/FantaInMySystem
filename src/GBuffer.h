@@ -19,7 +19,7 @@ public:
 	GLuint getGAlbedo() { return gAlbedo; }
 	GLuint getGNormal() { return gNormal; }
 	GLuint getGBuffer() { return gBuffer; }
-	GLuint getGMetallicRoughness() { return gBuffer; }
+	GLuint getGMetallicRoughness() { return gMetalRough; }
 
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
 	void CleanUpGBuffer();
