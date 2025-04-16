@@ -100,5 +100,6 @@ void GBuffer::CleanUpGBuffer() {
 	if (gPosition != 0) { glDeleteTextures(1, &gPosition); gPosition = 0; }
 	if (gNormal != 0) { glDeleteTextures(1, &gNormal); gNormal = 0; }
 	if (gAlbedo != 0) { glDeleteTextures(1, &gAlbedo); gAlbedo = 0; }
+	if (gMetalRough != 0) { glDeleteTextures(1, &gMetalRough); gMetalRough = 0; }
 	if (rboDepth != 0) { glDeleteRenderbuffers(1, &rboDepth); rboDepth = 0; }
 }

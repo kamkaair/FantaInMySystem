@@ -141,6 +141,7 @@ void UI::ImGuiDraw()
 		ImGui::InputInt("Width", &width);
 		ImGui::InputInt("Height", &height);
 		if(ImGui::Button("Set Resolution")) {
+			// TODO: add just a general update for the resolution
 			m_GBuffer->CleanUpGBuffer();
 			m_GBuffer->setResolution(width, height);
 			m_GBuffer->constructGBuffer();

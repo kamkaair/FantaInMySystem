@@ -12,7 +12,7 @@
 	// SSAO
 	//uniform sampler2D ssao;
 	
-	uniform float LampStrength = 25, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
+	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
 
