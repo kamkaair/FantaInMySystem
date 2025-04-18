@@ -302,11 +302,6 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
-
 		// Render meshes
 		for (Mesh* mesh : m_uiDraw->getMeshes()) {
 			mesh->RenderGBuffer(m_geometryPass, m_camera->getViewMatrix(),
@@ -314,9 +309,6 @@ public:
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-		//glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
-		//glReadBuffer(GL_COLOR_ATTACHMENT0);  // Check positions
 
 		// 2. SSAO pass
 		//renderSSAO();
@@ -360,20 +352,19 @@ public:
 		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
 		m_lightPass->setUniform("view", m_camera->getPosition());
 
-
 		// Render quad
 		m_meshRender->renderQuad();
 
 		// Render background
-		//switch (m_uiDraw->getBackgroundMode()) {
-		//case 0: m_HDRI->renderSkybox(m_camera); break;
-		//case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		//}
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
 
-		// Render UI
-		//if (!g_input->getImGuiVisibility()) {
-		//	renderIcons();
-		//}
+		// Render UI - Disabled for now
+		if (!g_input->getImGuiVisibility()) {
+			renderIcons();
+		}
 
 		m_uiDraw->ImGuiDraw();
 	}

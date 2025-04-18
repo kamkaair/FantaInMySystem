@@ -8,7 +8,7 @@
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
 	// G-Buffer
-	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
+	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness, gDepth;
 	// SSAO
 	//uniform sampler2D ssao;
 	
@@ -89,6 +89,9 @@
 		vec3 metallics = texture(gMetallicRoughness, texCoord).rgb;
 		float roughness = texture(gMetallicRoughness, texCoord).g;
 		//float AmbientOcclusion = texture(ssao, texCoord).r;
+		
+		bool hasGeometry = length(FragPos) > 0.0001;
+		if(!hasGeometry){ discard; }
 		
 		// PBR	
 		// View direction		

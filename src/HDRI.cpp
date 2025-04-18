@@ -328,8 +328,7 @@ void HDRI::setHDRITextures(Shader* shader) {
 
 void HDRI::renderSkybox(Camera* m_camera) {
 	glDepthFunc(GL_LEQUAL);  // Ensure skybox is drawn in the background
-	//glDisable(GL_CULL_FACE);
-	glDisable(GL_DEPTH_TEST);
+	glDepthMask(GL_FALSE); // disable writing to depth
 
 	glm::mat4 view = glm::mat4(glm::mat3(m_camera->getViewMatrix()));  // Remove translation from the view matrix
 	//std::cout << "View Matrix: " << glm::to_string(view) << std::endl;
@@ -345,8 +344,7 @@ void HDRI::renderSkybox(Camera* m_camera) {
 	// Render the cube
 	m_meshRender->renderCube();
 
-	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_CULL_FACE);
+	glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LESS);
 }
 
