@@ -255,10 +255,12 @@ public:
 		//glClear(GL_DEPTH_BUFFER_BIT);
 
 		// Render skybox, the background image or clear color
+		glDisable(GL_DEPTH_TEST);
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
+		glEnable(GL_DEPTH_TEST);
 
 		if (!m_uiDraw->getMeshes().empty()) {
 			std::vector<GLuint> textureIds;
@@ -336,7 +338,7 @@ public:
 		m_lightPass->setUniform("gMetallicRoughness", 6);
 		//m_lightPass->setUniform("ssao", 4);
 		
-		// Set light uniforms
+		// Set light uniforms + view
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].position",
 				m_uiDraw->getPointLightPos()[i]);
@@ -352,21 +354,20 @@ public:
 		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
 		m_lightPass->setUniform("view", m_camera->getPosition());
 
-		// Render quad
+		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
 
-		// Render background
+		// 4. Render the skybox/background image
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
 
-		// Render UI - Disabled for now
+		// 5. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
 			renderIcons();
+			m_uiDraw->ImGuiDraw();
 		}
-
-		m_uiDraw->ImGuiDraw();
 	}
 
 	float SSAOLerp(float a, float b, float f)

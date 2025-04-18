@@ -328,7 +328,7 @@ void HDRI::setHDRITextures(Shader* shader) {
 
 void HDRI::renderSkybox(Camera* m_camera) {
 	glDepthFunc(GL_LEQUAL);  // Ensure skybox is drawn in the background
-	glDepthMask(GL_FALSE); // disable writing to depth
+	//glDepthMask(GL_FALSE); // disable writing to depth
 
 	glm::mat4 view = glm::mat4(glm::mat3(m_camera->getViewMatrix()));  // Remove translation from the view matrix
 	//std::cout << "View Matrix: " << glm::to_string(view) << std::endl;
@@ -344,14 +344,14 @@ void HDRI::renderSkybox(Camera* m_camera) {
 	// Render the cube
 	m_meshRender->renderCube();
 
-	glDepthMask(GL_TRUE);
+	//glDepthMask(GL_TRUE);
 	glDepthFunc(GL_LESS);
 }
 
 void HDRI::renderBackgroundImage(Camera* m_camera, Texture* backgroundImage, Shader* m_backImage) {
 	// Decided to use "clip-space quad" method to render the background image for the background image
 	// Since the quad is already in clip space (gl_Position = vec4(in_position, 1.0), just disable depth testing
-	glDisable(GL_DEPTH_TEST);
+	//glDisable(GL_DEPTH_TEST);
 
 	m_backImage->bind();
 
@@ -359,5 +359,5 @@ void HDRI::renderBackgroundImage(Camera* m_camera, Texture* backgroundImage, Sha
 	glBindTexture(GL_TEXTURE_2D, backgroundImage->getTextureId());
 
 	m_meshRender->renderQuad();
-	glEnable(GL_DEPTH_TEST);
+	//glEnable(GL_DEPTH_TEST);
 }

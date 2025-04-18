@@ -82,6 +82,9 @@
 	{             
 		// Retrieve data from gbuffer
 		vec3 FragPos = texture(gPosition, texCoord).rgb;
+		bool hasGeometry = length(FragPos) > 0.0001;
+		if(!hasGeometry){ discard; return; }
+		
 		vec3 N = texture(gNormal, texCoord).rgb;
 		vec3 NN = normalize(texture(gNormal, texCoord).rgb);
 		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
@@ -89,9 +92,6 @@
 		vec3 metallics = texture(gMetallicRoughness, texCoord).rgb;
 		float roughness = texture(gMetallicRoughness, texCoord).g;
 		//float AmbientOcclusion = texture(ssao, texCoord).r;
-		
-		bool hasGeometry = length(FragPos) > 0.0001;
-		if(!hasGeometry){ discard; }
 		
 		// PBR	
 		// View direction		
