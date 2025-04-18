@@ -290,6 +290,7 @@ public:
 	void deferredRendering (GLFWwindow* window) {
 		glfwGetFramebufferSize(window, &width, &height);
 		m_camera->setAspectRatio(width, height);
+		m_GBuffer->setResolution(width, height);
 		framebuffer_size_callback(window, width, height);
 		glViewport(0, 0, width, height);
 		checkGLError();

@@ -13,9 +13,7 @@ public:
 
     }
 
-    const glm::mat4& getProjectionMatrix() const {
-        return m_projection;
-    }
+    const glm::mat4& getProjectionMatrix() const { return m_projection; }
 
     // FOV
     void setFOV(float fov) {
@@ -32,9 +30,7 @@ public:
         updateProjectionMatrix();
     }
 
-    float getFOV() const {
-        return m_fov;
-    }
+    float getFOV() const { return m_fov; }
 
 private:
     glm::mat4 m_projection;

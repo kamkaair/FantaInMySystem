@@ -21,6 +21,9 @@ public:
 	GLuint getGBuffer() { return gBuffer; }
 	GLuint getGMetallicRoughness() { return gMetalRough; }
 
+	float getWidth() const { return width; }
+	float getHeight() const { return height; }
+
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
 	void CleanUpGBuffer();
 	void constructGBuffer();
