@@ -116,7 +116,6 @@
 										   pointLights[i].quadratic * (distance * distance));
 			
 			vec3 radiance = pointLights[i].color * attenuation * LampStrength;
-			//diffuse *= attenuation;
 
 			// Cook-Torrance BRDF
 			float NDF = DistributionGGX(N, H, roughness);
@@ -151,7 +150,6 @@
 		float chroma = sqrt(albedo.b*albedo.b+albedo.g*albedo.g);
 		
 		vec3 diffuse      = irradiance * vec3(albedo.r, chroma * cos(finalHue), chroma * sin(finalHue));
-		//vec3 diffuse      = vec3(albedo.r, chroma * cos(finalHue), chroma * sin(finalHue));
 		
 		// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
 		//MAX_REFLECTION_LOD = 3.0; is quite nice :3

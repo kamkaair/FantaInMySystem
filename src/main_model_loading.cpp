@@ -294,13 +294,13 @@ public:
 		glViewport(0, 0, width, height);
 		checkGLError();
 
+		// Clear everything
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Render background
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
@@ -311,22 +311,20 @@ public:
 			mesh->RenderGBuffer(m_geometryPass, m_camera->getViewMatrix(),
 				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 		}
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
-		glReadBuffer(GL_COLOR_ATTACHMENT0);  // Check positions
+		//glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
+		//glReadBuffer(GL_COLOR_ATTACHMENT0);  // Check positions
 
 		// 2. SSAO pass
 		//renderSSAO();
 		
 		// 3. Lighting pass
-		for (Mesh* mesh : m_uiDraw->getMeshes()) {
-			// HDRI textures to the lighting shader
-			m_lightPass->bind();
-			m_HDRI->setHDRITextures(m_lightPass);
-		}
+		m_HDRI->setHDRITextures(m_lightPass);
 
 		glClear(GL_COLOR_BUFFER_BIT);
+
 		m_lightPass->bind();
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
@@ -359,17 +357,24 @@ public:
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f); // Quadratic attenuation
 		}
 		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
-		//m_lightPass->setUniform("viewPos", m_camera->getPosition());
 		m_lightPass->setUniform("view", m_camera->getPosition());
+
 
 		// Render quad
 		m_meshRender->renderQuad();
 
+		// Render background
+		//switch (m_uiDraw->getBackgroundMode()) {
+		//case 0: m_HDRI->renderSkybox(m_camera); break;
+		//case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		//}
+
 		// Render UI
-		if (!g_input->getImGuiVisibility()) {
-			renderIcons();
-			m_uiDraw->ImGuiDraw();
-		}
+		//if (!g_input->getImGuiVisibility()) {
+		//	renderIcons();
+		//}
+
+		m_uiDraw->ImGuiDraw();
 	}
 
 	float SSAOLerp(float a, float b, float f)
