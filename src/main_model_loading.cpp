@@ -529,7 +529,8 @@ public:
 
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 	{
-		g_input->inputMouse(window, xposIn, yposIn);
+		//g_input->inputMouse(window, xposIn, yposIn);
+		g_input->inputMouseMovement(window, xposIn, yposIn);
 	}
 
 	void update(float deltaTime, GLFWwindow* window) {
@@ -554,7 +555,7 @@ public:
 		}
 
 		// Keeping the movement inside the update loop
-		g_input->inputMovement(window, deltaTime);
+		//g_input->inputMovement(window, deltaTime);
 	}
 
 private:

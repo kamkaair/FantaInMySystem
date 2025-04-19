@@ -122,11 +122,35 @@ void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
 		else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 			cameraPos -= cameraSpeed * cameraUp;
 	}
-
+	
 	//Update camera position and LookAt direction
 	m_camera->setPosition(cameraPos);
-	m_camera->setLookAt(cameraPos + cameraFront);
+	//m_camera->setLookAt(cameraPos + cameraFront); // redundant
 
 	//Update view matrix
 	m_camera->setViewMatrix(cameraPos + cameraFront);
+}
+
+void Inputs::inputMouseMovement(GLFWwindow* window, double xposIn, double yposIn) {
+	if (!ImGui::GetIO().WantTextInput) {
+		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
+		{
+			float camX = static_cast<float>(sin(glfwGetTime()) * radius);
+			float camY = static_cast<float>(tan(glfwGetTime()) * radius);
+			float camZ = static_cast<float>(cos(glfwGetTime()) * radius);
+
+			//float camZ = sin(glfwGetTime() * radius);
+			//glm::mat4 view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+
+			//Update camera position and LookAt direction
+			//m_camera->setPosition(cameraPos);
+			m_camera->setPosition(glm::vec3(camX, 0.0f, camZ));
+
+			//Update view matrix
+			//m_camera->setViewMatrix(cameraPos + cameraFront);
+			m_camera->setViewMatrix(glm::vec3(0.0f, 0.0f, 0.0f));
+
+			printf("BIBINKI");
+		}
+	}
 }

@@ -12,6 +12,7 @@ public:
 	void inputScroll(GLFWwindow* window, double xoffset, double yoffset, float fov);
 	void inputMouse(GLFWwindow* window, double xposIn, double yposIn);
 	void inputMovement(GLFWwindow* window, float deltaTime);
+	void inputMouseMovement(GLFWwindow* window, double xposIn, double yposIn);
 
 	glm::vec3 getCameraPos() { return cameraPos; }
 	glm::vec3 getCameraFront() { return cameraFront; }
@@ -22,7 +23,7 @@ public:
 
 private:
 	// Camera movement
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.5f, 1.0f), cameraFront = glm::vec3(0.0f, 0.0f, -1.0f), cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+	glm::vec3 cameraPos = glm::vec3(0.0f, 0.5f, 1.0f), cameraFront = glm::vec3(0.0f, 0.0f, -1.0f), cameraUp = glm::vec3(0.0f, 1.0f, 0.0f), cameraFocus = glm::vec3(0.0f, 0.0f, 0.0f);
 	// Is mouse active?
 	bool firstMouse = true;
 	bool mouseEnabled = false;
@@ -30,7 +31,8 @@ private:
 	float pitch = 0.0f;
 	float lastX = 800.0f / 2.0;
 	float lastY = 600.0 / 2.0;
-	//float fov = 40.0f;
+
+	float radius = 10.0f;
 
 	bool togglePressed = false;
 	bool togglePressedHide = false;
