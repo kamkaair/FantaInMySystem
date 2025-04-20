@@ -99,6 +99,32 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 	}
 }
 
+void Inputs::inputMouseSecond(GLFWwindow* window, double xposIn, double yposIn)
+{
+	if (mouseEnabled) {
+		float sensitivity = 0.000005f;
+		float dx = float(xposIn - xPos);
+		float dy = float(yposIn - yPos);
+
+		theta -= dx * sensitivity;
+		phi -= dy * sensitivity;
+
+		// Clamp phi to avoid gimbal lock
+		const float epsilon = 0.01f;
+		phi = glm::clamp(phi, epsilon, glm::pi<float>() - epsilon);
+
+		lastX = xposIn;
+		lastY = yposIn;
+	}
+}
+
+glm::vec3 Inputs::calculateCameraPosition() {
+	float x = radius * sinf(phi) * cosf(theta);
+	float y = radius * cosf(phi);
+	float z = radius * sinf(phi) * sinf(theta);
+	return glm::vec3(x, y, z);
+}
+
 void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
 	if (!ImGui::GetIO().WantTextInput)
 	{
@@ -124,33 +150,26 @@ void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
 	}
 	
 	//Update camera position and LookAt direction
-	m_camera->setPosition(cameraPos);
+	//m_camera->setPosition(cameraPos);
 	//m_camera->setLookAt(cameraPos + cameraFront); // redundant
 
 	//Update view matrix
-	m_camera->setViewMatrix(cameraPos + cameraFront);
+	//m_camera->setViewMatrix(cameraPos + cameraFront);
 }
 
-void Inputs::inputMouseMovement(GLFWwindow* window, double xposIn, double yposIn) {
-	if (!ImGui::GetIO().WantTextInput) {
-		if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
-		{
-			float camX = static_cast<float>(sin(glfwGetTime()) * radius);
-			float camY = static_cast<float>(tan(glfwGetTime()) * radius);
-			float camZ = static_cast<float>(cos(glfwGetTime()) * radius);
+void Inputs::mousePosUpdate(GLFWwindow* window) {
+	std::cout << "Pos update" << std::endl;
+	glfwGetCursorPos(window, &xPos, &yPos);
 
-			//float camZ = sin(glfwGetTime() * radius);
-			//glm::mat4 view = glm::lookAt(glm::vec3(camX, 0.0f, camZ), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	//float camX = radius * sin(phi) * cos(theta);
+	//float camY = radius * cos(phi);
+	//float camZ = radius * sin(phi) * sin(theta);
 
-			//Update camera position and LookAt direction
-			//m_camera->setPosition(cameraPos);
-			m_camera->setPosition(glm::vec3(camX, 0.0f, camZ));
+	// Lateral movement
+	//m_camera->setPosition(glm::vec3(camX, camY, camZ));
+	// Vertical movement
+	//m_camera->setPosition(glm::vec3(0.0f, camX, camZ));
 
-			//Update view matrix
-			//m_camera->setViewMatrix(cameraPos + cameraFront);
-			m_camera->setViewMatrix(glm::vec3(0.0f, 0.0f, 0.0f));
+	//m_camera->setViewMatrix(glm::vec3(cameraFocus)); // Default focus position = (0.0f, 0.0f, 0.0f)
 
-			printf("BIBINKI");
-		}
-	}
 }

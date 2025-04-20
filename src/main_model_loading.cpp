@@ -521,16 +521,31 @@ public:
 		}
 	}
 
-	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
-	{
+	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
 		g_input->inputScroll(window, xoffset, yoffset, app->m_camera->getFOV());
 	}
 
-	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
-	{
+	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 		//g_input->inputMouse(window, xposIn, yposIn);
-		g_input->inputMouseMovement(window, xposIn, yposIn);
+		g_input->inputMouseSecond(window, xposIn, yposIn);
+	}
+
+	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
+		//if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+		//	g_input->mousePosUpdate(window);
+		//}
+
+		if (button == GLFW_MOUSE_BUTTON_LEFT) {
+			if (action == GLFW_PRESS) {
+				g_input->setmouseEnabled(true);
+				g_input->mousePosUpdate(window);
+				//glfwGetCursorPos(window, &lastX, &lastY);
+			}
+			else if (action == GLFW_RELEASE) {
+				g_input->setmouseEnabled(false);
+			}
+		}
 	}
 
 	void update(float deltaTime, GLFWwindow* window) {
@@ -556,6 +571,8 @@ public:
 
 		// Keeping the movement inside the update loop
 		//g_input->inputMovement(window, deltaTime);
+		m_camera->setPosition(g_input->calculateCameraPosition());
+		m_camera->setViewMatrix(glm::vec3(0.0f, 0.0f, 0.0f)); // Default focus position = (0.0f, 0.0f, 0.0f)
 	}
 
 private:
@@ -656,9 +673,10 @@ int main(void) {
 	// Mouse scroll callback
 	glfwSetScrollCallback(window, Application::scroll_callback);
 
+	glfwSetMouseButtonCallback(window, Application::mouse_button_callback);
+
 	// Specify the key callback as c++-lambda to glfw
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
-
 		switch (key) {
 		case GLFW_KEY_ESCAPE:
 			// Close window if escape is pressed by the user.
