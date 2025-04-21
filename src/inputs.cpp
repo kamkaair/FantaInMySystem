@@ -99,19 +99,53 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 	}
 }
 
-void Inputs::inputMouseSecond(GLFWwindow* window, double xposIn, double yposIn)
+void Inputs::inputMouseCursorLeft(GLFWwindow* window, double xposIn, double yposIn)
 {
-	if (mouseEnabled) {
-		float sensitivity = 0.000005f;
+	if (mouseLeftEnabled) {
+		float sensitivity = 0.00001f;
 		float dx = float(xposIn - xPos);
 		float dy = float(yposIn - yPos);
 
 		theta -= dx * sensitivity;
-		phi -= dy * sensitivity;
+		phi += dy * sensitivity;
 
 		// Clamp phi to avoid gimbal lock
 		const float epsilon = 0.01f;
 		phi = glm::clamp(phi, epsilon, glm::pi<float>() - epsilon);
+
+		lastX = xposIn;
+		lastY = yposIn;
+	}
+}
+
+void Inputs::inputMouseCursorRight(GLFWwindow* window, double xposIn, double yposIn)
+{
+	if (mouseRightEnabled) {
+		float sensitivity = 0.00001f;
+		float dx = float(xposIn - xPos);
+		float dy = float(yposIn - yPos);
+
+		yaw += dx;
+		pitch += dy;
+
+		// update the front vector
+		glm::vec3 front;
+		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		front.y = sin(glm::radians(pitch));
+		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(front);
+
+		// TODO: cameraFocus still a bit tacky with X-axis movement. Fix
+		glm::vec3 up(0.0f, 1.0f, 0.0f);
+		glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraFront));
+		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraFront, cameraRight));
+
+		cameraFocus += dx * sensitivity * cameraRight;
+		cameraFocus += dy * sensitivity * cameraUpAdjust;
+
+		//cameraFocus += glm::vec3(dx * sensitivity, 0.0f, 0.0f);
+		//cameraFocus -= glm::vec3(0.0f, dy * sensitivity, 0.0f);
+		std::cout << glm::to_string(cameraFocus) << std::endl;
 
 		lastX = xposIn;
 		lastY = yposIn;
@@ -123,6 +157,10 @@ glm::vec3 Inputs::calculateCameraPosition() {
 	float y = radius * cosf(phi);
 	float z = radius * sinf(phi) * sinf(theta);
 	return glm::vec3(x, y, z);
+}
+
+void Inputs::mousePosUpdate(GLFWwindow* window) {
+	glfwGetCursorPos(window, &xPos, &yPos);
 }
 
 void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
@@ -148,28 +186,13 @@ void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
 		else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 			cameraPos -= cameraSpeed * cameraUp;
 	}
+
+	std::cout << glm::to_string(cameraFront) << std::endl;
 	
 	//Update camera position and LookAt direction
-	//m_camera->setPosition(cameraPos);
-	//m_camera->setLookAt(cameraPos + cameraFront); // redundant
+	m_camera->setPosition(cameraPos);
+	m_camera->setLookAt(cameraPos + cameraFront); // redundant
 
 	//Update view matrix
-	//m_camera->setViewMatrix(cameraPos + cameraFront);
-}
-
-void Inputs::mousePosUpdate(GLFWwindow* window) {
-	std::cout << "Pos update" << std::endl;
-	glfwGetCursorPos(window, &xPos, &yPos);
-
-	//float camX = radius * sin(phi) * cos(theta);
-	//float camY = radius * cos(phi);
-	//float camZ = radius * sin(phi) * sin(theta);
-
-	// Lateral movement
-	//m_camera->setPosition(glm::vec3(camX, camY, camZ));
-	// Vertical movement
-	//m_camera->setPosition(glm::vec3(0.0f, camX, camZ));
-
-	//m_camera->setViewMatrix(glm::vec3(cameraFocus)); // Default focus position = (0.0f, 0.0f, 0.0f)
-
+	m_camera->setViewMatrix(cameraPos + cameraFront);
 }

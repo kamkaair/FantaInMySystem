@@ -528,22 +528,27 @@ public:
 
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
 		//g_input->inputMouse(window, xposIn, yposIn);
-		g_input->inputMouseSecond(window, xposIn, yposIn);
+		g_input->inputMouseCursorLeft(window, xposIn, yposIn);
+		g_input->inputMouseCursorRight(window, xposIn, yposIn);
 	}
 
 	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-		//if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-		//	g_input->mousePosUpdate(window);
-		//}
+		if ((button == GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+			g_input->setMouseLeftEnabled(true);
+			g_input->mousePosUpdate(window);
+			//printf("Supdate");
 
-		if (button == GLFW_MOUSE_BUTTON_LEFT) {
-			if (action == GLFW_PRESS) {
-				g_input->setmouseEnabled(true);
-				g_input->mousePosUpdate(window);
-				//glfwGetCursorPos(window, &lastX, &lastY);
+			if (action == GLFW_RELEASE) {
+				g_input->setMouseLeftEnabled(false);
 			}
-			else if (action == GLFW_RELEASE) {
-				g_input->setmouseEnabled(false);
+		}
+		if ((button == GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+			g_input->setMouseRightEnabled(true);
+			g_input->mousePosUpdate(window);
+			//printf("Supdate");
+
+			if (action == GLFW_RELEASE) {
+				g_input->setMouseRightEnabled(false);
 			}
 		}
 	}
@@ -572,7 +577,7 @@ public:
 		// Keeping the movement inside the update loop
 		//g_input->inputMovement(window, deltaTime);
 		m_camera->setPosition(g_input->calculateCameraPosition());
-		m_camera->setViewMatrix(glm::vec3(0.0f, 0.0f, 0.0f)); // Default focus position = (0.0f, 0.0f, 0.0f)
+		m_camera->setViewMatrix(g_input->getCameraFocus()); // Default focus position = (0.0f, 0.0f, 0.0f)
 	}
 
 private:
@@ -673,6 +678,7 @@ int main(void) {
 	// Mouse scroll callback
 	glfwSetScrollCallback(window, Application::scroll_callback);
 
+	// Mouse button callback
 	glfwSetMouseButtonCallback(window, Application::mouse_button_callback);
 
 	// Specify the key callback as c++-lambda to glfw
