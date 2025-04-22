@@ -14,6 +14,7 @@
 #include <filesystem>
 #include <stb_image.h>
 #include <iostream>
+#include <initializer_list>
 
 #include "shader.h"
 #include "material.h"
@@ -70,6 +71,9 @@ public:
 	std::vector<glm::vec3>& getPointLightPos() { return pointLightPos; }
 	std::vector<glm::vec3>& getPointLightColor() { return pointLightColor; }
 
+	void setWindowInteract(bool newBool) { windowDisabled = newBool; }
+	ImGuiWindowFlags disableInteraction();
+
 private:
 	SettingsMaterial m_settingsMaterial;
 
@@ -90,8 +94,11 @@ private:
 	int backgroundMode = 0;
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 
-	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, deferredRendering = false;
+	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, deferredRendering = false, windowDisabled = false;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };
+
+	ImGuiWindowFlags flagWinDisabled = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoInputs;
+	ImGuiWindowFlags flagWinEnabled = 0;
 };

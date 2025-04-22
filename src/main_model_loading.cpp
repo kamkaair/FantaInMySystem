@@ -284,7 +284,7 @@ public:
 		//renderSSAO();
 
 		if (!g_input->getImGuiVisibility()) {
-			//renderIcons(); // Render all the point lamp icons
+			renderIcons(); // Render all the point lamp icons
 			tempVisualizeFocus();
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
@@ -637,7 +637,6 @@ private:
 
 	// Class references
 	Camera*         			m_camera;
-	//Texture*					m_textureBack;			// Texture pointer
 	Texture*					m_iconTexture = 0;
 	Mesh*						m_meshRender;
 	UI*							m_uiDraw;
@@ -646,9 +645,8 @@ private:
 	GBuffer*					m_GBuffer;
 
 	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
-	GLuint						m_texture;
-
 	GLuint						ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0;
+
 	std::vector<glm::vec3>		ssaoKernel;
 
 	float fov = 40.0f;
@@ -656,7 +654,6 @@ private:
 	int width = 640, height = 480;
 
 	std::vector<Texture*>		m_textures;		// Vector of texture pointers
-	bool isHidden =				false;
 };
 
 // Global pointer to the application
@@ -699,7 +696,8 @@ int main(void) {
 	// Create application
 	g_app = new Application();
 
-	//glClearColor(0.2, 0.2, 0.2, 1.0);
+	if (!g_input->getMouseEnabled())
+		g_input->setImGuiInteractability(window, GLFW_CURSOR_DISABLED, 0.3f, 0.0005f, 0.004f, true);
 
 	// Disable cursor
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);

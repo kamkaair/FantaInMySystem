@@ -33,6 +33,11 @@ void displayMatList(int item, static int currentItem[], std::vector<const char*>
 	}
 }
 
+ImGuiWindowFlags UI::disableInteraction() {
+	if (windowDisabled) { return flagWinDisabled; }
+	else { return flagWinEnabled; }
+}
+
 void UI::ImGuiStyleSetup()
 {
 	// Using the "Dracula Style" made by Trippasch in ImGui GitHub forum section (I've made few alterations to this color scheme)
@@ -122,7 +127,7 @@ void UI::ImGuiDraw()
 	//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGuiAlpha);
 	ImGuiStyleSetup();
-	ImGui::Begin("Control Window");
+	ImGui::Begin("Control Window", 0, disableInteraction()); // Make a new window
 
 	ImGui::Text("Sup broidi, press 'E' to lock/unlock mouse. Feel free to try out different settings!");
 	ImGui::Text("Press 'H' to hide the window!");

@@ -4,6 +4,13 @@ Inputs::Inputs(UI* ui, Camera* camera) : m_uiDraw(ui), m_camera(camera), Object(
 
 Inputs::~Inputs(){}
 
+void Inputs::setImGuiInteractability(GLFWwindow* window, int cursorMode, float ImGuiAlpha, float orbitSensIn, float focusSensIn, bool WindowInteract) {
+	glfwSetInputMode(window, GLFW_CURSOR, cursorMode);
+	m_uiDraw->setImGuiAlpha(ImGuiAlpha);
+	orbitSens = orbitSensIn; focusSens = focusSensIn;
+	m_uiDraw->setWindowInteract(WindowInteract);
+}
+
 void Inputs::inputFocus(GLFWwindow* window) {
 	// Toggle mouse cursor with 'E'
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !togglePressed && !ImGui::GetIO().WantTextInput) {
@@ -11,13 +18,22 @@ void Inputs::inputFocus(GLFWwindow* window) {
 		mouseEnabled = !mouseEnabled; // Set mouseEnabled to what it's not
 
 		if (mouseEnabled) {
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			m_uiDraw->setImGuiAlpha(0.9f);
+			//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			//m_uiDraw->setImGuiAlpha(0.9f);
+			//orbitSens = 0.0f; focusSens = 0.0f;
+			//m_uiDraw->setWindowInteract(false);
+
+			setImGuiInteractability(window, GLFW_CURSOR_NORMAL, 0.9f, 0.0f, 0.0f, false);
 		}
 		else {
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			m_uiDraw->setImGuiAlpha(0.3f);
+			//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+			//m_uiDraw->setImGuiAlpha(0.3f);
+			//firstMouse = true;
+			//orbitSens = 0.0005f; focusSens = 0.004f;
+			//m_uiDraw->setWindowInteract(true);
+
 			firstMouse = true;
+			setImGuiInteractability(window, GLFW_CURSOR_DISABLED, 0.3f, 0.0005f, 0.004f, true);
 		}
 	}
 	// Using GLFW_RELEASE to avoid detecting multiple presses for the toggle
@@ -102,17 +118,21 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 void Inputs::orbitCursorLeft(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseLeftEnabled) {
-		float sensitivity = 0.0005f;
 		float dx = float(xposIn - xPos);
 		float dy = float(yposIn - yPos);
 
-		theta -= dx * sensitivity;
-		phi += dy * sensitivity;
-		lastX = xposIn;
-		lastY = yposIn;
+		if (firstMouse) {
+			xPos = dx;
+			yPos = dy;
+			firstMouse = false;
+		}
+
+		theta -= dx * orbitSens;
+		phi += dy * orbitSens;
+		xPos = xposIn;
+		yPos = yposIn;
 
 		// Clamp phi to avoid gimbal lock
-		const float epsilon = 0.01f;
 		phi = glm::clamp(phi, epsilon, glm::pi<float>() - epsilon);
 	}
 }
@@ -120,9 +140,14 @@ void Inputs::orbitCursorLeft(GLFWwindow* window, double xposIn, double yposIn)
 void Inputs::orbitCursorRight(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseRightEnabled) {
-		float sensitivity = 0.004f;
 		float dx = float(xposIn - xPos);
 		float dy = float(yposIn - yPos);
+
+		if (firstMouse) {
+			xPos = dx;
+			yPos = dy;
+			firstMouse = false;
+		}
 
 		xPos = xposIn;
 		yPos = yposIn;
@@ -131,8 +156,8 @@ void Inputs::orbitCursorRight(GLFWwindow* window, double xposIn, double yposIn)
 		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraRight, cameraFront));
 
 		// Added times cameraRight for the X-axis to make the cameraFocus transforming according to camera's view
-		cameraFocus += cameraRight * dx * sensitivity;
-		cameraFocus += cameraUpAdjust * -dy * sensitivity;
+		cameraFocus += cameraRight * dx * focusSens;
+		cameraFocus += cameraUpAdjust * -dy * focusSens;
 	}
 }
 
