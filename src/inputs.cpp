@@ -102,7 +102,7 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 void Inputs::inputMouseCursorLeft(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseLeftEnabled) {
-		float sensitivity = 0.00001f;
+		float sensitivity = 0.0005f;
 		float dx = float(xposIn - xPos);
 		float dy = float(yposIn - yPos);
 
@@ -120,7 +120,7 @@ void Inputs::inputMouseCursorLeft(GLFWwindow* window, double xposIn, double ypos
 void Inputs::inputMouseCursorRight(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseRightEnabled) {
-		float sensitivity = 0.001f;
+		float sensitivity = 0.004f;
 		float dx = float(xposIn - xPos);
 		float dy = float(yposIn - yPos);
 

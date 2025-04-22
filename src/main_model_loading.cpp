@@ -570,18 +570,13 @@ public:
 	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
 		if ((button == GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
 			g_input->setMouseLeftEnabled(true);
-			g_input->mousePosUpdate(window);
-			//printf("Supdate");
-
 			if (action == GLFW_RELEASE) {
 				g_input->setMouseLeftEnabled(false);
 			}
 		}
+
 		if ((button == GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
 			g_input->setMouseRightEnabled(true);
-			g_input->mousePosUpdate(window);
-			//printf("Supdate");
-
 			if (action == GLFW_RELEASE) {
 				g_input->setMouseRightEnabled(false);
 			}
@@ -617,7 +612,8 @@ public:
 
 		glm::vec3 camPos = g_input->calculateCameraPosition();
 		m_camera->setPosition(camPos);
-		m_camera->setViewMatrix(camPos + glm::normalize(g_input->getCameraFocus() - camPos));
+		m_camera->setViewMatrix(g_input->getCameraPos() + g_input->getCameraFront());
+		g_input->mousePosUpdate(window);
 	}
 
 private:
