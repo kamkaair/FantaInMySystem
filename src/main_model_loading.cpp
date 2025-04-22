@@ -562,23 +562,30 @@ public:
 	}
 
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
-		//g_input->inputMouse(window, xposIn, yposIn);
-		g_input->inputMouseCursorLeft(window, xposIn, yposIn);
-		g_input->inputMouseCursorRight(window, xposIn, yposIn);
+		
+		if (g_input->getMovementMode()) {
+			g_input->inputMouse(window, xposIn, yposIn);
+		}
+		else {
+			g_input->orbitCursorLeft(window, xposIn, yposIn);
+			g_input->orbitCursorRight(window, xposIn, yposIn);
+		}
 	}
 
-	static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods) {
-		if ((button == GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
-			g_input->setMouseLeftEnabled(true);
-			if (action == GLFW_RELEASE) {
-				g_input->setMouseLeftEnabled(false);
-			}
-		}
-
-		if ((button == GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS) {
+	static void mouse_button_right_callback(GLFWwindow* window, int button, int action, int mods) {
+		if ((button == GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS && (!g_input->getMovementMode())) {
 			g_input->setMouseRightEnabled(true);
 			if (action == GLFW_RELEASE) {
 				g_input->setMouseRightEnabled(false);
+			}
+		}
+	}
+
+	static void mouse_button_left_callback(GLFWwindow* window, int button, int action, int mods) {
+		if ((button == GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS && (!g_input->getMovementMode())) {
+			g_input->setMouseLeftEnabled(true);
+			if (action == GLFW_RELEASE) {
+				g_input->setMouseLeftEnabled(false);
 			}
 		}
 	}
@@ -603,17 +610,9 @@ public:
 			}
 			m_uiDraw->toggleDoOnce();
 		}
-
+		
 		// Keeping the movement inside the update loop
-		//g_input->inputMovement(window, deltaTime);
-
-		// Orbiting controls
-		g_input->updateCameraVectors();
-
-		glm::vec3 camPos = g_input->calculateCameraPosition();
-		m_camera->setPosition(camPos);
-		m_camera->setViewMatrix(g_input->getCameraPos() + g_input->getCameraFront());
-		g_input->mousePosUpdate(window);
+		g_input->movementControls(window, deltaTime);
 	}
 
 private:
@@ -715,7 +714,17 @@ int main(void) {
 	glfwSetScrollCallback(window, Application::scroll_callback);
 
 	// Mouse button callback
-	glfwSetMouseButtonCallback(window, Application::mouse_button_callback);
+	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
+		switch (button) {
+		case GLFW_MOUSE_BUTTON_LEFT:
+			Application::mouse_button_left_callback(window, button, action, mods);
+			break;
+
+		case GLFW_MOUSE_BUTTON_RIGHT:
+			Application::mouse_button_right_callback(window, button, action, mods);
+			break;
+		}
+	});
 
 	// Specify the key callback as c++-lambda to glfw
 	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -731,6 +740,15 @@ int main(void) {
 		case GLFW_KEY_H:
 			// Hide ImGui
 			g_input->inputHide(window);
+			break;
+		case GLFW_KEY_V:	// Enable free mode
+			//g_input->setMovementMode(!g_input->getMovementMode());
+			g_input->setMovementMode(true);
+			std::cout << g_input->getMovementMode() << std::endl;
+			break;
+		case GLFW_KEY_B:	// Enable orbit mode
+			g_input->setMovementMode(false);
+			std::cout << g_input->getMovementMode() << std::endl;
 			break;
 		}
 

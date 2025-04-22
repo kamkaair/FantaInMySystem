@@ -99,7 +99,7 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 	}
 }
 
-void Inputs::inputMouseCursorLeft(GLFWwindow* window, double xposIn, double yposIn)
+void Inputs::orbitCursorLeft(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseLeftEnabled) {
 		float sensitivity = 0.0005f;
@@ -117,7 +117,7 @@ void Inputs::inputMouseCursorLeft(GLFWwindow* window, double xposIn, double ypos
 	}
 }
 
-void Inputs::inputMouseCursorRight(GLFWwindow* window, double xposIn, double yposIn)
+void Inputs::orbitCursorRight(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseRightEnabled) {
 		float sensitivity = 0.004f;
@@ -130,10 +130,9 @@ void Inputs::inputMouseCursorRight(GLFWwindow* window, double xposIn, double ypo
 		glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
 		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraRight, cameraFront));
 
+		// Added times cameraRight for the X-axis to make the cameraFocus transforming according to camera's view
 		cameraFocus += cameraRight * dx * sensitivity;
 		cameraFocus += cameraUpAdjust * -dy * sensitivity;
-
-		std::cout << glm::to_string(cameraFront) << std::endl;
 	}
 }
 
@@ -145,7 +144,7 @@ glm::vec3 Inputs::calculateCameraPosition() {
 }
 
 void Inputs::updateCameraVectors() {
-	cameraPos = calculateCameraPosition(); // Orbiting position
+	cameraPos = calculateCameraPosition(); // Orbiting camera position
 	cameraFront = glm::normalize(cameraFocus - cameraPos);
 }
 
@@ -153,16 +152,16 @@ void Inputs::mousePosUpdate(GLFWwindow* window) {
 	glfwGetCursorPos(window, &xPos, &yPos);
 }
 
-void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
+void Inputs::movementFreeMode(GLFWwindow* window, float deltaTime) {
+	// Free camera movement
 	if (!ImGui::GetIO().WantTextInput)
 	{
-		// Camera movement
 		// "Sprint"
 		float cameraSpeed = 1.0 * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 			cameraSpeed = 2.5 * deltaTime;
 
-		// Movement controls
+		// WASD movement controls, descend/ascend with space and l-control
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 			cameraPos += cameraSpeed * cameraFront;
 		else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -176,8 +175,6 @@ void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
 		else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
 			cameraPos -= cameraSpeed * cameraUp;
 	}
-
-	std::cout << glm::to_string(cameraFront) << std::endl;
 	
 	//Update camera position and LookAt direction
 	m_camera->setPosition(cameraPos);
@@ -185,4 +182,19 @@ void Inputs::inputMovement(GLFWwindow* window, float deltaTime) {
 
 	//Update view matrix
 	m_camera->setViewMatrix(cameraPos + cameraFront);
+}
+
+void Inputs::movementOrbitMode(GLFWwindow* window) {
+	// Orbiting controls
+	updateCameraVectors();
+
+	glm::vec3 camPos = calculateCameraPosition();
+	m_camera->setPosition(camPos);
+	m_camera->setViewMatrix(cameraPos + cameraFront);
+
+	mousePosUpdate(window);
+}
+
+void Inputs::movementControls(GLFWwindow* window, float deltaTime) {
+	movementMode ? movementFreeMode(window, deltaTime) : movementOrbitMode(window);
 }
