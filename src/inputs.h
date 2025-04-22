@@ -15,6 +15,7 @@ public:
 	void inputMouseCursorRight(GLFWwindow* window, double xposIn, double yposIn);
 	void inputMovement(GLFWwindow* window, float deltaTime);
 	void mousePosUpdate(GLFWwindow* window);
+	void updateCameraVectors();
 
 	glm::vec3 calculateCameraPosition();
 

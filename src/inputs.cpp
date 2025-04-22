@@ -108,47 +108,32 @@ void Inputs::inputMouseCursorLeft(GLFWwindow* window, double xposIn, double ypos
 
 		theta -= dx * sensitivity;
 		phi += dy * sensitivity;
+		lastX = xposIn;
+		lastY = yposIn;
 
 		// Clamp phi to avoid gimbal lock
 		const float epsilon = 0.01f;
 		phi = glm::clamp(phi, epsilon, glm::pi<float>() - epsilon);
-
-		lastX = xposIn;
-		lastY = yposIn;
 	}
 }
 
 void Inputs::inputMouseCursorRight(GLFWwindow* window, double xposIn, double yposIn)
 {
 	if (mouseRightEnabled) {
-		float sensitivity = 0.00001f;
+		float sensitivity = 0.001f;
 		float dx = float(xposIn - xPos);
 		float dy = float(yposIn - yPos);
 
-		yaw += dx;
-		pitch += dy;
+		xPos = xposIn;
+		yPos = yposIn;
 
-		// update the front vector
-		glm::vec3 front;
-		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		front.y = sin(glm::radians(pitch));
-		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraFront = glm::normalize(front);
+		glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
+		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraRight, cameraFront));
 
-		// TODO: cameraFocus still a bit tacky with X-axis movement. Fix
-		glm::vec3 up(0.0f, 1.0f, 0.0f);
-		glm::vec3 cameraRight = glm::normalize(glm::cross(up, cameraFront));
-		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraFront, cameraRight));
+		cameraFocus += cameraRight * dx * sensitivity;
+		cameraFocus += cameraUpAdjust * -dy * sensitivity;
 
-		cameraFocus += dx * sensitivity * cameraRight;
-		cameraFocus += dy * sensitivity * cameraUpAdjust;
-
-		//cameraFocus += glm::vec3(dx * sensitivity, 0.0f, 0.0f);
-		//cameraFocus -= glm::vec3(0.0f, dy * sensitivity, 0.0f);
-		std::cout << glm::to_string(cameraFocus) << std::endl;
-
-		lastX = xposIn;
-		lastY = yposIn;
+		std::cout << glm::to_string(cameraFront) << std::endl;
 	}
 }
 
@@ -157,6 +142,11 @@ glm::vec3 Inputs::calculateCameraPosition() {
 	float y = radius * cosf(phi);
 	float z = radius * sinf(phi) * sinf(theta);
 	return glm::vec3(x, y, z);
+}
+
+void Inputs::updateCameraVectors() {
+	cameraPos = calculateCameraPosition(); // Orbiting position
+	cameraFront = glm::normalize(cameraFocus - cameraPos);
 }
 
 void Inputs::mousePosUpdate(GLFWwindow* window) {
