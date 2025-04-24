@@ -9,7 +9,8 @@ public:
 
 	void inputFocus(GLFWwindow* window);
 	void inputHide(GLFWwindow* window);
-	void inputScroll(GLFWwindow* window, double xoffset, double yoffset, float fov);
+	void inputScrollFOV(GLFWwindow* window, double xoffset, double yoffset, float fov);
+	void inputScrollRadius(GLFWwindow* window, double xoffset, double yoffset, float fov);
 	void inputMouse(GLFWwindow* window, double xposIn, double yposIn);
 
 	void orbitCursorLeft(GLFWwindow* window, double xposIn, double yposIn);
@@ -27,6 +28,11 @@ public:
 	glm::vec3 getCameraFront() { return cameraFront; }
 	glm::vec3 getCameraUp() { return cameraUp; }
 	glm::vec3 getCameraFocus() { return cameraFocus; }
+	Camera* getCamera() { return m_camera; }
+
+	void setCameraPos(glm::vec3 newPos) { cameraPos = newPos; }
+	void setCameraFront(glm::vec3 newFront) { cameraFront = newFront; }
+	void resetYawPitch() { pitch = 0.0f; yaw = -90.0f; }
 
 	bool getImGuiVisibility() { return isHidden; }
 	bool getMovementMode() { return movementMode; }
@@ -35,7 +41,7 @@ public:
 	void setMouseLeftEnabled(bool inState) { mouseLeftEnabled = inState; }
 	void setMouseRightEnabled(bool inState) { mouseRightEnabled = inState; }
 	void setMovementMode(bool inState) { movementMode = inState; }
-	void setCameraPos(glm::vec3 newPos) { cameraPos = newPos; }
+
 	void setImGuiInteractability(GLFWwindow* window, int cursorMode, float ImGuiAlpha, float orbitSens, float focusSens, bool WindowInteract);
 
 private:

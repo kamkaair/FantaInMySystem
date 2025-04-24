@@ -40,7 +40,7 @@ void Inputs::inputHide(GLFWwindow* window) {
 	//return isHidden;
 }
 
-void Inputs::inputScroll(GLFWwindow* window, double xoffset, double yoffset, float fov)
+void Inputs::inputScrollFOV(GLFWwindow* window, double xoffset, double yoffset, float fov)
 {
 	if (mouseEnabled == false) {
 
@@ -50,13 +50,28 @@ void Inputs::inputScroll(GLFWwindow* window, double xoffset, double yoffset, flo
 			fov = 1.0f;
 
 		//Max FOV
-		if (fov > 45.0f)
+		else if (fov > 45.0f)
 			fov = 45.0f;
 
 		// Apply the new FOV to the camera
 		m_camera->setFOV(fov);
+	}
+}
 
-		//std::cout << "New FOV: " << fov << std::endl;
+void Inputs::inputScrollRadius(GLFWwindow* window, double xoffset, double yoffset, float fov)
+{
+	if (mouseEnabled == false) {
+
+		//Min radius
+		radius -= (float)yoffset;
+		if (radius < 1.0f) {
+			radius = 1.0f;
+		}
+
+		//Max radius
+		else if (radius > 20.0f) {
+			radius = 20.0f;
+		}
 	}
 }
 
@@ -91,14 +106,12 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 		if (pitch < -89.0f)
 			pitch = -89.0f;
 
-		// update the front vector
-		glm::vec3 front;
-		front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		front.y = sin(glm::radians(pitch));
-		front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraFront = glm::normalize(front);
+		cameraFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront.y = sin(glm::radians(pitch));
+		cameraFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		cameraFront = glm::normalize(cameraFront);
 
-		//std::cout << glm::to_string(cameraFront) << std::endl;
+		std::cout << glm::to_string(cameraFront) << std::endl;
 	}
 }
 

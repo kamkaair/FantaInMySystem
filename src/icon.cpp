@@ -3,8 +3,10 @@
 Icon::Icon(Mesh* mesh, TextureLoading* texLoading) : m_meshRender(mesh), m_texLoading(texLoading), Object(__FUNCTION__) {}
 
 Icon::~Icon() {
-	delete m_iconTexture;
-	m_iconTexture = 0;
+	for (auto meshes : m_iconTexture) {
+		delete meshes;
+		meshes = 0;
+	}
 }
 
 void Icon::renderIcons(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* input, Camera* m_camera)
@@ -37,7 +39,7 @@ void Icon::renderIcons(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* inp
 		m_icon->setUniform("model", modelMatrix);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_iconTexture->getTextureId());
+		glBindTexture(GL_TEXTURE_2D, m_iconTexture[0]->getTextureId());
 
 		m_meshRender->renderQuad();
 	}
@@ -67,7 +69,7 @@ void Icon::visualizeFocus(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* 
 	m_icon->setUniform("model", modelMatrix);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_iconTexture->getTextureId());
+	glBindTexture(GL_TEXTURE_2D, m_iconTexture[1]->getTextureId());
 
 	m_meshRender->renderQuad();
 }
@@ -75,6 +77,5 @@ void Icon::visualizeFocus(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* 
 void Icon::loadIconTexture(const char* path) {
 	// Load the texture for an icon
 	Texture* iconTexture = m_texLoading->loadTexture((std::string(ASSET_DIR) + path).c_str());
-	m_iconTexture = iconTexture;
-	//return iconTexture;
+	m_iconTexture.push_back(iconTexture);
 }

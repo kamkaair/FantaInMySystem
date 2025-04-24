@@ -17,7 +17,7 @@ public:
 	void loadIconTexture(const char* path);
 
 private:
-	Texture* m_iconTexture = 0;
+	std::vector<Texture*> m_iconTexture;
 	Mesh* m_meshRender;
 	TextureLoading* m_texLoading;
 };

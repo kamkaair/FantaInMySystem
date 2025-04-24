@@ -83,7 +83,8 @@ public:
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes());
 
 		// Load the texture for an icon
-		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");
+		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
+		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -287,7 +288,7 @@ public:
 		if (!g_input->getImGuiVisibility()) {
 			//renderIcons(); // Render all the point lamp icons
 			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw, g_input, m_camera);
-			m_iconClass->visualizeFocus(m_icon, 25.0f, m_uiDraw, g_input, m_camera);
+			m_iconClass->visualizeFocus(m_icon, 75.0f, m_uiDraw, g_input, m_camera);
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
 	}
@@ -490,7 +491,12 @@ public:
 
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
-		g_input->inputScroll(window, xoffset, yoffset, app->m_camera->getFOV());
+		if (g_input->getMovementMode()) {
+			g_input->inputScrollFOV(window, xoffset, yoffset, app->m_camera->getFOV());
+		}
+		else {
+			g_input->inputScrollRadius(window, xoffset, yoffset, app->m_camera->getFOV());
+		}
 	}
 
 	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
@@ -672,13 +678,21 @@ int main(void) {
 			g_input->inputHide(window);
 			break;
 		case GLFW_KEY_V:	// Enable free mode
-			//g_input->setMovementMode(!g_input->getMovementMode());
 			g_input->setMovementMode(true);
 			std::cout << g_input->getMovementMode() << std::endl;
+
+			// TODO: WIP camera lookAt after transitioning from orbit to free mode
+			//g_input->updateCameraVectors();
+			//g_input->resetYawPitch();
+			//g_input->setCameraFront(g_input->getCameraFocus() + g_input->getCameraPos());
+			//g_input->getCamera()->setViewMatrix(g_input->getCameraFocus() + g_input->getCameraPos());
+			//std::cout << "We in freemode" << std::endl;
+
 			break;
 		case GLFW_KEY_B:	// Enable orbit mode
 			g_input->setMovementMode(false);
 			std::cout << g_input->getMovementMode() << std::endl;
+			g_input->getCamera()->setFOV(40.0f);
 			break;
 		}
 
