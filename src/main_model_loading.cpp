@@ -7,6 +7,7 @@
 #include "textureLoading.h"
 #include "inputs.h"
 #include "GBuffer.h"
+#include "icon.h"
 
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>
@@ -68,6 +69,8 @@ public:
 		// Create perspective-projection camera
 		m_camera = new Camera(fov, 640/480, 0.1f, 100.0f);
 
+		m_iconClass = new Icon(m_meshRender, m_texLoading);
+
 		// Input class
 		g_input = new Inputs(m_uiDraw, m_camera);
 
@@ -80,8 +83,7 @@ public:
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes());
 
 		// Load the texture for an icon
-		Texture* iconTexture = m_texLoading->loadTexture((std::string(ASSET_DIR) + "/textures/LightBulbLitOutline.png").c_str());
-		m_iconTexture = iconTexture;
+		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -129,6 +131,9 @@ public:
 		delete m_lightPass;
 		m_lightPass = 0;
 
+		delete m_iconClass;
+		m_iconClass = 0;
+
 		// Delete references
 		delete m_HDRI;
 		m_HDRI = 0;
@@ -155,10 +160,6 @@ public:
 			delete texture;
 		}
 		m_textures.clear();
-
-		// Delete icon texture
-		delete m_iconTexture;
-		m_iconTexture = 0;
 
 		//Destroy ImGui
 		ImGui_ImplOpenGL3_Shutdown();
@@ -284,8 +285,9 @@ public:
 		//renderSSAO();
 
 		if (!g_input->getImGuiVisibility()) {
-			renderIcons(); // Render all the point lamp icons
-			tempVisualizeFocus();
+			//renderIcons(); // Render all the point lamp icons
+			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw, g_input, m_camera);
+			m_iconClass->visualizeFocus(m_icon, 25.0f, m_uiDraw, g_input, m_camera);
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
 	}
@@ -366,7 +368,7 @@ public:
 
 		// 5. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
-			renderIcons();
+			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw, g_input, m_camera);
 			m_uiDraw->ImGuiDraw();
 		}
 	}
@@ -486,76 +488,6 @@ public:
 		m_uiDraw->getPointLightColor().push_back(glm::vec3(0.10f, 0.89f, 0.5f));
 	}
 
-	void renderIcons()
-	{
-		for (size_t i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
-			//glm::vec3 directionToCamera = glm::normalize(cameraPos - m_uiDraw->getPointLightPos()[i]);
-			//directionToCamera.y = 0.0f; // Only if you want the plane to stay vertical
-
-			// Scaling depending on the distance
-			float iconDistance = glm::length(g_input->getCameraPos() - m_uiDraw->getPointLightPos()[i]);
-
-			// Divide the scale by the icon's distance by the iconSize. Icon's scale will stay the same regardless of the position of the camera.
-			float iconSize = 25.0f;
-			float scale = iconDistance / iconSize;
-			//float iconSize = 2.0f;
-			//float scale = iconSize / iconDistance;
-
-			// Model matrix for the lamp quad
-			glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), m_uiDraw->getPointLightPos()[i]) * glm::scale(glm::mat4(1.0f), glm::vec3(scale));
-
-			// Match the camera rotation to the icon's rotation
-			glm::mat4 cameraRotation = glm::mat4(glm::mat3(m_camera->getViewMatrix()));
-			modelMatrix *= glm::inverse(cameraRotation);
-			// Flip the icon, since it's upside down
-			modelMatrix *= glm::mat4(glm::mat3(-1.0f));
-
-			m_icon->bind();
-			m_icon->setUniform("projection", m_camera->getProjectionMatrix());
-			m_icon->setUniform("view", m_camera->getViewMatrix());
-			m_icon->setUniform("model", modelMatrix);
-
-			glActiveTexture(GL_TEXTURE0);
-			glBindTexture(GL_TEXTURE_2D, m_iconTexture->getTextureId());
-
-			m_meshRender->renderQuad();
-		}
-	}
-
-	void tempVisualizeFocus()
-	{
-		//glm::vec3 directionToCamera = glm::normalize(cameraPos - m_uiDraw->getPointLightPos()[i]);
-		//directionToCamera.y = 0.0f; // Only if you want the plane to stay vertical
-
-		// Scaling depending on the distance
-		float iconDistance = glm::length(g_input->getCameraPos() - g_input->getCameraFocus());
-
-		// Divide the scale by the icon's distance by the iconSize. Icon's scale will stay the same regardless of the position of the camera.
-		float iconSize = 25.0f;
-		float scale = iconDistance / iconSize;
-		//float iconSize = 2.0f;
-		//float scale = iconSize / iconDistance;
-
-		// Model matrix for the lamp quad
-		glm::mat4 modelMatrix = glm::translate(glm::mat4(1.0f), g_input->getCameraFocus()) * glm::scale(glm::mat4(1.0f), glm::vec3(scale));
-
-		// Match the camera rotation to the icon's rotation
-		glm::mat4 cameraRotation = glm::mat4(glm::mat3(m_camera->getViewMatrix()));
-		modelMatrix *= glm::inverse(cameraRotation);
-		// Flip the icon, since it's upside down
-		modelMatrix *= glm::mat4(glm::mat3(-1.0f));
-
-		m_icon->bind();
-		m_icon->setUniform("projection", m_camera->getProjectionMatrix());
-		m_icon->setUniform("view", m_camera->getViewMatrix());
-		m_icon->setUniform("model", modelMatrix);
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_iconTexture->getTextureId());
-
-		m_meshRender->renderQuad();
-	}
-
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
 		g_input->inputScroll(window, xoffset, yoffset, app->m_camera->getFOV());
@@ -637,12 +569,12 @@ private:
 
 	// Class references
 	Camera*         			m_camera;
-	Texture*					m_iconTexture = 0;
 	Mesh*						m_meshRender;
 	UI*							m_uiDraw;
 	HDRI*						m_HDRI;
 	TextureLoading*				m_texLoading;
 	GBuffer*					m_GBuffer;
+	Icon*						m_iconClass;
 
 	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
 	GLuint						ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0;

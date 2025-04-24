@@ -17,21 +17,8 @@ void Inputs::inputFocus(GLFWwindow* window) {
 		togglePressed = true;
 		mouseEnabled = !mouseEnabled; // Set mouseEnabled to what it's not
 
-		if (mouseEnabled) {
-			//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			//m_uiDraw->setImGuiAlpha(0.9f);
-			//orbitSens = 0.0f; focusSens = 0.0f;
-			//m_uiDraw->setWindowInteract(false);
-
-			setImGuiInteractability(window, GLFW_CURSOR_NORMAL, 0.9f, 0.0f, 0.0f, false);
-		}
+		if (mouseEnabled) { setImGuiInteractability(window, GLFW_CURSOR_NORMAL, 0.9f, 0.0f, 0.0f, false); }
 		else {
-			//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-			//m_uiDraw->setImGuiAlpha(0.3f);
-			//firstMouse = true;
-			//orbitSens = 0.0005f; focusSens = 0.004f;
-			//m_uiDraw->setWindowInteract(true);
-
 			firstMouse = true;
 			setImGuiInteractability(window, GLFW_CURSOR_DISABLED, 0.3f, 0.0005f, 0.004f, true);
 		}
