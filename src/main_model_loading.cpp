@@ -679,19 +679,15 @@ int main(void) {
 			break;
 		case GLFW_KEY_V:	// Enable free mode
 			g_input->setMovementMode(true);
-			std::cout << g_input->getMovementMode() << std::endl;
 
 			// TODO: WIP camera lookAt after transitioning from orbit to free mode
-			//g_input->updateCameraVectors();
-			//g_input->resetYawPitch();
-			//g_input->setCameraFront(g_input->getCameraFocus() + g_input->getCameraPos());
-			//g_input->getCamera()->setViewMatrix(g_input->getCameraFocus() + g_input->getCameraPos());
-			//std::cout << "We in freemode" << std::endl;
+			g_input->setCameraFocusPoint(g_input->getCameraFocus());
+			//g_input->setCameraFocusPointAlt();
 
 			break;
 		case GLFW_KEY_B:	// Enable orbit mode
 			g_input->setMovementMode(false);
-			std::cout << g_input->getMovementMode() << std::endl;
+			//std::cout << g_input->getMovementMode() << std::endl;
 			g_input->getCamera()->setFOV(40.0f);
 			break;
 		}

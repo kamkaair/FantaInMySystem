@@ -23,6 +23,8 @@ public:
 
 	void updateCameraVectors();
 	glm::vec3 calculateCameraPosition();
+	void setCameraFocusPoint(glm::vec3 focusPoint);
+	float setCameraFocusPointAlt();
 
 	glm::vec3 getCameraPos() { return cameraPos; }
 	glm::vec3 getCameraFront() { return cameraFront; }
@@ -32,7 +34,6 @@ public:
 
 	void setCameraPos(glm::vec3 newPos) { cameraPos = newPos; }
 	void setCameraFront(glm::vec3 newFront) { cameraFront = newFront; }
-	void resetYawPitch() { pitch = 0.0f; yaw = -90.0f; }
 
 	bool getImGuiVisibility() { return isHidden; }
 	bool getMovementMode() { return movementMode; }

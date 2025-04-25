@@ -111,7 +111,7 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 		cameraFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 		cameraFront = glm::normalize(cameraFront);
 
-		std::cout << glm::to_string(cameraFront) << std::endl;
+		std::cout << "lastX: " << lastX << " lastY: " << lastY << std::endl;
 	}
 }
 
@@ -166,6 +166,57 @@ glm::vec3 Inputs::calculateCameraPosition() {
 	float y = radius * cosf(phi);
 	float z = radius * sinf(phi) * sinf(theta);
 	return glm::vec3(x, y, z);
+}
+
+float dotProduct(glm::vec3 v1, glm::vec3 v2) {
+	float result = 0;
+	for (size_t i = 0; i < 3; i++) {
+		float dinky = v1[i] * v2[i];
+		result += dinky;
+	}
+	return result;
+}
+
+float length(glm::vec3 v1) {
+	float result = sqrt(pow(v1.x, 2) + pow(v1.y, 2) + pow(v1.z, 2));
+	return result;
+}
+
+void Inputs::setCameraFocusPoint(glm::vec3 focusPoint) {
+	const float pi = 3.14159265359;
+
+	yaw = 0; //lastX = 0;
+	pitch = 0; //lastY = 0;
+
+	// Direction of the focusPoint
+	glm::vec3 dirVec = normalize(focusPoint - cameraPos);
+
+	float newYaw = atan2(dirVec.z, dirVec.x);
+	float newPitch = asin(dirVec.y);
+
+	float yawDeg = newYaw * (180.0f / pi);
+	float pitchDeg = newPitch * (180.0f / pi);
+
+	yaw = yawDeg;
+	pitch = pitchDeg;
+
+	// Set the cameraFront's direction
+	cameraFront = glm::normalize(cameraFocus - cameraPos);
+	firstMouse = true; // Set firstMouse true to combat the camera snapping
+}
+
+float Inputs::setCameraFocusPointAlt() {
+	float cameraDot = dotProduct(cameraPos, cameraFocus);
+	float a = length(cameraPos);
+	float b = length(cameraFocus);
+	std::cout << "Length CamFront: " << a << std::endl;
+	std::cout << "Length CamFocus: "<< b << std::endl;
+
+	float formula = glm::clamp(cameraDot / (a * b), -1.0f, 1.0f );
+	
+	std::cout << acos(formula) << std::endl;
+
+	return acos(formula);
 }
 
 void Inputs::updateCameraVectors() {
