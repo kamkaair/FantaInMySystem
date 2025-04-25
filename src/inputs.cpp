@@ -110,8 +110,6 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 		cameraFront.y = sin(glm::radians(pitch));
 		cameraFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
 		cameraFront = glm::normalize(cameraFront);
-
-		std::cout << "lastX: " << lastX << " lastY: " << lastY << std::endl;
 	}
 }
 
@@ -168,25 +166,11 @@ glm::vec3 Inputs::calculateCameraPosition() {
 	return glm::vec3(x, y, z);
 }
 
-float dotProduct(glm::vec3 v1, glm::vec3 v2) {
-	float result = 0;
-	for (size_t i = 0; i < 3; i++) {
-		float dinky = v1[i] * v2[i];
-		result += dinky;
-	}
-	return result;
-}
-
-float length(glm::vec3 v1) {
-	float result = sqrt(pow(v1.x, 2) + pow(v1.y, 2) + pow(v1.z, 2));
-	return result;
-}
-
 void Inputs::setCameraFocusPoint(glm::vec3 focusPoint) {
 	const float pi = 3.14159265359;
 
-	yaw = 0; //lastX = 0;
-	pitch = 0; //lastY = 0;
+	yaw = 0;
+	pitch = 0;
 
 	// Direction of the focusPoint
 	glm::vec3 dirVec = normalize(focusPoint - cameraPos);
@@ -205,23 +189,28 @@ void Inputs::setCameraFocusPoint(glm::vec3 focusPoint) {
 	firstMouse = true; // Set firstMouse true to combat the camera snapping
 }
 
-float Inputs::setCameraFocusPointAlt() {
-	float cameraDot = dotProduct(cameraPos, cameraFocus);
-	float a = length(cameraPos);
-	float b = length(cameraFocus);
-	std::cout << "Length CamFront: " << a << std::endl;
-	std::cout << "Length CamFocus: "<< b << std::endl;
-
-	float formula = glm::clamp(cameraDot / (a * b), -1.0f, 1.0f );
-	
-	std::cout << acos(formula) << std::endl;
-
-	return acos(formula);
-}
-
 void Inputs::updateCameraVectors() {
 	cameraPos = calculateCameraPosition(); // Orbiting camera position
 	cameraFront = glm::normalize(cameraFocus - cameraPos);
+}
+
+void Inputs::setMovementMode(GLFWwindow* window, bool inState) {
+	if (inState) {
+		if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !togglePressedMovement && !ImGui::GetIO().WantTextInput) {
+			togglePressedMovement = true;
+			movementMode = inState;
+			setCameraFocusPoint(getCameraFocus());
+		}
+	}
+	else {
+		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !togglePressedMovement && !ImGui::GetIO().WantTextInput) {
+			togglePressedMovement = true;
+			movementMode = inState;
+			getCamera()->setFOV(40.0f);
+		}
+	}
+	if ((glfwGetKey(window, GLFW_KEY_V) || glfwGetKey(window, GLFW_KEY_B)) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
+		togglePressedMovement = false;
 }
 
 void Inputs::mousePosUpdate(GLFWwindow* window) {

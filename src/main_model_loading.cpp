@@ -597,7 +597,6 @@ private:
 // Global pointer to the application
 Application* g_app = 0;
 
-
 void Application::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
 	glViewport(0, 0, width, height);
@@ -678,17 +677,10 @@ int main(void) {
 			g_input->inputHide(window);
 			break;
 		case GLFW_KEY_V:	// Enable free mode
-			g_input->setMovementMode(true);
-
-			// TODO: WIP camera lookAt after transitioning from orbit to free mode
-			g_input->setCameraFocusPoint(g_input->getCameraFocus());
-			//g_input->setCameraFocusPointAlt();
-
+			g_input->setMovementMode(window, true);
 			break;
 		case GLFW_KEY_B:	// Enable orbit mode
-			g_input->setMovementMode(false);
-			//std::cout << g_input->getMovementMode() << std::endl;
-			g_input->getCamera()->setFOV(40.0f);
+			g_input->setMovementMode(window, false);
 			break;
 		}
 
@@ -712,9 +704,6 @@ int main(void) {
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
 		g_app->render(window);
-
-		//g_app->render(window);
-		//g_app->deferredRendering(window);
 		glfwSwapBuffers(window);
 
 		// Poll other window events.

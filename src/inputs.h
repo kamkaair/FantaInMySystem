@@ -24,7 +24,6 @@ public:
 	void updateCameraVectors();
 	glm::vec3 calculateCameraPosition();
 	void setCameraFocusPoint(glm::vec3 focusPoint);
-	float setCameraFocusPointAlt();
 
 	glm::vec3 getCameraPos() { return cameraPos; }
 	glm::vec3 getCameraFront() { return cameraFront; }
@@ -41,7 +40,7 @@ public:
 
 	void setMouseLeftEnabled(bool inState) { mouseLeftEnabled = inState; }
 	void setMouseRightEnabled(bool inState) { mouseRightEnabled = inState; }
-	void setMovementMode(bool inState) { movementMode = inState; }
+	void setMovementMode(GLFWwindow* window, bool inState);
 
 	void setImGuiInteractability(GLFWwindow* window, int cursorMode, float ImGuiAlpha, float orbitSens, float focusSens, bool WindowInteract);
 
@@ -52,7 +51,7 @@ private:
 	// Is mouse active?
 	bool firstMouse = true;
 	bool mouseEnabled = false, mouseLeftEnabled = false, mouseRightEnabled = false, movementMode = false;
-	bool togglePressed = false, togglePressedHide = false, isHidden = false;
+	bool togglePressed = false, togglePressedHide = false, togglePressedMovement = false, isHidden = false;
 
 	float pitch = 0.0f, yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
 	float lastX = 800.0f / 2.0, lastY = 600.0 / 2.0;
