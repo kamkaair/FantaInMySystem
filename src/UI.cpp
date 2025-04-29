@@ -129,6 +129,10 @@ void UI::ImGuiDraw()
 	ImGuiStyleSetup();
 	ImGui::Begin("Control Window", 0, disableInteraction()); // Make a new window
 
+	ImGui::InputInt("KernelSize", &kernelSize);
+	ImGui::InputFloat("Radius", &radius);
+	ImGui::InputFloat("bias", &bias);
+
 	ImGui::Text("Sup broidi, press 'E' to lock/unlock mouse. Feel free to try out different settings!");
 	ImGui::Text("Press 'H' to hide the window!");
 	//ImGui::Text(("Milliseconds Per Frame: " + std::to_string(1000.0 / calculateFPS())).c_str());

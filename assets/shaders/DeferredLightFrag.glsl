@@ -10,7 +10,7 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness, gDepth;
 	// SSAO
-	//uniform sampler2D ssao;
+	uniform sampler2D ssao;
 	
 	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
 	const float PI = 3.14159265359;
@@ -86,12 +86,11 @@
 		if(!hasGeometry){ discard; return; }
 		
 		vec3 N = texture(gNormal, texCoord).rgb;
-		vec3 NN = normalize(texture(gNormal, texCoord).rgb);
 		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		vec3 metallics = texture(gMetallicRoughness, texCoord).rgb;
 		float roughness = texture(gMetallicRoughness, texCoord).g;
-		//float AmbientOcclusion = texture(ssao, texCoord).r;
+		float AmbientOcclusion = texture(ssao, texCoord).r;
 		
 		// PBR	
 		// View direction		
@@ -163,7 +162,7 @@
 		
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
-		vec3 ambient = (kD * diffuse + specular);
+		vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
 		
 		//Ambient + point lights
 		vec3 color = ambient + Lo;
@@ -174,4 +173,5 @@
 		
 		//Color out
 		FragColor = vec4(color, 1.0);
+		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
 	}

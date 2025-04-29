@@ -213,6 +213,17 @@ void Shader::setUniform(const std::string& name, const glm::vec3& value) {
 	checkGLError();
 }
 
+void Shader::setUniform(const std::string& name, const glm::vec2& value) {
+	bind();  // Ensure shader is active
+	GLint loc = glGetUniformLocation(m_shaderProgram, name.c_str());
+	if (loc < 0) {
+		printf("Uniform not found: %s\n", name.c_str());
+		return;
+	}
+	glUniform2fv(loc, 1, &value[0]);
+	checkGLError();
+}
+
 bool Shader::IsValid() const {
 	return glIsProgram(m_shaderProgram);
 }

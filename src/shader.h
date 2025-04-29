@@ -21,6 +21,7 @@ public:
 	void setUniform(const std::string& name, const glm::vec3& value, int index);
 	void setUniform(const std::string& name, float value, int index);
 	void setUniform(const std::string& name, const glm::vec3& value);
+	void setUniform(const std::string& name, const glm::vec2& value);
 
 	bool IsValid() const;
 

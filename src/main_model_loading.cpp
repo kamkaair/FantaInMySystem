@@ -69,10 +69,11 @@ public:
 		// Create perspective-projection camera
 		m_camera = new Camera(fov, 640/480, 0.1f, 100.0f);
 
-		m_iconClass = new Icon(m_meshRender, m_texLoading);
-
 		// Input class
 		g_input = new Inputs(m_uiDraw, m_camera);
+
+		// Icon class initialization
+		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -94,7 +95,7 @@ public:
 		// Load the HDR texture and create all the HDRI maps
 		m_HDRI->ProcessHDRI("/HDRI/newport_loft.hdr");
 
-		//bunchaHOOPLAA();
+		bunchaHOOPLAA();
 
 		// Set up lights and color
 		initializeLights();
@@ -229,6 +230,7 @@ public:
 
 	void render(GLFWwindow* window) {
 		!m_uiDraw->getRenderMode() ? forwardRendering(window) : deferredRendering(window);
+		//!m_uiDraw->getRenderMode() ? deferredRendering(window) : forwardRendering(window);
 	}
 
 	void forwardRendering(GLFWwindow* window) {
@@ -287,8 +289,8 @@ public:
 
 		if (!g_input->getImGuiVisibility()) {
 			//renderIcons(); // Render all the point lamp icons
-			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw, g_input, m_camera);
-			m_iconClass->visualizeFocus(m_icon, 75.0f, m_uiDraw, g_input, m_camera);
+			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
+			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
 	}
@@ -317,7 +319,7 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. SSAO pass
-		//renderSSAO();
+		renderSSAO();
 		
 		// 3. Lighting pass
 		m_HDRI->setHDRITextures(m_lightPass);
@@ -333,14 +335,14 @@ public:
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGAlbedo());
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-		//glActiveTexture(GL_TEXTURE3);
-		//glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 
 		m_lightPass->setUniform("gPosition", 3);
 		m_lightPass->setUniform("gNormal", 4);
 		m_lightPass->setUniform("gAlbedoSpec", 5);
 		m_lightPass->setUniform("gMetallicRoughness", 6);
-		//m_lightPass->setUniform("ssao", 4);
+		m_lightPass->setUniform("ssao", 7);
 		
 		// Set light uniforms + view
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
@@ -369,7 +371,8 @@ public:
 
 		// 5. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
-			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw, g_input, m_camera);
+			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
+			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw();
 		}
 	}
@@ -379,10 +382,7 @@ public:
 		return a + f * (b - a);
 	}
 
-	std::vector<glm::vec3> createSampleKernel() {
-		std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-		std::default_random_engine generator;
-
+	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
 		for (unsigned int i = 0; i < 64; ++i)
 		{
 			glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
@@ -394,24 +394,23 @@ public:
 			scale = SSAOLerp(0.1f, 1.0f, scale * scale);
 			sample *= scale;
 			ssaoKernel.push_back(sample);
+			//std::cout << glm::to_string(sample) << " also: " << i << std::endl;
 		}
 		return ssaoKernel;
 	}
 
-	GLuint createNoiseTexture() {
+	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
 		std::vector<glm::vec3> ssaoNoise;
-		// Added these scrunklers down here again, might have to make them use the same randomFloats as the createSampleKernel()
-		std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-		std::default_random_engine generator;
 
 		for (unsigned int i = 0; i < 16; i++)
 		{
 			glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
 			ssaoNoise.push_back(noise);
 		}
-		GLuint noiseTexture; glGenTextures(1, &noiseTexture);
+		glGenTextures(1, &noiseTexture);
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -442,10 +441,13 @@ public:
 	}
 
 	void bunchaHOOPLAA() {
-		ssaoFBO = createSsaoFBO();
-		ssaoKernel = createSampleKernel();
+		std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
+		std::default_random_engine generator;
 
-		noiseTexture = createNoiseTexture();
+		ssaoFBO = createSsaoFBO();
+		ssaoKernel = createSampleKernel(randomFloats, generator);
+
+		noiseTexture = createNoiseTexture(randomFloats, generator);
 		ssaoColorBuffer = createSsaoColorBuffer();
 	}
 
@@ -453,10 +455,6 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 		glClear(GL_COLOR_BUFFER_BIT);
 		m_SSAO->bind();
-
-		// Send kernel + rotation 
-		for (unsigned int i = 0; i < 64; ++i)
-			m_SSAO->setUniform("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, noiseTexture);
@@ -470,7 +468,17 @@ public:
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
 		m_SSAO->setUniform("gNormal", 2);
 
+		// Send kernel + rotation 
+		for (unsigned int i = 0; i < 64; ++i)
+			m_SSAO->setUniform("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
+
 		m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
+
+		m_SSAO->setUniform("kernelSize", m_uiDraw->getKernelSize());
+		m_SSAO->setUniform("radius", m_uiDraw->getRadius());
+		m_SSAO->setUniform("bias", m_uiDraw->getBias());
+
+		m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f));
 
 		m_meshRender->renderQuad();
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -588,7 +596,6 @@ private:
 	std::vector<glm::vec3>		ssaoKernel;
 
 	float fov = 40.0f;
-	float randomFloat = 0.0f;
 	int width = 640, height = 480;
 
 	std::vector<Texture*>		m_textures;		// Vector of texture pointers
@@ -703,7 +710,8 @@ int main(void) {
 	while (!glfwWindowShouldClose(window)) {
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
-		g_app->render(window);
+		//g_app->render(window);
+		g_app->deferredRendering(window);
 		glfwSwapBuffers(window);
 
 		// Poll other window events.
