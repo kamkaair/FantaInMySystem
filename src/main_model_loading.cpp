@@ -322,6 +322,23 @@ public:
 		renderSSAO();
 		
 		// 3. Lighting pass
+		deferredLightPass();
+
+		// 4. Render the skybox/background image
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
+
+		// 5. Render icons and UI
+		if (!g_input->getImGuiVisibility()) {
+			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
+			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
+			m_uiDraw->ImGuiDraw();
+		}
+	}
+
+	void deferredLightPass() {
 		m_HDRI->setHDRITextures(m_lightPass);
 
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -343,7 +360,7 @@ public:
 		m_lightPass->setUniform("gAlbedoSpec", 5);
 		m_lightPass->setUniform("gMetallicRoughness", 6);
 		m_lightPass->setUniform("ssao", 7);
-		
+
 		// Set light uniforms + view
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].position",
@@ -351,7 +368,7 @@ public:
 
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].color",
 				m_uiDraw->getPointLightColor()[i]);
-			
+
 			// Set attenuation factors for the point light
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);   // Constant attenuation
 			m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);    // Linear attenuation
@@ -362,19 +379,6 @@ public:
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
-
-		// 4. Render the skybox/background image
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
-
-		// 5. Render icons and UI
-		if (!g_input->getImGuiVisibility()) {
-			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
-			m_uiDraw->ImGuiDraw();
-		}
 	}
 
 	float SSAOLerp(float a, float b, float f)

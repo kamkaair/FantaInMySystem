@@ -10,14 +10,14 @@
 	
 	uniform mat4 M;
 	uniform mat4 VP;
+	uniform mat4 V;
 	
 	void main()
 	{
-		fragPos = vec3(M * vec4(in_position, 1.0));
+		mat4 MV = V * M;
+		fragPos = vec3(MV * vec4(in_position, 1.0));
 		normal = mat3(transpose(inverse(M))) * in_normal;
 		texCoord = in_texCoord;
 		
-		gl_Position = VP * vec4(fragPos, 1.0);
+		gl_Position = VP * vec4(vec3(M * vec4(in_position, 1.0)), 1.0); // still use world position for gl_Position
 	};
-	
-	

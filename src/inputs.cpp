@@ -255,6 +255,7 @@ void Inputs::movementOrbitMode(GLFWwindow* window) {
 
 	glm::vec3 camPos = calculateCameraPosition();
 	m_camera->setPosition(camPos);
+	m_camera->setLookAt(cameraPos + cameraFront); // redundant
 	m_camera->setViewMatrix(cameraPos + cameraFront);
 
 	mousePosUpdate(window);
