@@ -1,7 +1,7 @@
 #include "camera.h"			// Include Camera-class.
 #include "mesh.h"
 #include "material.h"
-#include "utils.h"			// Utility functions
+#include "utils.h"			// Utility functions, has 
 #include "UI.h"
 #include "HDRI.h"
 #include "textureLoading.h"
@@ -10,19 +10,9 @@
 #include "icon.h"
 #include "ssao.h"
 
-#include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
-#include <glm/gtc/type_ptr.hpp>
-
-//#include <glad/gl.h>				// Include glad
-//#include <kgfw/GLUtils.h>			// Include GLUtils for checkGLError
-//#include <kgfw/Object.h>			// Include kgfw::Object
-#include <GLFW/glfw3.h>				// Include glfw for windows
-
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
-#include <unordered_map>
 
 // Include STB-image library
 #define STB_IMAGE_IMPLEMENTATION
@@ -113,44 +103,30 @@ public:
 	}
 
 	~Application() {
+		// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
+		auto deleteObject = [](auto*& ptr) {
+			delete ptr;
+			ptr = 0;
+		};
+
 		// Delete shaders
-		delete m_shader;
-		m_shader = 0;
-
-		delete m_icon;
-		m_icon = 0;
-
-		delete m_backImage;
-		m_backImage = 0;
-
-		delete m_geometryPass;
-		m_geometryPass = 0;
-
-		delete m_lightPass;
-		m_lightPass = 0;
-
-		delete m_iconClass;
-		m_iconClass = 0;
+		deleteObject(m_shader);
+		deleteObject(m_icon);
+		deleteObject(m_backImage);
+		deleteObject(m_geometryPass);
+		deleteObject(m_lightPass);
 
 		// Delete references
-		delete m_HDRI;
-		m_HDRI = 0;
-
-		delete m_uiDraw;
-		m_uiDraw = 0;
-
-		delete m_texLoading;
-		m_texLoading = 0;
-
-		delete g_input;
-		g_input = 0;
-
-		delete m_GBuffer;
-		m_GBuffer = 0;
+		deleteObject(m_HDRI);
+		deleteObject(m_uiDraw);
+		deleteObject(m_texLoading);
+		deleteObject(g_input);
+		deleteObject(m_GBuffer);
+		deleteObject(m_iconClass);
+		deleteObject(m_ssaoClass);
 
 		// Delete Camera
-		delete m_camera;
-		m_camera = 0;
+		deleteObject(m_camera);
 
 		//Delete all textures
 		for (Texture* texture : m_textures)
@@ -166,57 +142,16 @@ public:
 	}
 
 	void bindShaders() {
-		// Load the main vertex and fragment shaders
-		std::string vertexShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/vertShader.glsl");
-		std::string fragmentShaderSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/fragShader.glsl");
-
-		// Build and compile our shader program
-		m_shader = new Shader(vertexShaderSource, fragmentShaderSource);
-
-		// Load the cubemap shaders
-		std::string CubemapVertexSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/cubemap_vert.glsl");
-		std::string CubemapFragmentSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/cubemap_frag.glsl");
-		m_cubemapShader = new Shader(CubemapVertexSource, CubemapFragmentSource);
-
-		// Load the background shaders
-		std::string backgroundVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundVert.glsl");
-		std::string backgroundFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundFrag.glsl");
-		m_BackgroundShader = new Shader(backgroundVertSource, backgroundFragSource);
-
-		// Load the irradiance shaders
-		std::string irradianceVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/cubemap_vert.glsl");
-		std::string irradianceFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/irradianceFrag.glsl");
-		m_IrradianceShader = new Shader(irradianceVertSource, irradianceFragSource);
-
-		// Load the prefilter map shaders
-		std::string prefilterVert = utils::loadShader(std::string(ASSET_DIR) + "/shaders/cubemap_vert.glsl");
-		std::string prefilterFrag = utils::loadShader(std::string(ASSET_DIR) + "/shaders/prefilterFrag.glsl");
-		m_Prefilter = new Shader(prefilterVert, prefilterFrag);
-
-		// Load the brdf map shaders
-		std::string brdfVert = utils::loadShader(std::string(ASSET_DIR) + "/shaders/brdfVert.glsl");
-		std::string brdfFrag = utils::loadShader(std::string(ASSET_DIR) + "/shaders/brdfFrag.glsl");
-		m_brdf = new Shader(brdfVert, brdfFrag);
-
-		// Load the billboard icon shaders
-		std::string iconVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/iconVert.glsl");
-		std::string iconFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/iconFrag.glsl");
-		m_icon = new Shader(iconVertSource, iconFragSource);
-
-		// Load the 2d-texture background shaders
-		std::string BackImageVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundImageVert.glsl");
-		std::string BackImageFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/backgroundImageFrag.glsl");
-		m_backImage = new Shader(BackImageVertSource, BackImageFragSource);
-
-		// Load the geometry pass (for deferred rendering)
-		std::string GeometryVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassVert.glsl");
-		std::string GeometryFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/GeometryPassFrag.glsl");
-		m_geometryPass = new Shader(GeometryVertSource, GeometryFragSource);
-
-		// Load the lighting pass (for deferred rendering)
-		std::string LightingVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightVert.glsl");
-		std::string LightingFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightFrag.glsl");
-		m_lightPass = new Shader(LightingVertSource, LightingFragSource);
+		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl");
+		m_cubemapShader = utils::makeShader("cubemap_vert.glsl", "cubemap_frag.glsl");
+		m_BackgroundShader = utils::makeShader("backgroundVert.glsl", "backgroundFrag.glsl");
+		m_IrradianceShader = utils::makeShader("cubemap_vert.glsl", "irradianceFrag.glsl");
+		m_Prefilter = utils::makeShader("cubemap_vert.glsl", "prefilterFrag.glsl");
+		m_brdf = utils::makeShader("brdfVert.glsl", "brdfFrag.glsl");
+		m_icon = utils::makeShader("iconVert.glsl", "iconFrag.glsl");
+		m_backImage = utils::makeShader("backgroundImageVert.glsl", "backgroundImageFrag.glsl");
+		m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl");
+		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl");
 	}
 
 	void render(GLFWwindow* window) {

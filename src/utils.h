@@ -14,6 +14,10 @@
 #include <assimp/DefaultLogger.hpp>
 #include <assimp/LogStream.hpp>
 
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
 #include <GLFW/glfw3.h>				// Include glfw for windows
 
 #include "mesh.h"
@@ -38,6 +42,15 @@ namespace utils {
 		}
 
 		return result;
+	}
+
+	static Shader* makeShader(const std::string vertex, const std::string frag) {
+		// Load the main vertex and fragment shaders
+		std::string vertexShaderSource = loadShader(std::string(ASSET_DIR) + "/shaders/" + vertex);
+		std::string fragmentShaderSource = loadShader(std::string(ASSET_DIR) + "/shaders/" + frag);
+
+		// Build and compile our shader program
+		return new Shader(vertexShaderSource, fragmentShaderSource);
 	}
 
 
