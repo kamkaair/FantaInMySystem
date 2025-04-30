@@ -39,6 +39,8 @@ struct SettingsMaterial {
 	bool useRoughnessTexture = true;
 };
 
+class SSAO;
+
 class UI : public kgfw::Object
 {
 public:
@@ -46,7 +48,8 @@ public:
 		Shader* backImage,
 		TextureLoading* texLoad,
 		HDRI* hdri,
-		GBuffer* gbuffer);
+		GBuffer* gbuffer,
+		SSAO* ssao);
 	~UI();
 
 	void ImGuiStyleSetup();
@@ -87,6 +90,7 @@ private:
 	TextureLoading* m_texLoading;
 	HDRI* m_HDRI;
 	GBuffer* m_GBuffer;
+	SSAO* m_SSAO;
 
 	std::vector<glm::vec3> pointLightPos; // Reference to point light positions
 	std::vector<glm::vec3> pointLightColor; // Reference to point light colors

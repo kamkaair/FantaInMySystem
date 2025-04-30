@@ -67,7 +67,6 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 	// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
 	shader->setUniform("M", getModelMatrix());
 	shader->setUniform("VP", projectionMatrix * viewMatrix);
-	//shader->setUniform("V", getViewMatrix());
 	shader->setUniform("V", viewMatrix);
 
 	// Bind material textures

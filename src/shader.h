@@ -10,6 +10,7 @@ public:
 	~Shader();
 
 	void bind();
+	void deleteShader();
 
 	void setUniform(const std::string& name, float x, float y, float z);
 	void setUniform(const std::string& name, float x, float y, float z, float w);

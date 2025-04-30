@@ -78,8 +78,10 @@ Shader::Shader(const std::string& vertexShaderString, const std::string& fragmen
 
 Shader::~Shader() {
 	// Delete shader program
-	glDeleteProgram(m_shaderProgram);
-	checkGLError();
+	if (m_shaderProgram) {
+		glDeleteProgram(m_shaderProgram);
+		checkGLError();
+	}
 }
 
 void Shader::bind() {
@@ -87,6 +89,10 @@ void Shader::bind() {
 	checkGLError();
 }
 
+void Shader::deleteShader() {
+	glDeleteProgram(m_shaderProgram);
+	checkGLError();
+}
 
 void Shader::setUniform(const std::string& name, float x, float y, float z) {
 	GLint loc = glGetUniformLocation(m_shaderProgram, name.c_str());

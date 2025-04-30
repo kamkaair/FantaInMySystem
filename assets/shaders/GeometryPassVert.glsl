@@ -19,5 +19,5 @@
 		normal = mat3(transpose(inverse(M))) * in_normal;
 		texCoord = in_texCoord;
 		
-		gl_Position = VP * vec4(vec3(M * vec4(in_position, 1.0)), 1.0); // still use world position for gl_Position
+		gl_Position = VP * vec4(vec3(M * vec4(in_position, 1.0)), 1.0); // Currently going from model space -> world space -> clip space (before was in view-space, which was a bug!)
 	};

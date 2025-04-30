@@ -8,6 +8,7 @@
 #include "inputs.h"
 #include "GBuffer.h"
 #include "icon.h"
+#include "ssao.h"
 
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>
@@ -22,9 +23,6 @@
 #include "imgui_impl_opengl3.h"
 
 #include <unordered_map>
-
-// Added for SSAO
-#include <random>
 
 // Include STB-image library
 #define STB_IMAGE_IMPLEMENTATION
@@ -60,8 +58,11 @@ public:
 		// Loads and computes all the HDRI maps
 		m_HDRI = new HDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
+		// Screen Spaced Ambient Occlusion initialization
+		m_ssaoClass = new SSAO(m_GBuffer, width, height);
+
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI, m_GBuffer);
+		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -95,8 +96,6 @@ public:
 		// Load the HDR texture and create all the HDRI maps
 		m_HDRI->ProcessHDRI("/HDRI/newport_loft.hdr");
 
-		bunchaHOOPLAA();
-
 		// Set up lights and color
 		initializeLights();
 
@@ -123,9 +122,6 @@ public:
 
 		delete m_backImage;
 		m_backImage = 0;
-
-		delete m_SSAO;
-		m_SSAO = 0;
 
 		delete m_geometryPass;
 		m_geometryPass = 0;
@@ -221,11 +217,6 @@ public:
 		std::string LightingVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightVert.glsl");
 		std::string LightingFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/DeferredLightFrag.glsl");
 		m_lightPass = new Shader(LightingVertSource, LightingFragSource);
-
-		// Load SSAO shaders
-		std::string SSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
-		std::string SSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Frag.glsl");
-		m_SSAO = new Shader(SSAOVertSource, SSAOFragSource);
 	}
 
 	void render(GLFWwindow* window) {
@@ -275,17 +266,9 @@ public:
 			// Forward rendering
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_shader);
-
-				//m_shader->bind();
-				//glActiveTexture(GL_TEXTURE7);
-				//glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
-				//m_shader->setUniform("ssao", 7);
-
 				mesh->Render(m_shader, m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 			}
 		}
-
-		//renderSSAO();
 
 		if (!g_input->getImGuiVisibility()) {
 			//renderIcons(); // Render all the point lamp icons
@@ -319,7 +302,7 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. SSAO pass
-		renderSSAO();
+		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender);
 		
 		// 3. Lighting pass
 		deferredLightPass();
@@ -353,7 +336,7 @@ public:
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getColorBuffer());
 
 		m_lightPass->setUniform("gPosition", 3);
 		m_lightPass->setUniform("gNormal", 4);
@@ -379,113 +362,6 @@ public:
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
-	}
-
-	float SSAOLerp(float a, float b, float f)
-	{
-		return a + f * (b - a);
-	}
-
-	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
-		for (unsigned int i = 0; i < 64; ++i)
-		{
-			glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
-			sample = glm::normalize(sample);
-			sample *= randomFloats(generator);
-			float scale = float(i) / 64.0f;
-
-			// scale samples s.t. they're more aligned to center of kernel
-			scale = SSAOLerp(0.1f, 1.0f, scale * scale);
-			sample *= scale;
-			ssaoKernel.push_back(sample);
-			//std::cout << glm::to_string(sample) << " also: " << i << std::endl;
-		}
-		return ssaoKernel;
-	}
-
-	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
-		std::vector<glm::vec3> ssaoNoise;
-
-		for (unsigned int i = 0; i < 16; i++)
-		{
-			glm::vec3 noise(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, 0.0f); // rotate around z-axis (in tangent space)
-			ssaoNoise.push_back(noise);
-		}
-		glGenTextures(1, &noiseTexture);
-		glBindTexture(GL_TEXTURE_2D, noiseTexture);
-		//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-		return noiseTexture;
-	}
-
-	GLuint createSsaoFBO() {
-		glGenFramebuffers(1, &ssaoFBO);
-		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
-
-		return ssaoFBO;
-	}
-
-	GLuint createSsaoColorBuffer() {
-		glGenTextures(1, &ssaoColorBuffer);
-		glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "SSAO Framebuffer not complete!" << std::endl;
-
-		return ssaoColorBuffer;
-	}
-
-	void bunchaHOOPLAA() {
-		std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
-		std::default_random_engine generator;
-
-		ssaoFBO = createSsaoFBO();
-		ssaoKernel = createSampleKernel(randomFloats, generator);
-
-		noiseTexture = createNoiseTexture(randomFloats, generator);
-		ssaoColorBuffer = createSsaoColorBuffer();
-	}
-
-	void renderSSAO() {
-		glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
-		glClear(GL_COLOR_BUFFER_BIT);
-		m_SSAO->bind();
-
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, noiseTexture);
-		m_SSAO->setUniform("texNoise", 0);
-
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-		m_SSAO->setUniform("gPosition", 1);
-
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
-		m_SSAO->setUniform("gNormal", 2);
-
-		// Send kernel + rotation 
-		for (unsigned int i = 0; i < 64; ++i)
-			m_SSAO->setUniform("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
-
-		m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
-
-		m_SSAO->setUniform("kernelSize", m_uiDraw->getKernelSize());
-		m_SSAO->setUniform("radius", m_uiDraw->getRadius());
-		m_SSAO->setUniform("bias", m_uiDraw->getBias());
-
-		m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f));
-
-		m_meshRender->renderQuad();
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void initializeLights()
@@ -568,11 +444,11 @@ public:
 private:
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-	// Shaders
-	Shader* m_shader;				// Pointer to the Shader object
+	// Pointers to the Shader objects
+	Shader* m_shader;				
 
-	Shader* m_cubemapShader;		// Pointer to the Shader object
-	Shader* m_BackgroundShader;		// Pointer to the Shader object
+	Shader* m_cubemapShader;
+	Shader* m_BackgroundShader;
 	Shader* m_IrradianceShader;
 	Shader* m_Prefilter;
 	Shader* m_brdf;
@@ -580,10 +456,8 @@ private:
 	Shader* m_icon;
 	Shader* m_backImage;
 
-	Shader* m_SSAO;
 	Shader* m_lightPass;
 	Shader* m_geometryPass;
-
 
 	// Class references
 	Camera*         			m_camera;
@@ -593,11 +467,9 @@ private:
 	TextureLoading*				m_texLoading;
 	GBuffer*					m_GBuffer;
 	Icon*						m_iconClass;
+	SSAO*						m_ssaoClass;
 
 	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
-	GLuint						ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0;
-
-	std::vector<glm::vec3>		ssaoKernel;
 
 	float fov = 40.0f;
 	int width = 640, height = 480;
@@ -692,6 +564,7 @@ int main(void) {
 			break;
 		case GLFW_KEY_B:	// Enable orbit mode
 			g_input->setMovementMode(window, false);
+			//g_app->constructSSAO();
 			break;
 		}
 
@@ -714,8 +587,8 @@ int main(void) {
 	while (!glfwWindowShouldClose(window)) {
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
-		//g_app->render(window);
-		g_app->deferredRendering(window);
+		g_app->render(window);
+		//g_app->deferredRendering(window);
 		glfwSwapBuffers(window);
 
 		// Poll other window events.

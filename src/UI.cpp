@@ -1,15 +1,18 @@
 #include "UI.h"
+#include "ssao.h"
 
 UI::UI(Shader* shader,
 	Shader* backImage,
 	TextureLoading* texLoad,
 	HDRI* hdri,
-	GBuffer* gbuffer)
+	GBuffer* gbuffer,
+	SSAO* ssao)
 	: m_shader(shader),
 	m_backImage(backImage),
 	m_texLoading(texLoad),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
+	m_SSAO(ssao),
 	ImGuiAlpha(0.3f), 
 	Object(__FUNCTION__) {}
 
@@ -129,10 +132,6 @@ void UI::ImGuiDraw()
 	ImGuiStyleSetup();
 	ImGui::Begin("Control Window", 0, disableInteraction()); // Make a new window
 
-	ImGui::InputInt("KernelSize", &kernelSize);
-	ImGui::InputFloat("Radius", &radius);
-	ImGui::InputFloat("bias", &bias);
-
 	ImGui::Text("Sup broidi, press 'E' to lock/unlock mouse. Feel free to try out different settings!");
 	ImGui::Text("Press 'H' to hide the window!");
 	//ImGui::Text(("Milliseconds Per Frame: " + std::to_string(1000.0 / calculateFPS())).c_str());
@@ -140,7 +139,14 @@ void UI::ImGuiDraw()
 
 	ImGui::Checkbox("Enable rotation", &meshRotationEnabled);
 
-	ImGui::Checkbox("Deferred rendering", &deferredRendering);
+	if (ImGui::Checkbox("Deferred rendering", &deferredRendering)) {
+		if (deferredRendering) {
+			m_SSAO->constructSSAO();
+		}
+		else if (deferredRendering) {
+			m_SSAO->deconstructSSAO();
+		}
+	}
 
 	// Disable or enable blending whether using forward or deferred rendering
 	//deferredRendering ? glDisable(GL_BLEND) : glEnable(GL_BLEND);
@@ -152,6 +158,9 @@ void UI::ImGuiDraw()
 			m_GBuffer->setResolution(m_GBuffer->getWidth(), m_GBuffer->getHeight());
 			m_GBuffer->constructGBuffer();
 		}
+		ImGui::InputInt("KernelSize", &kernelSize);
+		ImGui::InputFloat("Radius", &radius);
+		ImGui::InputFloat("bias", &bias);
 	}
 	else {
 		glEnable(GL_BLEND);
