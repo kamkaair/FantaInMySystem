@@ -194,22 +194,20 @@ void Inputs::updateCameraVectors() {
 	cameraFront = glm::normalize(cameraFocus - cameraPos);
 }
 
-void Inputs::setMovementMode(GLFWwindow* window, bool inState) {
-	if (inState) {
-		if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !togglePressedMovement && !ImGui::GetIO().WantTextInput) {
+void Inputs::setMovementMode(GLFWwindow* window) {
+	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !togglePressedMovement && !ImGui::GetIO().WantTextInput) {
+		if (!movementMode) {
 			togglePressedMovement = true;
-			movementMode = inState;
+			movementMode = !movementMode;
 			setCameraFocusPoint(getCameraFocus());
 		}
-	}
-	else {
-		if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !togglePressedMovement && !ImGui::GetIO().WantTextInput) {
+		else {
 			togglePressedMovement = true;
-			movementMode = inState;
+			movementMode = !movementMode;
 			getCamera()->setFOV(40.0f);
 		}
 	}
-	if ((glfwGetKey(window, GLFW_KEY_V) || glfwGetKey(window, GLFW_KEY_B)) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
+	if ((glfwGetKey(window, GLFW_KEY_V)) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
 		togglePressedMovement = false;
 }
 

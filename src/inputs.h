@@ -40,7 +40,7 @@ public:
 
 	void setMouseLeftEnabled(bool inState) { mouseLeftEnabled = inState; }
 	void setMouseRightEnabled(bool inState) { mouseRightEnabled = inState; }
-	void setMovementMode(GLFWwindow* window, bool inState);
+	void setMovementMode(GLFWwindow* window);
 
 	void setImGuiInteractability(GLFWwindow* window, int cursorMode, float ImGuiAlpha, float orbitSens, float focusSens, bool WindowInteract);
 

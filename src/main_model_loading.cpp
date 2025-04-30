@@ -495,11 +495,7 @@ int main(void) {
 			g_input->inputHide(window);
 			break;
 		case GLFW_KEY_V:	// Enable free mode
-			g_input->setMovementMode(window, true);
-			break;
-		case GLFW_KEY_B:	// Enable orbit mode
-			g_input->setMovementMode(window, false);
-			//g_app->constructSSAO();
+			g_input->setMovementMode(window);
 			break;
 		}
 

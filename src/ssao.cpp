@@ -2,11 +2,11 @@
 
 SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 	: m_GBuffer(gbuffer), width(inWidth), height(inHeight), Object(__FUNCTION__) {
-	setupSSAO(); //constructSSAO();
+	setupSSAO(); constructSSAO();
 }
 
 SSAO::~SSAO() {
-	if (m_SSAO) {
+	if (!m_SSAO == 0) {
 		delete m_SSAO;
 		m_SSAO = 0;
 	}
@@ -14,14 +14,16 @@ SSAO::~SSAO() {
 
 void SSAO::constructSSAO() {
 	// Load SSAO shaders
-	std::string SSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
-	std::string SSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Frag.glsl");
-	m_SSAO = new Shader(SSAOVertSource, SSAOFragSource);
+	if (m_SSAO == 0) {
+		std::string SSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
+		std::string SSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Frag.glsl");
+		m_SSAO = new Shader(SSAOVertSource, SSAOFragSource);
+	}
 }
 
 void SSAO::deconstructSSAO() {
 	//m_SSAO->deleteShader();
-	if (m_SSAO) {
+	if (!m_SSAO == 0) {
 		delete m_SSAO;
 		m_SSAO = 0;
 	}

@@ -24,7 +24,7 @@ public:
 	GLuint getColorBuffer() { return ssaoColorBuffer; }
 
 private:
-	Shader* m_SSAO;
+	Shader* m_SSAO = 0;
 	GBuffer* m_GBuffer;
 
 	GLuint ssaoFBO = 0, ssaoColorBuffer = 0, noiseTexture = 0;

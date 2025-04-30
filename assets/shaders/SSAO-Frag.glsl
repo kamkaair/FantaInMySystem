@@ -42,8 +42,8 @@
 			offset.xyz /= offset.w;                    // perspective divide
 			offset.xyz = offset.xyz * 0.5 + 0.5;        // to [0,1] screen space
 
-			//if (offset.x < 0.0 || offset.x > 1.0 || offset.y < 0.0 || offset.y > 1.0)
-				//continue; // skip samples outside screen
+			// if (offset.x < 0.0 || offset.x > 1.0 || offset.y < 0.0 || offset.y > 1.0)
+				// continue; // skip samples outside screen
 
 			float sampleDepth = texture(gPosition, offset.xy).z; // get depth at sample
 
