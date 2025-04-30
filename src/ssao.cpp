@@ -2,12 +2,14 @@
 
 SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 	: m_GBuffer(gbuffer), width(inWidth), height(inHeight), Object(__FUNCTION__) {
-	setupSSAO(); constructSSAO();
+	setupSSAO(); //constructSSAO();
 }
 
 SSAO::~SSAO() {
-	delete m_SSAO;
-	m_SSAO = 0;
+	if (m_SSAO) {
+		delete m_SSAO;
+		m_SSAO = 0;
+	}
 }
 
 void SSAO::constructSSAO() {
@@ -18,7 +20,11 @@ void SSAO::constructSSAO() {
 }
 
 void SSAO::deconstructSSAO() {
-	m_SSAO->deleteShader();
+	//m_SSAO->deleteShader();
+	if (m_SSAO) {
+		delete m_SSAO;
+		m_SSAO = 0;
+	}
 }
 
 void SSAO::setupSSAO() {

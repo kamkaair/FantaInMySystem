@@ -143,7 +143,7 @@ void UI::ImGuiDraw()
 		if (deferredRendering) {
 			m_SSAO->constructSSAO();
 		}
-		else if (deferredRendering) {
+		else if (!deferredRendering) {
 			m_SSAO->deconstructSSAO();
 		}
 	}

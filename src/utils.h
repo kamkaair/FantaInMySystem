@@ -15,8 +15,21 @@
 #include <assimp/LogStream.hpp>
 
 #include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
+#pragma once
+#include <iostream>
+#include <fstream>
+#include <unordered_map>
+#include <vector>			// Include std::vector
+#include <filesystem>
+
+#include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
+#include <glm/gtc/type_ptr.hpp>
+
+#include <assimp/Importer.hpp>
+#include <assimp/postprocess.h>
+#include <assimp/scene.h>
+#include <assimp/DefaultLogger.hpp>
+#include <assimp/LogStream.hpp>
 
 #include <GLFW/glfw3.h>				// Include glfw for windows
 
