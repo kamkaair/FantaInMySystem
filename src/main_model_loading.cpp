@@ -237,7 +237,7 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. SSAO pass
-		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height);
+		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
 		
 		// 3. Lighting pass
 		deferredLightPass();
@@ -271,7 +271,7 @@ public:
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getColorBuffer());
+		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getBlurColorBuffer());
 
 		m_lightPass->setUniform("gPosition", 3);
 		m_lightPass->setUniform("gNormal", 4);

@@ -25,6 +25,11 @@ void SSAO::constructSSAO() {
 		std::string SSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Frag.glsl");
 		m_SSAO = new Shader(SSAOVertSource, SSAOFragSource);
 	}
+	if (m_blurSSAO == 0) {
+		std::string blurSSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
+		std::string blurSSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/blurSSAO-Frag.glsl");
+		m_blurSSAO = new Shader(blurSSAOVertSource, blurSSAOFragSource);
+	}
 }
 
 void SSAO::deconstructSSAO() {
@@ -38,19 +43,27 @@ void SSAO::setupSSAO() {
 	std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 	std::default_random_engine generator;
 
+	// SSAO texture framebuffer
 	ssaoFBO = createSsaoFBO();
-	ssaoKernel = createSampleKernel(randomFloats, generator);
-
-	noiseTexture = createNoiseTexture(randomFloats, generator);
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	ssaoColorBuffer = createSsaoColorBuffer();
 
+	// Blur framebuffer
+	ssaoBlurFBO = createSsaoBlurFBO();
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+	ssaoColorBufferBlur = createSsaoColorBufferBlur();
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	ssaoKernel = createSampleKernel(randomFloats, generator);
+	noiseTexture = createNoiseTexture(randomFloats, generator);
 }
 
-void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight) {
+void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight, int samples) {
 	width = inWidth;
 	height = inHeight;
 
+	// SSAO texture
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSAO->bind();
@@ -68,7 +81,7 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	m_SSAO->setUniform("gNormal", 2);
 
 	// Send kernel + rotation 
-	for (unsigned int i = 0; i < 64; ++i)
+	for (unsigned int i = 0; i < samples; ++i)
 		m_SSAO->setUniform("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
 
 	m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
@@ -78,6 +91,14 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	m_SSAO->setUniform("bias", m_uiDraw->getBias());
 	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f));
 
+	m_meshRender->renderQuad();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Apply the blur to the SSAO texture
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+	m_blurSSAO->bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -125,7 +146,13 @@ GLuint SSAO::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFl
 
 GLuint SSAO::createSsaoFBO() {
 	glGenFramebuffers(1, &ssaoFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+
+	return ssaoFBO;
+}
+
+GLuint SSAO::createSsaoBlurFBO() {
+	glGenFramebuffers(1, &ssaoBlurFBO);
+	//glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
 
 	return ssaoFBO;
 }
@@ -133,6 +160,20 @@ GLuint SSAO::createSsaoFBO() {
 GLuint SSAO::createSsaoColorBuffer() {
 	glGenTextures(1, &ssaoColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "SSAO Framebuffer not complete!" << std::endl;
+
+	return ssaoColorBuffer;
+}
+
+GLuint SSAO::createSsaoColorBufferBlur() {
+	glGenTextures(1, &ssaoColorBufferBlur);
+	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
