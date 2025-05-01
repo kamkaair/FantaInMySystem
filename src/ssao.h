@@ -14,7 +14,8 @@ public:
 	void constructSSAO();
 	void deconstructSSAO();
 	void setupSSAO();
-	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender);
+	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height);
+	void recreateColorBuffer();
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);

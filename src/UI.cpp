@@ -148,15 +148,13 @@ void UI::ImGuiDraw()
 		}
 	}
 
-	// Disable or enable blending whether using forward or deferred rendering
-	//deferredRendering ? glDisable(GL_BLEND) : glEnable(GL_BLEND);
-
 	if(deferredRendering) {
 		glDisable(GL_BLEND);
 		if(ImGui::Button("Set Resolution")) {
 			m_GBuffer->CleanUpGBuffer();
 			m_GBuffer->setResolution(m_GBuffer->getWidth(), m_GBuffer->getHeight());
 			m_GBuffer->constructGBuffer();
+			m_SSAO->recreateColorBuffer();
 		}
 		ImGui::InputInt("KernelSize", &kernelSize);
 		ImGui::InputFloat("Radius", &radius);
@@ -168,15 +166,7 @@ void UI::ImGuiDraw()
 
 	if (ImGui::Checkbox("Wireframe mode", &wireFrame))
 	{
-		//Wireframe check
-		if (wireFrame) {
-			//Wireframe on
-			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-		}
-		else {
-			//Wireframe off
-			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-		}
+		wireFrame ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
 	//ImGui::Separator();

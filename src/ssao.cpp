@@ -10,6 +10,12 @@ SSAO::~SSAO() {
 		delete m_SSAO;
 		m_SSAO = 0;
 	}
+	if (ssaoFBO != 0) { glDeleteFramebuffers(1, &ssaoFBO); ssaoFBO = 0; }
+	if (noiseTexture != 0) { glDeleteTextures(1, &noiseTexture); noiseTexture = 0; }
+	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
+	for (int i = 0; i < ssaoKernel.size(); i++) {
+		ssaoKernel[i] = glm::vec3{ 0.0f };
+	}
 }
 
 void SSAO::constructSSAO() {
@@ -22,7 +28,6 @@ void SSAO::constructSSAO() {
 }
 
 void SSAO::deconstructSSAO() {
-	//m_SSAO->deleteShader();
 	if (!m_SSAO == 0) {
 		delete m_SSAO;
 		m_SSAO = 0;
@@ -42,7 +47,10 @@ void SSAO::setupSSAO() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender) {
+void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight) {
+	width = inWidth;
+	height = inHeight;
+
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSAO->bind();
@@ -68,7 +76,6 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender) {
 	m_SSAO->setUniform("kernelSize", m_uiDraw->getKernelSize());
 	m_SSAO->setUniform("radius", m_uiDraw->getRadius());
 	m_SSAO->setUniform("bias", m_uiDraw->getBias());
-
 	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f));
 
 	m_meshRender->renderQuad();
@@ -107,7 +114,6 @@ GLuint SSAO::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFl
 	}
 	glGenTextures(1, &noiseTexture);
 	glBindTexture(GL_TEXTURE_2D, noiseTexture);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 4, 4, 0, GL_RGB, GL_FLOAT, &ssaoNoise[0]);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -136,4 +142,11 @@ GLuint SSAO::createSsaoColorBuffer() {
 		std::cout << "SSAO Framebuffer not complete!" << std::endl;
 
 	return ssaoColorBuffer;
+}
+
+void SSAO::recreateColorBuffer() {
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
+	ssaoColorBuffer = createSsaoColorBuffer();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

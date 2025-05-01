@@ -237,7 +237,7 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. SSAO pass
-		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender);
+		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height);
 		
 		// 3. Lighting pass
 		deferredLightPass();
