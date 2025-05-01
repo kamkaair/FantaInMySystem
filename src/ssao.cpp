@@ -6,10 +6,8 @@ SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 }
 
 SSAO::~SSAO() {
-	if (!m_SSAO == 0) {
-		delete m_SSAO;
-		m_SSAO = 0;
-	}
+	if (!m_SSAO == 0) { delete m_SSAO; m_SSAO = 0; }
+	if (!m_blurSSAO == 0) { delete m_blurSSAO; m_blurSSAO = 0; }
 	if (ssaoFBO != 0) { glDeleteFramebuffers(1, &ssaoFBO); ssaoFBO = 0; }
 	if (noiseTexture != 0) { glDeleteTextures(1, &noiseTexture); noiseTexture = 0; }
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }

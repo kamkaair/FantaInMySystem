@@ -219,5 +219,6 @@
 	
 	//Color out
 	FragColor = vec4(color, 1.0);
+	//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 	//FragColor = sharpen(DiffuseMap, texCoord, vec2(HueChange, HueChange));
 	};

@@ -15,9 +15,13 @@
 	void main()
 	{
 		mat4 MV = V * M;
+		
+		//fragPos and normal both in view-space
 		fragPos = vec3(MV * vec4(in_position, 1.0));
-		normal = mat3(transpose(inverse(M))) * in_normal;
+		normal = normalize(mat3(transpose(inverse(MV))) * in_normal);
+		
 		texCoord = in_texCoord;
 		
-		gl_Position = VP * vec4(vec3(M * vec4(in_position, 1.0)), 1.0); // Currently going from model space -> world space -> clip space (before was in view-space, which was a bug!)
+		//gl_Position = VP * vec4(vec3(M * vec4(in_position, 1.0)), 1.0);
+		gl_Position = VP * M * vec4(in_position, 1.0); // Model → World → View → Clip
 	};

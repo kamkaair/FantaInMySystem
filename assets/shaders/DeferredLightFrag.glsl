@@ -97,6 +97,7 @@
 		vec3 V = normalize(view - FragPos);
 		// Reflection
 		vec3 R = reflect(-V, N);
+		//R = mix(R, N, roughness * roughness); // bias reflection direction
 
 		vec3 F0 = vec3(0.04);
 		F0 = mix(F0, albedo, metallic);
@@ -158,7 +159,6 @@
 		const float MAX_REFLECTION_LOD = 3.0;
 		vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;  
 		vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
-		vec3 brdfDEBUG = texture(brdfLUT, texCoord).rgb;
 		
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
@@ -173,5 +173,6 @@
 		
 		//Color out
 		FragColor = vec4(color, 1.0);
+		//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
 	}
