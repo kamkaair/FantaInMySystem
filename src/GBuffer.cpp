@@ -33,7 +33,6 @@ void GBuffer::constructGBuffer() {
 
 GLuint GBuffer::createGPosition() {
 	// position color buffer
-	// Probably have to be viewport's resolution
 	glGenTextures(1, &gPosition);
 	glBindTexture(GL_TEXTURE_2D, gPosition);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);

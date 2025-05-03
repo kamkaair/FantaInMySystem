@@ -156,9 +156,6 @@ void UI::ImGuiDraw()
 			m_GBuffer->constructGBuffer();
 			m_SSAO->recreateColorBuffer();
 		}
-		ImGui::InputInt("KernelSize", &kernelSize);
-		ImGui::InputFloat("Radius", &radius);
-		ImGui::InputFloat("bias", &bias);
 	}
 	else {
 		glEnable(GL_BLEND);
@@ -594,7 +591,24 @@ void UI::ImGuiDraw()
 
 			ImGui::EndTabItem();
 		}
-		
+
+		if (ImGui::BeginTabItem("SSAO"))
+		{
+			// Reset options for transformations
+			if (ImGui::TreeNode("Parameters"))
+			{
+				ImGui::InputInt("Kernel Samples", &kernelSize);
+				ImGui::InputFloat("Radius", &radius);
+				ImGui::InputFloat("Bias", &bias);
+				ImGui::InputFloat("Occlusion Strength", &aoStrength);
+
+				ImGui::TreePop();
+			}
+			ImGui::Separator();
+
+			ImGui::EndTabItem();
+		}
+	
 		if (ImGui::BeginTabItem("MATERIALS"))
 		{
 			if (ImGui::TreeNode("ADD MATERIAL"))
@@ -698,6 +712,7 @@ void UI::ImGuiDraw()
 
 			ImGui::EndTabItem();
 		}
+
 		ImGui::EndTabBar();
 	}
 

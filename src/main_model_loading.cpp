@@ -280,20 +280,6 @@ public:
 		m_lightPass->setUniform("ssao", 7);
 
 		// Set light uniforms + view
-		//for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
-		//	m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].position",
-		//		m_uiDraw->getPointLightPos()[i]);
-
-		//	m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].color",
-		//		m_uiDraw->getPointLightColor()[i]);
-
-		//	// Set attenuation factors for the point light
-		//	m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);   // Constant attenuation
-		//	m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);    // Linear attenuation
-		//	m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f); // Quadratic attenuation
-		//}
-
-		// Set light uniforms + view
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
 			glm::vec3 lightPosWorld = m_uiDraw->getPointLightPos()[i];
 			glm::vec3 lightPosView = glm::vec3(m_camera->getViewMatrix() * glm::vec4(lightPosWorld, 1.0f));
@@ -310,7 +296,9 @@ public:
 		}
 
 		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
-		//m_lightPass->setUniform("view", m_camera->getPosition());
+		m_lightPass->setUniform("aoStrength", m_uiDraw->getAoStrength());
+		// Camera is always at (0.0f, 0.0f, 0.0f), even after viewMatrix * cameraPos.
+		// Works, but the IBL reflections have the same rotation in every angle.
 		m_lightPass->setUniform("view", glm::vec3(0.0f));
 
 		// Render quad, applies the lighting pass

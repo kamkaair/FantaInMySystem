@@ -87,7 +87,6 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	m_SSAO->setUniform("kernelSize", m_uiDraw->getKernelSize());
 	m_SSAO->setUniform("radius", m_uiDraw->getRadius());
 	m_SSAO->setUniform("bias", m_uiDraw->getBias());
-	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f));
 
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -187,5 +186,6 @@ void SSAO::recreateColorBuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
 	ssaoColorBuffer = createSsaoColorBuffer();
+	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f)); // new noiseScale resolution
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

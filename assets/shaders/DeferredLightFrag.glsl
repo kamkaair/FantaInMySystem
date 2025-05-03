@@ -12,7 +12,7 @@
 	// SSAO
 	uniform sampler2D ssao;
 	
-	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
+	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
 
@@ -158,11 +158,12 @@
 		//MAX_REFLECTION_LOD = 3.0; is quite nice :3
 		const float MAX_REFLECTION_LOD = 3.0;
 		vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;  
-		vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
-		vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
+		float ao = pow(AmbientOcclusion, aoStrength);
+		vec3 ambient = (kD * (diffuse * ao) + specular);
 		
 		//Ambient + point lights
 		vec3 color = ambient + Lo;

@@ -72,6 +72,7 @@ public:
 	int getKernelSize() { return kernelSize; }
 	float getRadius() { return radius; }
 	float getBias() { return bias; }
+	float getAoStrength() { return aoStrength; }
 
 	// Add '&' to get the REFERENCE!!!
 	std::vector<Mesh*>& getMeshes() { return m_meshes; }
@@ -97,13 +98,10 @@ private:
 	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
 	float lampStrength = 0.0f, HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
-		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
+		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f,
+		radius = 0.5, bias = 0.025, aoStrength = 10.0f;
 
-	int kernelSize = 64;
-	float radius = 0.5;
-	float bias = 0.025;
-
-	int backgroundMode = 0;
+	int backgroundMode = 0, kernelSize = 64;
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, deferredRendering = false, windowDisabled = false;
