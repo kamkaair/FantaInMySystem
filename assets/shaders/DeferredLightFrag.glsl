@@ -13,6 +13,8 @@
 	uniform sampler2D ssao;
 	
 	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
+	uniform bool aoTone;
+	uniform mat4 inverseView;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
 
@@ -97,6 +99,8 @@
 		vec3 V = normalize(view - FragPos);
 		// Reflection
 		vec3 R = reflect(-V, N);
+		vec3 WorldR = mat3(inverseView) * R;
+		vec3 WorldN = mat3(inverseView) * N;
 		//R = mix(R, N, roughness * roughness); // bias reflection direction
 
 		vec3 F0 = vec3(0.04);
@@ -145,7 +149,7 @@
 		kD *= 1.0 - metallic; // kD I believe is broken.
 		
 		// HDRI
-		vec3 irradiance = texture(irradianceMap, N).rgb;
+		vec3 irradiance = texture(irradianceMap, WorldN).rgb; // N Set to world-space. See the magnificent lighting all around
 		
 		// Hue change for the diffuse color
 		float originalHue = atan(albedo.b, albedo.g);
@@ -157,12 +161,13 @@
 		// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
 		//MAX_REFLECTION_LOD = 3.0; is quite nice :3
 		const float MAX_REFLECTION_LOD = 3.0;
-		vec3 prefilteredColor = textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;  
+		vec3 prefilteredColor = textureLod(prefilterMap, WorldR, roughness * MAX_REFLECTION_LOD).rgb; // R Set to world-space. Reflect, reflect 360 degrees around my brother
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
 		float ao = pow(AmbientOcclusion, aoStrength);
+		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
 		vec3 ambient = (kD * (diffuse * ao) + specular);
 		
 		//Ambient + point lights

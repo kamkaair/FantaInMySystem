@@ -595,12 +595,13 @@ void UI::ImGuiDraw()
 		if (ImGui::BeginTabItem("SSAO"))
 		{
 			// Reset options for transformations
-			if (ImGui::TreeNode("Parameters"))
+			if (ImGui::TreeNode("PARAMETERS"))
 			{
 				ImGui::InputInt("Kernel Samples", &kernelSize);
 				ImGui::InputFloat("Radius", &radius);
 				ImGui::InputFloat("Bias", &bias);
 				ImGui::InputFloat("Occlusion Strength", &aoStrength);
+				ImGui::Checkbox("Clamped Midtones", &aoMidtones);
 
 				ImGui::TreePop();
 			}

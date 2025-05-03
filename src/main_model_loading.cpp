@@ -156,7 +156,6 @@ public:
 
 	void render(GLFWwindow* window) {
 		!m_uiDraw->getRenderMode() ? forwardRendering(window) : deferredRendering(window);
-		//!m_uiDraw->getRenderMode() ? deferredRendering(window) : forwardRendering(window);
 	}
 
 	void forwardRendering(GLFWwindow* window) {
@@ -180,9 +179,6 @@ public:
 		// Use other shaders for the rest of the scene...
 		glUseProgram(0); // Unbind any active shader
 		m_shader->bind();
-
-		// Clear the depth buffer to ensure the skybox doesn't interfere with object rendering
-		//glClear(GL_DEPTH_BUFFER_BIT);
 
 		// Render skybox, the background image or clear color
 		glDisable(GL_DEPTH_TEST);
@@ -297,10 +293,14 @@ public:
 
 		m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
 		m_lightPass->setUniform("aoStrength", m_uiDraw->getAoStrength());
+		m_lightPass->setUniform("aoTone", m_uiDraw->getAoMidTones());
+		m_lightPass->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 		// Camera is always at (0.0f, 0.0f, 0.0f), even after viewMatrix * cameraPos.
 		// Works, but the IBL reflections have the same rotation in every angle.
-		m_lightPass->setUniform("view", glm::vec3(0.0f));
-
+		glm::vec3 view = glm::vec3(m_camera->getViewMatrix() * glm::vec4(m_camera->getPosition(), 1.0f));
+		//m_lightPass->setUniform("view", glm::vec3(0.0f));
+		m_lightPass->setUniform("view", view);
+		std::cout << glm::to_string(view) << std::endl;
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
 	}

@@ -2,7 +2,7 @@
 
 SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 	: m_GBuffer(gbuffer), width(inWidth), height(inHeight), Object(__FUNCTION__) {
-	setupSSAO(); constructSSAO();
+	setupSSAO(); //constructSSAO();
 }
 
 SSAO::~SSAO() {
@@ -18,23 +18,16 @@ SSAO::~SSAO() {
 
 void SSAO::constructSSAO() {
 	// Load SSAO shaders
-	if (m_SSAO == 0) {
-		std::string SSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
-		std::string SSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Frag.glsl");
-		m_SSAO = new Shader(SSAOVertSource, SSAOFragSource);
-	}
-	if (m_blurSSAO == 0) {
-		std::string blurSSAOVertSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/SSAO-Vert.glsl");
-		std::string blurSSAOFragSource = utils::loadShader(std::string(ASSET_DIR) + "/shaders/blurSSAO-Frag.glsl");
-		m_blurSSAO = new Shader(blurSSAOVertSource, blurSSAOFragSource);
-	}
+	if (m_SSAO == 0)
+		m_SSAO = utils::makeShader("SSAO-Vert.glsl", "SSAO-Frag.glsl");
+
+	if (m_blurSSAO == 0)
+		m_blurSSAO = utils::makeShader("SSAO-Vert.glsl", "blurSSAO-Frag.glsl");
 }
 
 void SSAO::deconstructSSAO() {
-	if (!m_SSAO == 0) {
-		delete m_SSAO;
-		m_SSAO = 0;
-	}
+	if (!m_SSAO == 0) { delete m_SSAO; m_SSAO = 0; }
+	if (!m_blurSSAO == 0) { delete m_blurSSAO; m_blurSSAO = 0; }
 }
 
 void SSAO::setupSSAO() {
@@ -149,7 +142,6 @@ GLuint SSAO::createSsaoFBO() {
 
 GLuint SSAO::createSsaoBlurFBO() {
 	glGenFramebuffers(1, &ssaoBlurFBO);
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
 
 	return ssaoFBO;
 }
@@ -184,8 +176,12 @@ GLuint SSAO::createSsaoColorBufferBlur() {
 
 void SSAO::recreateColorBuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
 	ssaoColorBuffer = createSsaoColorBuffer();
+	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
+	ssaoColorBufferBlur = createSsaoColorBufferBlur();
 	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f)); // new noiseScale resolution
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

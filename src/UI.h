@@ -73,6 +73,7 @@ public:
 	float getRadius() { return radius; }
 	float getBias() { return bias; }
 	float getAoStrength() { return aoStrength; }
+	bool getAoMidTones() { return aoMidtones; }
 
 	// Add '&' to get the REFERENCE!!!
 	std::vector<Mesh*>& getMeshes() { return m_meshes; }
@@ -104,7 +105,8 @@ private:
 	int backgroundMode = 0, kernelSize = 64;
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 
-	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, deferredRendering = false, windowDisabled = false;
+	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
+		deferredRendering = false, windowDisabled = false, aoMidtones = false;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };
