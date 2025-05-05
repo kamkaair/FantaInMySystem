@@ -52,7 +52,7 @@ public:
 		m_ssaoClass = new SSAO(m_GBuffer, width, height);
 
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass);
+		m_uiDraw = new UI(m_shader, m_backImage, m_lightPass, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -297,10 +297,7 @@ public:
 		m_lightPass->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 		// Camera is always at (0.0f, 0.0f, 0.0f), even after viewMatrix * cameraPos.
 		// Works, but the IBL reflections have the same rotation in every angle.
-		glm::vec3 view = glm::vec3(m_camera->getViewMatrix() * glm::vec4(m_camera->getPosition(), 1.0f));
-		//m_lightPass->setUniform("view", glm::vec3(0.0f));
-		m_lightPass->setUniform("view", view);
-		std::cout << glm::to_string(view) << std::endl;
+		m_lightPass->setUniform("view", glm::vec3(0.0f));
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
 	}

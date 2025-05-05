@@ -3,12 +3,14 @@
 
 UI::UI(Shader* shader,
 	Shader* backImage,
+	Shader* lightPass,
 	TextureLoading* texLoad,
 	HDRI* hdri,
 	GBuffer* gbuffer,
 	SSAO* ssao)
 	: m_shader(shader),
 	m_backImage(backImage),
+	m_lightPass(lightPass),
 	m_texLoading(texLoad),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
@@ -133,7 +135,7 @@ void UI::ImGuiDraw()
 	ImGui::Begin("Control Window", 0, disableInteraction()); // Make a new window
 
 	ImGui::Text("Sup broidi, press 'E' to lock/unlock mouse. Feel free to try out different settings!");
-	ImGui::Text("Press 'H' to hide the window!");
+	ImGui::Text("Press 'H' to hide the window! Toggle 'V' for camera orbit/freecam");
 	//ImGui::Text(("Milliseconds Per Frame: " + std::to_string(1000.0 / calculateFPS())).c_str());
 	ImGui::Text(("Frames Per Second: " + std::to_string(fpsCounter.calculateFPS())).c_str());
 
@@ -486,28 +488,43 @@ void UI::ImGuiDraw()
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
-				// COMMENTED OUT FOR NOW
 				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
+					m_shader->bind();
 					m_shader->setUniform("HdrExposure", HdrExposure);
+					m_lightPass->bind();
+					m_lightPass->setUniform("HdrExposure", HdrExposure);
 				}
 
 				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
+					m_shader->bind();
 					m_shader->setUniform("HdrContrast", HdrContrast);
+					m_lightPass->bind();
+					m_lightPass->setUniform("HdrContrast", HdrContrast);
 				}
 
-
 				if (ImGui::SliderFloat("Hue", &HueChange, -10.0f, 10.0f)) {
+					m_shader->bind();
 					m_shader->setUniform("HueChange", HueChange);
+					m_lightPass->bind();
+					m_lightPass->setUniform("HueChange", HueChange);
 				}
 
 				// Load selected HDR file and generate the maps for them
 				if (ImGui::Button("Reset Exposure/Contrast")) {
 					HdrContrast = 2.2f;
-					m_shader->setUniform("HdrContrast", HdrContrast);
 					HdrExposure = 1.0f;
-					m_shader->setUniform("HdrExposure", HdrExposure);
 					HueChange = 0.0f;
+
+					m_shader->bind();
+					m_shader->setUniform("HdrContrast", HdrContrast);
+					m_shader->setUniform("HdrExposure", HdrExposure);
 					m_shader->setUniform("HueChange", HueChange);
+
+					m_lightPass->bind();
+					m_lightPass->setUniform("HueChange", HueChange);
+					m_lightPass->setUniform("HdrContrast", HdrContrast);
+					m_lightPass->setUniform("HdrExposure", HdrExposure);
+
 				}
 
 				// Padding
@@ -592,10 +609,9 @@ void UI::ImGuiDraw()
 			ImGui::EndTabItem();
 		}
 
-		if (ImGui::BeginTabItem("SSAO"))
+		if (ImGui::BeginTabItem("POST-PROCESS"))
 		{
-			// Reset options for transformations
-			if (ImGui::TreeNode("PARAMETERS"))
+			if (ImGui::TreeNode("SSAO"))
 			{
 				ImGui::InputInt("Kernel Samples", &kernelSize);
 				ImGui::InputFloat("Radius", &radius);

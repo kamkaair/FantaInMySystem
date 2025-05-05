@@ -15,6 +15,10 @@
 	uniform sampler2D RoughnessMap;
 	uniform sampler2D NormalMap;
 	
+	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
+	uniform vec3 u_DiffuseColor;
+	uniform float u_Roughness, u_Metallic;
+	
 	//Normal map function
 	vec3 getNormalFromMap()
 	{
@@ -38,15 +42,27 @@
 		// Store the fragment position vector in the first gbuffer texture
 		gPosition = fragPos;
 		
-		// Also store the per-fragment normals into the gbuffer
-		//gNormal = normalize(normal);
+		// Also store the per-fragment normals into the gbuffer	
 		vec3 N = texture(NormalMap, texCoord).rgb == vec3(0.0) ? normalize(normal) : getNormalFromMap();
 		gNormal = N;
 		
 		// And the diffuse per-fragment color
-		gAlbedoSpec.rgb = (pow(texture(DiffuseMap, texCoord).rgb, vec3(2.2)));
+		//gAlbedoSpec.rgb = (pow(texture(DiffuseMap, texCoord).rgb, vec3(2.2)));	
+		gAlbedoSpec.rgb = u_DiffuseColor;
+		if (useDiffuseTexture) {
+			gAlbedoSpec.rgb = (pow(texture(DiffuseMap, texCoord).rgb, vec3(2.2)));
+		}
 		
 		// Metallic and Roughness values into a singular sampler2D
-		gMetallicRoughness.r = texture(MetallicMap, texCoord).r;
-		gMetallicRoughness.g  = texture(RoughnessMap, texCoord).r;
+		//gMetallicRoughness.r = texture(MetallicMap, texCoord).r;	
+		gMetallicRoughness.r = u_Metallic;
+		if (useMetallicTexture) {
+			gMetallicRoughness.r = texture(MetallicMap, texCoord).r;
+		}
+		
+		//gMetallicRoughness.g  = texture(RoughnessMap, texCoord).r;	
+		gMetallicRoughness.g = u_Roughness;
+		if (useRoughnessTexture) {
+			gMetallicRoughness.g  = texture(RoughnessMap, texCoord).r;	
+		}
 	}

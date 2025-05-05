@@ -7,11 +7,14 @@
 	in vec2 texCoord;
 	in vec3 normal;
 
+	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
+	// PBR
 	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap;
 	//uniform sampler2D ssao;
 	
+	// Use textures or basic colors/values?
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
 	
 	uniform vec3 u_DiffuseColor, objectColor;

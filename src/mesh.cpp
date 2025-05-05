@@ -71,6 +71,14 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 
 	// Bind material textures
 	if (m_material) {
+		// Set uniform values for material properties
+		shader->setUniform("u_DiffuseColor", m_material->diffuseColor.x, m_material->diffuseColor.y, m_material->diffuseColor.z);
+		shader->setUniform("u_Roughness", m_material->roughness);
+		shader->setUniform("u_Metallic", m_material->metallic);
+
+		shader->setUniform("useDiffuseTexture", m_material->useDiffuseTexture);
+		shader->setUniform("useMetallicTexture", m_material->useMetallicTexture);
+		shader->setUniform("useRoughnessTexture", m_material->useRoughnessTexture);
 
 		const std::vector<GLuint>& textureIds = m_material->getTextures();
 		// Ensure you bind the textures with the appropriate uniforms

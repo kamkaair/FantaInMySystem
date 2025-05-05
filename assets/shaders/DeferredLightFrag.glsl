@@ -10,10 +10,15 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness, gDepth;
 	// SSAO
-	uniform sampler2D ssao;
-	
-	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
+	uniform sampler2D ssao;	
 	uniform bool aoTone;
+	// General ImGui uniforms
+	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
+	// Texture or solid color/value usage
+	//uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
+	//uniform vec3 u_DiffuseColor, objectColor;
+	//uniform float u_Roughness, u_Metallic;
+	
 	uniform mat4 inverseView;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
@@ -88,10 +93,13 @@
 		if(!hasGeometry){ discard; return; }
 		
 		vec3 N = texture(gNormal, texCoord).rgb;
+		
 		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;
-		float metallic = texture(gMetallicRoughness, texCoord).r;
-		vec3 metallics = texture(gMetallicRoughness, texCoord).rgb;
+		
 		float roughness = texture(gMetallicRoughness, texCoord).g;
+		
+		float metallic = texture(gMetallicRoughness, texCoord).r;
+
 		float AmbientOcclusion = texture(ssao, texCoord).r;
 		
 		// PBR	
