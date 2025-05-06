@@ -143,11 +143,8 @@ void UI::ImGuiDraw()
 		if (deferredRendering) {
 			m_GBuffer->constructDeferredShaders();
 			m_SSAO->constructSSAO();
-			m_GBuffer->setRenderReady(true);
-			std::cout << "Render READY!" << std::endl;
 		}
 		else if (!deferredRendering) {
-			m_GBuffer->setRenderReady(false);
 			m_SSAO->deconstructSSAO();
 			m_GBuffer->deconstructDeferredShaders();
 		}
@@ -439,6 +436,9 @@ void UI::ImGuiDraw()
 				// COMMENTED OUT FOR NOW
 				if (ImGui::SliderFloat("Lamp Strength", &lampStrength, 0.0f, 100.0f))  // Directly modify pointLightColor
 				{
+					m_GBuffer->getLightPass()->bind();
+					m_GBuffer->getLightPass()->setUniform("LampStrength", lampStrength);
+					m_shader->bind();
 					m_shader->setUniform("LampStrength", lampStrength); // Pass the float value to the shader
 				}
 				ImGui::TreePop();

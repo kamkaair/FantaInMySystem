@@ -208,51 +208,45 @@ public:
 	}
 
 	void deferredRendering(GLFWwindow* window) {
-		if (!m_GBuffer->getRenderReady() || m_GBuffer->getGeometryPass() == 0) {
-			m_GBuffer->constructDeferredShaders(); // TODO: Do this better
-			std::cout << "Shaders not ready yet! Geometry pass: " << m_GBuffer->getGeometryPass() << " LightingPass: " << m_GBuffer->getLightPass() << std::endl;
+		glfwGetFramebufferSize(window, &width, &height);
+		m_camera->setAspectRatio(width, height);
+		m_GBuffer->setResolution(width, height);
+		framebuffer_size_callback(window, width, height);
+		glViewport(0, 0, width, height);
+		checkGLError();
+
+		// Clear everything
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// 1. Geometry pass: render scene's geometry/color data into gbuffer
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// Render meshes
+		for (Mesh* mesh : m_uiDraw->getMeshes()) {
+			mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera->getViewMatrix(),
+				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 		}
-		else {
-			glfwGetFramebufferSize(window, &width, &height);
-			m_camera->setAspectRatio(width, height);
-			m_GBuffer->setResolution(width, height);
-			framebuffer_size_callback(window, width, height);
-			glViewport(0, 0, width, height);
-			checkGLError();
 
-			// Clear everything
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-			// 1. Geometry pass: render scene's geometry/color data into gbuffer
-			glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		// 2. SSAO pass
+		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
 
-			// Render meshes
-			for (Mesh* mesh : m_uiDraw->getMeshes()) {
-				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera->getViewMatrix(),
-					m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
-			}
+		// 3. Lighting pass
+		deferredLightPass();
 
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		// 4. Render the skybox/background image
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
 
-			// 2. SSAO pass
-			m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
-
-			// 3. Lighting pass
-			deferredLightPass();
-
-			// 4. Render the skybox/background image
-			switch (m_uiDraw->getBackgroundMode()) {
-			case 0: m_HDRI->renderSkybox(m_camera); break;
-			case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-			}
-
-			// 5. Render icons and UI
-			if (!g_input->getImGuiVisibility()) {
-				m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
-				m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
-				m_uiDraw->ImGuiDraw();
-			}
+		// 5. Render icons and UI
+		if (!g_input->getImGuiVisibility()) {
+			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
+			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
+			m_uiDraw->ImGuiDraw();
 		}
 	}
 
@@ -279,12 +273,6 @@ public:
 		m_GBuffer->getLightPass()->setUniform("gMetallicRoughness", 6);
 		m_GBuffer->getLightPass()->setUniform("ssao", 7);
 
-		//m_lightPass->setUniform("gPosition", 3);
-		//m_lightPass->setUniform("gNormal", 4);
-		//m_lightPass->setUniform("gAlbedoSpec", 5);
-		//m_lightPass->setUniform("gMetallicRoughness", 6);
-		//m_lightPass->setUniform("ssao", 7);
-
 		// Set light uniforms + view
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
 			glm::vec3 lightPosWorld = m_uiDraw->getPointLightPos()[i];
@@ -292,22 +280,13 @@ public:
 
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].position", lightPosView);
 
-			//m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].position", lightPosView);
-
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].color",
 				m_uiDraw->getPointLightColor()[i]);
-
-			//m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].color",
-				//m_uiDraw->getPointLightColor()[i]);
 
 			// Set attenuation factors for the point light
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
-
-			//m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);   // Constant attenuation
-			//m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);    // Linear attenuation
-			//m_lightPass->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f); // Quadratic attenuation
 		}
 
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
@@ -315,15 +294,9 @@ public:
 		m_GBuffer->getLightPass()->setUniform("aoTone", m_uiDraw->getAoMidTones());
 		m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 
-		//m_lightPass->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
-		//m_lightPass->setUniform("aoStrength", m_uiDraw->getAoStrength());
-		//m_lightPass->setUniform("aoTone", m_uiDraw->getAoMidTones());
-		//m_lightPass->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
-
 		// Camera is always at (0.0f, 0.0f, 0.0f), even after viewMatrix * cameraPos.
 		// Works, but the IBL reflections have the same rotation in every angle.
 		m_GBuffer->getLightPass()->setUniform("view", glm::vec3(0.0f));
-		//m_lightPass->setUniform("view", glm::vec3(0.0f));
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
 	}
@@ -419,9 +392,6 @@ private:
 
 	Shader* m_icon;
 	Shader* m_backImage;
-
-	//Shader* m_lightPass;
-	//Shader* m_geometryPass;
 
 	// Class references
 	Camera*         			m_camera;

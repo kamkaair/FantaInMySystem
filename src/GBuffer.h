@@ -35,9 +35,6 @@ public:
 	Shader* getLightPass() { return m_lightPass; }
 	Shader* getGeometryPass() { return m_geometryPass; }
 
-	void setRenderReady(bool state) { renderReady = state; }
-	bool getRenderReady() { return renderReady; }
-
 private:
 	int width, height;
 
@@ -48,6 +45,4 @@ private:
 	GLuint gBuffer = 0, ssaoFBO = 0, rboDepth = 0;
 	// Maps
 	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0;
-
-	bool renderReady = false;
 };
