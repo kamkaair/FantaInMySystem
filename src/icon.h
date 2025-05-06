@@ -20,7 +20,6 @@ public:
 
 	glm::mat4 processIconMatrix(glm::vec3 targetPos, float iconSize);
 
-
 private:
 	std::vector<Texture*> m_iconTexture;
 	Mesh* m_meshRender;

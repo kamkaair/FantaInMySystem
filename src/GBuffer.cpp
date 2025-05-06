@@ -1,4 +1,5 @@
 #include "GBuffer.h"
+#include "utils.h"
 
 GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), Object(__FUNCTION__) {
 	constructGBuffer();
@@ -101,4 +102,19 @@ void GBuffer::CleanUpGBuffer() {
 	if (gAlbedo != 0) { glDeleteTextures(1, &gAlbedo); gAlbedo = 0; }
 	if (gMetalRough != 0) { glDeleteTextures(1, &gMetalRough); gMetalRough = 0; }
 	if (rboDepth != 0) { glDeleteRenderbuffers(1, &rboDepth); rboDepth = 0; }
+	if (!m_geometryPass == 0) { delete m_geometryPass; m_geometryPass = 0; }
+	if (!m_lightPass == 0) { delete m_lightPass; m_lightPass = 0; }
+}
+
+void GBuffer::constructDeferredShaders() {
+	if (m_geometryPass == 0)
+		m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl"); std::cout << "Constructed geometry" << std::endl;
+
+	if (m_lightPass == 0)
+		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl"); std::cout << "Constructed light" << std::endl;
+}
+
+void GBuffer::deconstructDeferredShaders() {
+	if (!m_geometryPass == 0) { delete m_geometryPass; m_geometryPass = 0; std::cout << "DESTOYED geometry" << std::endl; }
+	if (!m_lightPass == 0) { delete m_lightPass; m_lightPass = 0; std::cout << "DESTOYED light" << std::endl; }
 }

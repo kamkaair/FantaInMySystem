@@ -3,14 +3,12 @@
 
 UI::UI(Shader* shader,
 	Shader* backImage,
-	Shader* lightPass,
 	TextureLoading* texLoad,
 	HDRI* hdri,
 	GBuffer* gbuffer,
 	SSAO* ssao)
 	: m_shader(shader),
 	m_backImage(backImage),
-	m_lightPass(lightPass),
 	m_texLoading(texLoad),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
@@ -143,10 +141,15 @@ void UI::ImGuiDraw()
 
 	if (ImGui::Checkbox("Deferred rendering", &deferredRendering)) {
 		if (deferredRendering) {
+			m_GBuffer->constructDeferredShaders();
 			m_SSAO->constructSSAO();
+			m_GBuffer->setRenderReady(true);
+			std::cout << "Render READY!" << std::endl;
 		}
 		else if (!deferredRendering) {
+			m_GBuffer->setRenderReady(false);
 			m_SSAO->deconstructSSAO();
+			m_GBuffer->deconstructDeferredShaders();
 		}
 	}
 
@@ -491,22 +494,22 @@ void UI::ImGuiDraw()
 				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
 					m_shader->bind();
 					m_shader->setUniform("HdrExposure", HdrExposure);
-					m_lightPass->bind();
-					m_lightPass->setUniform("HdrExposure", HdrExposure);
+					m_GBuffer->getLightPass()->bind();
+					m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
 				}
 
 				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
 					m_shader->bind();
 					m_shader->setUniform("HdrContrast", HdrContrast);
-					m_lightPass->bind();
-					m_lightPass->setUniform("HdrContrast", HdrContrast);
+					m_GBuffer->getLightPass()->bind();
+					m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
 				}
 
 				if (ImGui::SliderFloat("Hue", &HueChange, -10.0f, 10.0f)) {
 					m_shader->bind();
 					m_shader->setUniform("HueChange", HueChange);
-					m_lightPass->bind();
-					m_lightPass->setUniform("HueChange", HueChange);
+					m_GBuffer->getLightPass()->bind();
+					m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
 				}
 
 				// Load selected HDR file and generate the maps for them
@@ -520,11 +523,10 @@ void UI::ImGuiDraw()
 					m_shader->setUniform("HdrExposure", HdrExposure);
 					m_shader->setUniform("HueChange", HueChange);
 
-					m_lightPass->bind();
-					m_lightPass->setUniform("HueChange", HueChange);
-					m_lightPass->setUniform("HdrContrast", HdrContrast);
-					m_lightPass->setUniform("HdrExposure", HdrExposure);
-
+					m_GBuffer->getLightPass()->bind();
+					m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
+					m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
+					m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
 				}
 
 				// Padding

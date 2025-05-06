@@ -46,7 +46,6 @@ class UI : public kgfw::Object
 public:
 	UI(Shader* shader,
 		Shader* backImage,
-		Shader* lightPass,
 		TextureLoading* texLoad,
 		HDRI* hdri,
 		GBuffer* gbuffer,
@@ -89,7 +88,6 @@ private:
 
 	Shader* m_shader; // Shader reference
 	Shader* m_backImage;
-	Shader* m_lightPass;
 
 	std::vector<Mesh*> m_meshes; // Mesh reference
 	TextureLoading* m_texLoading;
