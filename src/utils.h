@@ -1,35 +1,11 @@
 #pragma once
 #include <iostream>
 #include <fstream>
-#include <unordered_map>
-#include <vector>			// Include std::vector
+#include <vector>
 #include <filesystem>
 
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>
-
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
-#include <assimp/DefaultLogger.hpp>
-#include <assimp/LogStream.hpp>
-
-#include "imgui.h"
-#pragma once
-#include <iostream>
-#include <fstream>
-#include <unordered_map>
-#include <vector>			// Include std::vector
-#include <filesystem>
-
-#include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
-#include <glm/gtc/type_ptr.hpp>
-
-#include <assimp/Importer.hpp>
-#include <assimp/postprocess.h>
-#include <assimp/scene.h>
-#include <assimp/DefaultLogger.hpp>
-#include <assimp/LogStream.hpp>
 
 #include <GLFW/glfw3.h>				// Include glfw for windows
 
@@ -66,6 +42,11 @@ namespace utils {
 		return new Shader(vertexShaderSource, fragmentShaderSource);
 	}
 
+	// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
+	auto deleteObject = [](auto*& ptr) {
+		delete ptr;
+		ptr = 0;
+	};
 
 	class utils {
 	public:

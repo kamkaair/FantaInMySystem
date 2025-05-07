@@ -8,9 +8,8 @@ GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), 
 // TODO: seems that the cleanup doesn't delete everything (memory usage rises up after reconstructing G-Buffer)
 GBuffer::~GBuffer() {
 	CleanUpGBuffer();
-	if (!m_shader == 0) { delete m_shader; m_shader = 0; }
-	if (!m_geometryPass == 0) { delete m_geometryPass; m_geometryPass = 0; }
-	if (!m_lightPass == 0) { delete m_lightPass; m_lightPass = 0; }
+	deconstructForwardShaders();
+	deconstructDeferredShaders();
 }
 
 void GBuffer::constructGBuffer() {
@@ -128,10 +127,10 @@ void GBuffer::constructForwardShaders() {
 }
 
 void GBuffer::deconstructDeferredShaders() {
-	if (!m_geometryPass == 0) { delete m_geometryPass; m_geometryPass = 0; }
-	if (!m_lightPass == 0) { delete m_lightPass; m_lightPass = 0; }
+	if (!m_geometryPass == 0) { utils::deleteObject(m_geometryPass); }
+	if (!m_lightPass == 0) { utils::deleteObject(m_lightPass); }
 }
 
 void GBuffer::deconstructForwardShaders() {
-	if (!m_shader == 0) { delete m_shader; m_shader = 0; }
+	if (!m_shader == 0) { utils::deleteObject(m_shader); }
 }

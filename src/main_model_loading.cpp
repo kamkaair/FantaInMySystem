@@ -103,27 +103,21 @@ public:
 	}
 
 	~Application() {
-		// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
-		auto deleteObject = [](auto*& ptr) {
-			delete ptr;
-			ptr = 0;
-		};
-
 		// Delete shaders
-		deleteObject(m_icon);
-		deleteObject(m_backImage);
+		utils::deleteObject(m_icon);
+		utils::deleteObject(m_backImage);
 
 		// Delete references
-		deleteObject(m_HDRI);
-		deleteObject(m_uiDraw);
-		deleteObject(m_texLoading);
-		deleteObject(g_input);
-		deleteObject(m_GBuffer);
-		deleteObject(m_iconClass);
-		deleteObject(m_ssaoClass);
+		utils::deleteObject(m_HDRI);
+		utils::deleteObject(m_uiDraw);
+		utils::deleteObject(m_texLoading);
+		utils::deleteObject(g_input);
+		utils::deleteObject(m_GBuffer);
+		utils::deleteObject(m_iconClass);
+		utils::deleteObject(m_ssaoClass);
 
 		// Delete Camera
-		deleteObject(m_camera);
+		utils::deleteObject(m_camera);
 
 		//Delete all textures
 		for (Texture* texture : m_textures)
