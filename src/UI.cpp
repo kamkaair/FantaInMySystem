@@ -1,14 +1,12 @@
 #include "UI.h"
 #include "ssao.h"
 
-UI::UI(Shader* shader,
-	Shader* backImage,
+UI::UI(Shader* backImage,
 	TextureLoading* texLoad,
 	HDRI* hdri,
 	GBuffer* gbuffer,
 	SSAO* ssao)
-	: m_shader(shader),
-	m_backImage(backImage),
+	: m_backImage(backImage),
 	m_texLoading(texLoad),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
@@ -125,7 +123,7 @@ void UI::ImGuiDraw()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	m_shader->bind();  // Make sure the shader is bound
+	m_GBuffer->getForwardShader()->bind(); // Make sure the shader is bound
 
 	//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGuiAlpha);
@@ -142,10 +140,12 @@ void UI::ImGuiDraw()
 	if (ImGui::Checkbox("Deferred rendering", &deferredRendering)) {
 		if (deferredRendering) {
 			m_GBuffer->constructDeferredShaders();
+			m_GBuffer->deconstructForwardShaders();
 			m_SSAO->constructSSAO();
 		}
 		else if (!deferredRendering) {
 			m_SSAO->deconstructSSAO();
+			m_GBuffer->constructForwardShaders();
 			m_GBuffer->deconstructDeferredShaders();
 		}
 	}
@@ -436,10 +436,13 @@ void UI::ImGuiDraw()
 				// COMMENTED OUT FOR NOW
 				if (ImGui::SliderFloat("Lamp Strength", &lampStrength, 0.0f, 100.0f))  // Directly modify pointLightColor
 				{
-					m_GBuffer->getLightPass()->bind();
-					m_GBuffer->getLightPass()->setUniform("LampStrength", lampStrength);
-					m_shader->bind();
-					m_shader->setUniform("LampStrength", lampStrength); // Pass the float value to the shader
+					shaderBind();
+					shaderSet("LampStrength", lampStrength);
+
+					//m_GBuffer->getLightPass()->bind();
+					//m_GBuffer->getLightPass()->setUniform("LampStrength", lampStrength);
+					//m_GBuffer->getForwardShader()->bind();
+					//m_GBuffer->getForwardShader()->setUniform("LampStrength", lampStrength); // Pass the float value to the shader 
 				}
 				ImGui::TreePop();
 			}
@@ -492,24 +495,35 @@ void UI::ImGuiDraw()
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
 				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
-					m_shader->bind();
-					m_shader->setUniform("HdrExposure", HdrExposure);
-					m_GBuffer->getLightPass()->bind();
-					m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
+
+					shaderBind();
+					shaderSet("HdrExposure", HdrExposure);
+
+					//m_GBuffer->getForwardShader()->bind();
+					//m_GBuffer->getForwardShader()->setUniform("HdrExposure", HdrExposure);
+					//m_GBuffer->getLightPass()->bind();
+					//m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
 				}
 
 				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
-					m_shader->bind();
-					m_shader->setUniform("HdrContrast", HdrContrast);
-					m_GBuffer->getLightPass()->bind();
-					m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
+
+					shaderBind();
+					shaderSet("HdrContrast", HdrContrast);
+
+					//m_GBuffer->getForwardShader()->bind();
+					//m_GBuffer->getForwardShader()->setUniform("HdrContrast", HdrContrast);
+					//m_GBuffer->getLightPass()->bind();
+					//m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
 				}
 
 				if (ImGui::SliderFloat("Hue", &HueChange, -10.0f, 10.0f)) {
-					m_shader->bind();
-					m_shader->setUniform("HueChange", HueChange);
-					m_GBuffer->getLightPass()->bind();
-					m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
+					shaderBind();
+					shaderSet("HueChange", HueChange);
+
+					//m_GBuffer->getForwardShader()->bind();
+					//m_GBuffer->getForwardShader()->setUniform("HueChange", HueChange);
+					//m_GBuffer->getLightPass()->bind();
+					//m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
 				}
 
 				// Load selected HDR file and generate the maps for them
@@ -518,15 +532,20 @@ void UI::ImGuiDraw()
 					HdrExposure = 1.0f;
 					HueChange = 0.0f;
 
-					m_shader->bind();
-					m_shader->setUniform("HdrContrast", HdrContrast);
-					m_shader->setUniform("HdrExposure", HdrExposure);
-					m_shader->setUniform("HueChange", HueChange);
+					shaderBind();
+					shaderSet("HdrContrast", HdrContrast);
+					shaderSet("HdrExposure", HdrExposure);
+					shaderSet("HueChange", HueChange);
 
-					m_GBuffer->getLightPass()->bind();
-					m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
-					m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
-					m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
+					//m_GBuffer->getForwardShader()->bind();
+					//m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
+					//m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
+					//m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
+
+					//m_GBuffer->getLightPass()->bind();
+					//m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
+					//m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
+					//m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
 				}
 
 				// Padding

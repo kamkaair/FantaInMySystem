@@ -30,16 +30,23 @@ public:
 	void constructGBuffer();
 
 	void constructDeferredShaders();
+	void constructForwardShaders();
 	void deconstructDeferredShaders();
+	void deconstructForwardShaders();
 
+	Shader* getForwardShader() { return m_shader; }
 	Shader* getLightPass() { return m_lightPass; }
 	Shader* getGeometryPass() { return m_geometryPass; }
+	Shader* getCurrentShader() { return m_currentShader; }
+	void setCurrentShader(Shader* inShader) { m_currentShader = inShader; }
 
 private:
 	int width, height;
 
+	Shader* m_shader = 0;
 	Shader* m_lightPass = 0;
 	Shader* m_geometryPass = 0;
+	Shader* m_currentShader;
 
 	// Buffers
 	GLuint gBuffer = 0, ssaoFBO = 0, rboDepth = 0;

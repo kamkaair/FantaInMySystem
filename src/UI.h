@@ -44,8 +44,7 @@ class SSAO;
 class UI : public kgfw::Object
 {
 public:
-	UI(Shader* shader,
-		Shader* backImage,
+	UI(Shader* backImage,
 		TextureLoading* texLoad,
 		HDRI* hdri,
 		GBuffer* gbuffer,
@@ -75,6 +74,9 @@ public:
 	float getAoStrength() { return aoStrength; }
 	bool getAoMidTones() { return aoMidtones; }
 
+	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
+	void shaderBind() { m_GBuffer->getCurrentShader()->bind(); }
+
 	// Add '&' to get the REFERENCE!!!
 	std::vector<Mesh*>& getMeshes() { return m_meshes; }
 	std::vector<glm::vec3>& getPointLightPos() { return pointLightPos; }
@@ -86,7 +88,6 @@ public:
 private:
 	SettingsMaterial m_settingsMaterial;
 
-	Shader* m_shader; // Shader reference
 	Shader* m_backImage;
 
 	std::vector<Mesh*> m_meshes; // Mesh reference

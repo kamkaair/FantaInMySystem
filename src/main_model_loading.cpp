@@ -25,7 +25,6 @@ class Application : public kgfw::Object
 public:
 	Application()
 		: Object(__FUNCTION__)
-		, m_shader(0)
 		, m_cubemapShader(0)
 		, m_BackgroundShader(0)
 		, m_IrradianceShader(0)
@@ -52,7 +51,7 @@ public:
 		m_ssaoClass = new SSAO(m_GBuffer, width, height);
 
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_shader, m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass);
+		m_uiDraw = new UI(m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -110,7 +109,7 @@ public:
 		};
 
 		// Delete shaders
-		deleteObject(m_shader);
+		//deleteObject(m_shader);
 		deleteObject(m_icon);
 		deleteObject(m_backImage);
 
@@ -140,7 +139,7 @@ public:
 	}
 
 	void bindShaders() {
-		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl");
+		//m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl");
 		m_cubemapShader = utils::makeShader("cubemap_vert.glsl", "cubemap_frag.glsl");
 		m_BackgroundShader = utils::makeShader("backgroundVert.glsl", "backgroundFrag.glsl");
 		m_IrradianceShader = utils::makeShader("cubemap_vert.glsl", "irradianceFrag.glsl");
@@ -148,8 +147,6 @@ public:
 		m_brdf = utils::makeShader("brdfVert.glsl", "brdfFrag.glsl");
 		m_icon = utils::makeShader("iconVert.glsl", "iconFrag.glsl");
 		m_backImage = utils::makeShader("backgroundImageVert.glsl", "backgroundImageFrag.glsl");
-		//m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl");
-		//m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl");
 	}
 
 	void render(GLFWwindow* window) {
@@ -176,7 +173,7 @@ public:
 
 		// Use other shaders for the rest of the scene...
 		glUseProgram(0); // Unbind any active shader
-		m_shader->bind();
+		m_GBuffer->getForwardShader()->bind();
 
 		// Render skybox, the background image or clear color
 		glDisable(GL_DEPTH_TEST);
@@ -194,8 +191,8 @@ public:
 
 			// Forward rendering
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
-				m_HDRI->setHDRITextures(m_shader);
-				mesh->Render(m_shader, m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
+				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
+				mesh->Render(m_GBuffer->getForwardShader(), m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 			}
 		}
 
@@ -382,7 +379,7 @@ private:
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 	// Pointers to the Shader objects
-	Shader* m_shader;				
+	//Shader* m_shader;				
 
 	Shader* m_cubemapShader;
 	Shader* m_BackgroundShader;

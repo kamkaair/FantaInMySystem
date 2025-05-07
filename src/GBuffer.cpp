@@ -2,13 +2,13 @@
 #include "utils.h"
 
 GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), Object(__FUNCTION__) {
-	constructGBuffer();
+	constructForwardShaders(); constructGBuffer();
 }
 
 // TODO: seems that the cleanup doesn't delete everything (memory usage rises up after reconstructing G-Buffer)
 GBuffer::~GBuffer() {
 	CleanUpGBuffer();
-
+	if (!m_shader == 0) { delete m_shader; m_shader = 0; }
 	if (!m_geometryPass == 0) { delete m_geometryPass; m_geometryPass = 0; }
 	if (!m_lightPass == 0) { delete m_lightPass; m_lightPass = 0; }
 }
@@ -112,10 +112,28 @@ void GBuffer::constructDeferredShaders() {
 		m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl");
 
 	if (m_lightPass == 0)
-		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl");
+	{
+		setCurrentShader(0);
+		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl"); 
+		setCurrentShader(m_lightPass);
+	}
+
+}
+
+void GBuffer::constructForwardShaders() {
+	if (m_shader == 0) {
+		setCurrentShader(0);
+		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl"); 
+		setCurrentShader(m_shader);
+	}
+
 }
 
 void GBuffer::deconstructDeferredShaders() {
 	if (!m_geometryPass == 0) { delete m_geometryPass; m_geometryPass = 0; }
 	if (!m_lightPass == 0) { delete m_lightPass; m_lightPass = 0; }
+}
+
+void GBuffer::deconstructForwardShaders() {
+	if (!m_shader == 0) { delete m_shader; m_shader = 0; }
 }
