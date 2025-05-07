@@ -70,8 +70,9 @@ public:
 
 		// Load and push back textures/materials
 		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
-		m_texLoading->loadMaterials();
-		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes());
+		const int presetMode = 3;
+		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
+		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
@@ -109,7 +110,6 @@ public:
 		};
 
 		// Delete shaders
-		//deleteObject(m_shader);
 		deleteObject(m_icon);
 		deleteObject(m_backImage);
 

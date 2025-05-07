@@ -38,7 +38,7 @@ public:
 	Shader* getLightPass() { return m_lightPass; }
 	Shader* getGeometryPass() { return m_geometryPass; }
 	Shader* getCurrentShader() { return m_currentShader; }
-	void setCurrentShader(Shader* inShader) { m_currentShader = inShader; }
+	void setCurrentShader(Shader* inShader) { m_currentShader = inShader; } // Used for setting (and the other for getting) lighting shaders in the UI
 
 private:
 	int width, height;

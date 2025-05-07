@@ -18,13 +18,13 @@ public:
 
 	Texture* loadTexture(const std::string& path);
 	Material* checkAndAddMaterial(const std::pair<std::vector<GLuint>, std::vector<Texture*>>& textureData, const std::string& materialName);
-	std::unordered_map<int, Material*> loadMaterials();
+	std::unordered_map<int, Material*> loadMaterials(int presetMode);
 	std::pair<std::vector<GLuint>, std::vector<Texture*>> loadTextureSet(const std::string& baseColorPath, const std::string& metallicMapPath, const std::string& roughnessMapPath, const std::string& normalMapPath);
 	
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::vector<Material*>& loadedMaterials);
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::vector<Material*>& loadedMaterials);
 	std::vector<Mesh*> loadMeshes(const std::string& path, const std::vector<Material*>& loadedMaterials, const std::string& meshName);
-	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes);
+	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
 	std::vector<std::string> FileSystem(std::string& path);
 
 	std::vector<Material*>& getMaterials() { return m_materials; }

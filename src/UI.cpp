@@ -123,8 +123,6 @@ void UI::ImGuiDraw()
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 
-	m_GBuffer->getForwardShader()->bind(); // Make sure the shader is bound
-
 	//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGuiAlpha);
 	ImGuiStyleSetup();
@@ -139,11 +137,13 @@ void UI::ImGuiDraw()
 
 	if (ImGui::Checkbox("Deferred rendering", &deferredRendering)) {
 		if (deferredRendering) {
+			glUseProgram(0); // Unbind any active shader
 			m_GBuffer->constructDeferredShaders();
 			m_GBuffer->deconstructForwardShaders();
 			m_SSAO->constructSSAO();
 		}
 		else if (!deferredRendering) {
+			glUseProgram(0); // Unbind any active shader
 			m_SSAO->deconstructSSAO();
 			m_GBuffer->constructForwardShaders();
 			m_GBuffer->deconstructDeferredShaders();

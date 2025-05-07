@@ -117,7 +117,6 @@ void GBuffer::constructDeferredShaders() {
 		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl"); 
 		setCurrentShader(m_lightPass);
 	}
-
 }
 
 void GBuffer::constructForwardShaders() {
@@ -126,7 +125,6 @@ void GBuffer::constructForwardShaders() {
 		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl"); 
 		setCurrentShader(m_shader);
 	}
-
 }
 
 void GBuffer::deconstructDeferredShaders() {
