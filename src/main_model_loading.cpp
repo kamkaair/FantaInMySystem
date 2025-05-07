@@ -32,7 +32,7 @@ public:
 		, m_brdf(0)
 		, m_icon(0)
 		, m_backImage(0)
-		, m_uiDraw(nullptr) // Initialize UI pointer
+		, m_uiDraw(nullptr)
 		, m_HDRI(nullptr)
 		, m_texLoading(nullptr)
 		, m_camera(nullptr)

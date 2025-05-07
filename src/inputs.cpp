@@ -160,10 +160,10 @@ void Inputs::orbitCursorRight(GLFWwindow* window, double xposIn, double yposIn)
 }
 
 glm::vec3 Inputs::calculateCameraPosition() {
-	float x = radius * sinf(phi) * cosf(theta);
-	float y = radius * cosf(phi);
-	float z = radius * sinf(phi) * sinf(theta);
-	//std::cout << "Phi: " << phi << " Theta: " << theta << std::endl;
+	float x = radius * sinf(phi) * cosf(theta) + cameraFocus.x;
+	float y = radius * cosf(phi) + cameraFocus.y;
+	float z = radius * sinf(phi) * sinf(theta) + cameraFocus.z;
+
 	return glm::vec3(x, y, z);
 }
 
