@@ -494,36 +494,28 @@ void UI::ImGuiDraw()
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
+				if (ImGui::Checkbox("Lighting Orientation (only for deferred!)", &lightOrientationOn)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_GBuffer->getCurrentShader()->bind();
+						shaderSet("worldCoords", lightOrientationOn);
+					}
+				}
+
 				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
 
 					shaderBind();
 					shaderSet("HdrExposure", HdrExposure);
-
-					//m_GBuffer->getForwardShader()->bind();
-					//m_GBuffer->getForwardShader()->setUniform("HdrExposure", HdrExposure);
-					//m_GBuffer->getLightPass()->bind();
-					//m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
 				}
 
 				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
 
 					shaderBind();
 					shaderSet("HdrContrast", HdrContrast);
-
-					//m_GBuffer->getForwardShader()->bind();
-					//m_GBuffer->getForwardShader()->setUniform("HdrContrast", HdrContrast);
-					//m_GBuffer->getLightPass()->bind();
-					//m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
 				}
 
 				if (ImGui::SliderFloat("Hue", &HueChange, -10.0f, 10.0f)) {
 					shaderBind();
 					shaderSet("HueChange", HueChange);
-
-					//m_GBuffer->getForwardShader()->bind();
-					//m_GBuffer->getForwardShader()->setUniform("HueChange", HueChange);
-					//m_GBuffer->getLightPass()->bind();
-					//m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
 				}
 
 				// Load selected HDR file and generate the maps for them
@@ -536,19 +528,11 @@ void UI::ImGuiDraw()
 					shaderSet("HdrContrast", HdrContrast);
 					shaderSet("HdrExposure", HdrExposure);
 					shaderSet("HueChange", HueChange);
-
-					//m_GBuffer->getForwardShader()->bind();
-					//m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
-					//m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
-					//m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
-
-					//m_GBuffer->getLightPass()->bind();
-					//m_GBuffer->getLightPass()->setUniform("HueChange", HueChange);
-					//m_GBuffer->getLightPass()->setUniform("HdrContrast", HdrContrast);
-					//m_GBuffer->getLightPass()->setUniform("HdrExposure", HdrExposure);
 				}
 
 				// Padding
+				ImGui::Dummy(ImVec2(0.0f, 7.5f));
+				ImGui::Separator();
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
 				// ----------------------------------------
@@ -638,7 +622,12 @@ void UI::ImGuiDraw()
 				ImGui::InputFloat("Radius", &radius);
 				ImGui::InputFloat("Bias", &bias);
 				ImGui::InputFloat("Occlusion Strength", &aoStrength);
-				ImGui::Checkbox("Clamped Midtones", &aoMidtones);
+				if (ImGui::Checkbox("Clamped Midtones", &aoMidTones)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_GBuffer->getCurrentShader()->bind();
+						shaderSet("aoTone", aoMidTones);
+					}
+				}
 
 				ImGui::TreePop();
 			}

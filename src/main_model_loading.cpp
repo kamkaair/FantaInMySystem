@@ -280,14 +280,12 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
 		}
 
+		// TODO: send the uniforms from the ImGui, instead of every frame
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
 		m_GBuffer->getLightPass()->setUniform("aoStrength", m_uiDraw->getAoStrength());
-		m_GBuffer->getLightPass()->setUniform("aoTone", m_uiDraw->getAoMidTones());
-		m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
+		if (m_uiDraw->getLightOrientation())
+			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 
-		// Camera is always at (0.0f, 0.0f, 0.0f), even after viewMatrix * cameraPos.
-		// Works, but the IBL reflections have the same rotation in every angle.
-		m_GBuffer->getLightPass()->setUniform("view", glm::vec3(0.0f));
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
 	}

@@ -46,7 +46,7 @@ private:
 	Shader* m_shader = 0;
 	Shader* m_lightPass = 0;
 	Shader* m_geometryPass = 0;
-	Shader* m_currentShader;
+	Shader* m_currentShader = 0;
 
 	// Buffers
 	GLuint gBuffer = 0, ssaoFBO = 0, rboDepth = 0;

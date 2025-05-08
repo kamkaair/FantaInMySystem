@@ -15,6 +15,7 @@
 	uniform sampler2D RoughnessMap;
 	uniform sampler2D NormalMap;
 	
+	// Texture or solid color/value usage
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
 	uniform vec3 u_DiffuseColor;
 	uniform float u_Roughness, u_Metallic;
