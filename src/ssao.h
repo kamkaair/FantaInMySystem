@@ -27,6 +27,8 @@ public:
 	GLuint getColorBuffer() { return ssaoColorBuffer; }
 	GLuint getBlurColorBuffer() { return ssaoColorBufferBlur; }
 
+	Shader* getSsaoShader() { return m_SSAO; }
+
 private:
 	Shader* m_SSAO = 0;
 	Shader* m_blurSSAO = 0;

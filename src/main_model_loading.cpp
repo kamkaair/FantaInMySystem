@@ -280,9 +280,7 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
 		}
 
-		// TODO: send the uniforms from the ImGui, instead of every frame
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
-		m_GBuffer->getLightPass()->setUniform("aoStrength", m_uiDraw->getAoStrength());
 		if (m_uiDraw->getLightOrientation())
 			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 

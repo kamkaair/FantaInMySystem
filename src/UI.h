@@ -71,7 +71,6 @@ public:
 	int getKernelSize() { return kernelSize; }
 	float getRadius() { return radius; }
 	float getBias() { return bias; }
-	float getAoStrength() { return aoStrength; }
 	bool getLightOrientation() { return lightOrientationOn; }
 
 	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }

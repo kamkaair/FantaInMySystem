@@ -135,6 +135,8 @@ void UI::ImGuiDraw()
 
 	ImGui::Checkbox("Enable rotation", &meshRotationEnabled);
 
+	shaderBind();
+
 	if (ImGui::Checkbox("Deferred rendering", &deferredRendering)) {
 		if (deferredRendering) {
 			glUseProgram(0); // Unbind any active shader
@@ -436,13 +438,8 @@ void UI::ImGuiDraw()
 				// COMMENTED OUT FOR NOW
 				if (ImGui::SliderFloat("Lamp Strength", &lampStrength, 0.0f, 100.0f))  // Directly modify pointLightColor
 				{
-					shaderBind();
+					//shaderBind();
 					shaderSet("LampStrength", lampStrength);
-
-					//m_GBuffer->getLightPass()->bind();
-					//m_GBuffer->getLightPass()->setUniform("LampStrength", lampStrength);
-					//m_GBuffer->getForwardShader()->bind();
-					//m_GBuffer->getForwardShader()->setUniform("LampStrength", lampStrength); // Pass the float value to the shader 
 				}
 				ImGui::TreePop();
 			}
@@ -496,25 +493,19 @@ void UI::ImGuiDraw()
 
 				if (ImGui::Checkbox("Lighting Orientation (only for deferred!)", &lightOrientationOn)) {
 					if (!m_GBuffer->getLightPass() == 0) {
-						m_GBuffer->getCurrentShader()->bind();
 						shaderSet("worldCoords", lightOrientationOn);
 					}
 				}
 
 				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
-
-					shaderBind();
 					shaderSet("HdrExposure", HdrExposure);
 				}
 
 				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
-
-					shaderBind();
 					shaderSet("HdrContrast", HdrContrast);
 				}
 
 				if (ImGui::SliderFloat("Hue", &HueChange, -10.0f, 10.0f)) {
-					shaderBind();
 					shaderSet("HueChange", HueChange);
 				}
 
@@ -524,7 +515,6 @@ void UI::ImGuiDraw()
 					HdrExposure = 1.0f;
 					HueChange = 0.0f;
 
-					shaderBind();
 					shaderSet("HdrContrast", HdrContrast);
 					shaderSet("HdrExposure", HdrExposure);
 					shaderSet("HueChange", HueChange);
@@ -618,13 +608,27 @@ void UI::ImGuiDraw()
 		{
 			if (ImGui::TreeNode("SSAO"))
 			{
-				ImGui::InputInt("Kernel Samples", &kernelSize);
-				ImGui::InputFloat("Radius", &radius);
-				ImGui::InputFloat("Bias", &bias);
-				ImGui::InputFloat("Occlusion Strength", &aoStrength);
+				if (ImGui::InputInt("Kernel Samples", &kernelSize)) {
+					m_SSAO->getSsaoShader()->bind();
+					m_SSAO->getSsaoShader()->setUniform("kernelSize", kernelSize);
+				}
+				if (ImGui::InputFloat("Radius", &radius)) {
+					m_SSAO->getSsaoShader()->bind();
+					m_SSAO->getSsaoShader()->setUniform("radius", radius);
+				}
+				if (ImGui::InputFloat("Bias", &bias)) {
+					m_SSAO->getSsaoShader()->bind();
+					m_SSAO->getSsaoShader()->setUniform("bias", bias);
+				}
+				if (ImGui::InputFloat("Occlusion Strength", &aoStrength)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						//shaderBind();
+						shaderSet("aoStrength", aoStrength);
+					}
+				}
 				if (ImGui::Checkbox("Clamped Midtones", &aoMidTones)) {
 					if (!m_GBuffer->getLightPass() == 0) {
-						m_GBuffer->getCurrentShader()->bind();
+						//shaderBind();
 						shaderSet("aoTone", aoMidTones);
 					}
 				}

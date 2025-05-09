@@ -6,8 +6,7 @@ SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 }
 
 SSAO::~SSAO() {
-	if (!m_SSAO == 0) { delete m_SSAO; m_SSAO = 0; }
-	if (!m_blurSSAO == 0) { delete m_blurSSAO; m_blurSSAO = 0; }
+	deconstructSSAO();
 	if (ssaoFBO != 0) { glDeleteFramebuffers(1, &ssaoFBO); ssaoFBO = 0; }
 	if (noiseTexture != 0) { glDeleteTextures(1, &noiseTexture); noiseTexture = 0; }
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
@@ -26,8 +25,9 @@ void SSAO::constructSSAO() {
 }
 
 void SSAO::deconstructSSAO() {
-	if (!m_SSAO == 0) { delete m_SSAO; m_SSAO = 0; }
-	if (!m_blurSSAO == 0) { delete m_blurSSAO; m_blurSSAO = 0; }
+	if (!m_SSAO == 0) { utils::deleteObject(m_SSAO); }
+	if (!m_blurSSAO == 0) { utils::deleteObject(m_blurSSAO);
+	}
 }
 
 void SSAO::setupSSAO() {
@@ -76,10 +76,6 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 		m_SSAO->setUniform("samples[" + std::to_string(i) + "]", ssaoKernel[i]);
 
 	m_SSAO->setUniform("projection", m_camera->getProjectionMatrix());
-
-	m_SSAO->setUniform("kernelSize", m_uiDraw->getKernelSize());
-	m_SSAO->setUniform("radius", m_uiDraw->getRadius());
-	m_SSAO->setUniform("bias", m_uiDraw->getBias());
 
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
