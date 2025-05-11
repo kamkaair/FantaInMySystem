@@ -387,64 +387,41 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("LAMPS"))
 			{
 				ImGui::Text("Amount of existing lamps: %zu", pointLightPos.size());
-				if (ImGui::TreeNode("Positions"))
+
+				// Point light addition
+				if (ImGui::Button("Add new point light") && pointLightPos.size() < 12) {
+					pointLightPos.push_back(glm::vec3(0.0, 0.0, 2.0));
+					pointLightColor.push_back(glm::vec3(1.0f, 0.5f, 0.31f));
+					pointLightStrength.push_back(5.0f);
+				}
+				else if (pointLightPos.size() == 12) {
+					ImGui::Text("Maximum amount of lamps reached!!!");
+				}
+
+				ImGui::Dummy(ImVec2(5.0f, 5.0f));
+
+				if (ImGui::TreeNode("POINT LAMPS"))
 				{
-					// We need pointLight array and make an individual DragFloat3 for all of them
 					for (size_t i = 0; i < pointLightPos.size(); i++)
 					{
 						ImGui::PushID(static_cast<int>(i));	// Each control to be unique
 						ImGui::Text("Point Light %zu", i);
-						if (ImGui::DragFloat3("Position", glm::value_ptr(pointLightPos[i]), 0.1f));  // Directly modify pointLightPos
+
+						ImGui::DragFloat3("Position", glm::value_ptr(pointLightPos[i]), 0.1f);
+						ImGui::ColorEdit3("Color", glm::value_ptr(pointLightColor[i]));
+						ImGui::InputFloat("Strength", &pointLightStrength[i]);
+
 						if (ImGui::Button("Erase point light")) {
 							pointLightPos.erase(pointLightPos.begin() + i);
 							pointLightColor.erase(pointLightColor.begin() + i);
 						}
-						ImGui::PopID();
-
-					}
-					ImGui::TreePop();
-				}
-
-				if (ImGui::TreeNode("Colors"))
-				{
-					for (size_t i = 0; i < pointLightColor.size(); i++)
-					{
-						ImGui::PushID(static_cast<int>(i));	// Each control to be unique
-						ImGui::Text("Point Light %zu", i);
-						//ImGui::DragFloat3("Color", glm::value_ptr(pointLightColor[i]), 0.1f);  // Directly modify pointLightColor
-						// Edit a color stored as 4 floats
-						ImGui::ColorEdit3("Color", glm::value_ptr(pointLightColor[i]));
+						ImGui::Separator();
 						ImGui::PopID();
 					}
 					ImGui::TreePop();
-				}
-
-				if (ImGui::Button("Add new point light") && pointLightPos.size() < 12)
-				{
-					pointLightPos.push_back(glm::vec3(0.0, 0.0, 2.0));
-					pointLightColor.push_back(glm::vec3(1.0f, 0.5f, 0.31f));
-				}
-				else if (pointLightPos.size() == 12)
-				{
-					ImGui::Text("Maximum amount of lamps reached!!!");
-				}
-
-				//if (ImGui::Button("Erase the top of the list point light") && pointLightPos.size() > 0)
-				//{
-				//	pointLightPos.erase(pointLightPos.begin());
-				//	pointLightColor.erase(pointLightColor.begin());
-				//}
-
-				// COMMENTED OUT FOR NOW
-				if (ImGui::SliderFloat("Lamp Strength", &lampStrength, 0.0f, 100.0f))  // Directly modify pointLightColor
-				{
-					//shaderBind();
-					shaderSet("LampStrength", lampStrength);
 				}
 				ImGui::TreePop();
 			}
-			ImGui::Separator();
-
 			ImGui::EndTabItem();
 		}
 
@@ -575,11 +552,12 @@ void UI::ImGuiDraw()
 					}
 
 					// Load selected HDR file and generate the maps for them
-					if (ImGui::Button("Reset Exposure/Contrast")) {
+					if (ImGui::Button("Reset Background Exposure/Contrast")) {
 						backContrast = 2.2f;
-						m_backImage->setUniform("HdrContrast", HdrContrast);
 						backExposure = 1.0f;
-						m_backImage->setUniform("HdrExposure", HdrExposure);
+						m_backImage->bind();
+						m_backImage->setUniform("backExposure", backExposure);
+						m_backImage->setUniform("backContrast", backContrast);
 					}
 
 					if (ImGui::Button("Set Background Texture")) {

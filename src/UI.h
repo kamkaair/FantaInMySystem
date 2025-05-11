@@ -81,6 +81,7 @@ public:
 	std::vector<Mesh*>& getMeshes() { return m_meshes; }
 	std::vector<glm::vec3>& getPointLightPos() { return pointLightPos; }
 	std::vector<glm::vec3>& getPointLightColor() { return pointLightColor; }
+	std::vector<float>& getPointLightStrength() { return pointLightStrength; }
 
 	void setWindowInteract(bool newBool) { windowDisabled = newBool; }
 	ImGuiWindowFlags disableInteraction();
@@ -98,9 +99,10 @@ private:
 
 	std::vector<glm::vec3> pointLightPos; // Reference to point light positions
 	std::vector<glm::vec3> pointLightColor; // Reference to point light colors
+	std::vector<float> pointLightStrength;
 	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
-	float lampStrength = 0.0f, HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
+	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
 		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f,
 		radius = 0.5, bias = 0.025, aoStrength = 10.0f;
 

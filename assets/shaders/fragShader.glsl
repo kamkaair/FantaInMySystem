@@ -19,7 +19,7 @@
 	
 	uniform vec3 u_DiffuseColor, objectColor;
 	uniform float u_Roughness, u_Metallic;
-	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
+	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange;
 	uniform int NUM_POINT_LIGHTS;
 
 	// Point light structure in GLSL
@@ -29,6 +29,7 @@
 		float constant;
 		float linear;
 		float quadratic;
+		float strength;
 	};
 	
 	//#define NUM_POINT_LIGHTS 4  // Adjust this as needed
@@ -161,7 +162,7 @@
 	float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + 
                                    pointLights[i].quadratic * (distance * distance));
 	
-	vec3 radiance = pointLights[i].color * attenuation * LampStrength;
+	vec3 radiance = pointLights[i].color * attenuation * pointLights[i].strength;
 
 	// Cook-Torrance BRDF
 	float NDF = DistributionGGX(N, H, roughness);
@@ -208,7 +209,7 @@
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 	
-	//vec3 ambient = (kD * diffuse + specular) * AmbientOcclusion;
+	//vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
     vec3 ambient = (kD * diffuse + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 

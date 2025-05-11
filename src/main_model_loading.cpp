@@ -186,7 +186,8 @@ public:
 			// Forward rendering
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
+				mesh->Render(m_GBuffer->getForwardShader(), m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), 
+					m_uiDraw->getPointLightStrength(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
 			}
 		}
 
@@ -278,6 +279,7 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
+			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_uiDraw->getPointLightStrength()[i]);
 		}
 
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
@@ -290,15 +292,36 @@ public:
 
 	void initializeLights()
 	{
-		// Default point light positions
+		// Preset light positions, colors and light strength
 		m_uiDraw->getPointLightPos().push_back(glm::vec3(-2.72f, 1.20f, 3.68f));
 		m_uiDraw->getPointLightPos().push_back(glm::vec3(2.70, 1.50, 3.10));
 		m_uiDraw->getPointLightPos().push_back(glm::vec3(0.30f, 3.10f, -5.80f));
 
-		// Default point light colors
 		m_uiDraw->getPointLightColor().push_back(glm::vec3(0.07f, 0.18f, 1.00f));
 		m_uiDraw->getPointLightColor().push_back(glm::vec3(0.77f, 0.11f, 0.91f));
 		m_uiDraw->getPointLightColor().push_back(glm::vec3(0.10f, 0.89f, 0.5f));
+
+		m_uiDraw->getPointLightStrength().push_back(0.0f);
+		m_uiDraw->getPointLightStrength().push_back(0.0f);
+		m_uiDraw->getPointLightStrength().push_back(0.0f);
+
+		//srand(13);
+		//for (size_t i = 0; i < 12; i++) {
+		//	// calculate slightly random offsets
+		//	float xPos = static_cast<float>(((rand() % 100) / 100.0) * 6.0 - 3.0);
+		//	float yPos = static_cast<float>(((rand() % 100) / 100.0) * 6.0 - 4.0);
+		//	float zPos = static_cast<float>(((rand() % 100) / 100.0) * 6.0 - 3.0);
+
+		//	m_uiDraw->getPointLightPos().push_back(glm::vec3(xPos, yPos, zPos));
+
+		//	float rColor = static_cast<float>(((rand() % 100) / 200.0f) + 0.5); // between 0.5 and 1.)
+		//	float gColor = static_cast<float>(((rand() % 100) / 200.0f) + 0.5); // between 0.5 and 1.)
+		//	float bColor = static_cast<float>(((rand() % 100) / 200.0f) + 0.5); // between 0.5 and 1.)
+
+		//	m_uiDraw->getPointLightColor().push_back(glm::vec3(rColor, gColor, bColor));
+
+		//	m_uiDraw->getPointLightStrength().push_back(5.0f);
+		//}
 	}
 
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {

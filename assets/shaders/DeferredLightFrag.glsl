@@ -14,7 +14,7 @@
 	uniform sampler2D ssao;	
 	uniform bool aoTone = false;
 	// General ImGui uniforms
-	uniform float LampStrength, HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
+	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
 	
 	uniform mat4 inverseView;
 	const float PI = 3.14159265359;
@@ -26,6 +26,7 @@
 		float constant;
 		float linear;
 		float quadratic;
+		float strength;
 	};
 
 	uniform PointLight pointLights[12];
@@ -133,7 +134,7 @@
 			float attenuation = 1.0 / (pointLights[i].constant + pointLights[i].linear * distance + 
 										   pointLights[i].quadratic * (distance * distance));
 			
-			vec3 radiance = pointLights[i].color * attenuation * LampStrength;
+			vec3 radiance = pointLights[i].color * attenuation * pointLights[i].strength;
 
 			// Cook-Torrance BRDF
 			float NDF = DistributionGGX(N, H, roughness);

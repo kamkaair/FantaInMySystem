@@ -117,8 +117,7 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 	}
 }
 
-//void Mesh::Render(Shader* shader, const glm::vec3& viewPos, glm::vec3 LightP, const glm::mat4& viewMatrix, const glm::mat4& projectionMatrix, GLuint textureId)
-void Mesh::Render(Shader* shader, const glm::vec3& viewPos, std::vector<glm::vec3> LightP, std::vector<glm::vec3> LightColor, const glm::mat4& viewMatrix, const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const
+void Mesh::Render(Shader* shader, const glm::vec3& viewPos, const std::vector<glm::vec3> LightP, const std::vector<glm::vec3> LightColor, std::vector<float> LightStrength, const glm::mat4& viewMatrix, const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const
 {
 	// Bind the shader
 	shader->bind();
@@ -142,6 +141,7 @@ void Mesh::Render(Shader* shader, const glm::vec3& viewPos, std::vector<glm::vec
 		shader->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);   // Constant attenuation
 		shader->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);    // Linear attenuation
 		shader->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f); // Quadratic attenuation
+		shader->setUniform("pointLights[" + std::to_string(i) + "].strength", LightStrength[i]); // Quadratic attenuation
 	}
 	int lightAmount = LightP.size();
 	shader->setUniform("NUM_POINT_LIGHTS", lightAmount);
@@ -177,7 +177,6 @@ void Mesh::Render(Shader* shader, const glm::vec3& viewPos, std::vector<glm::vec
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, textureIds[3]);  // NormalMap
 		shader->setUniform("NormalMap", 6);
-
 	}
 
 	// draw mesh
