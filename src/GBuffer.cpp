@@ -98,6 +98,9 @@ GLuint GBuffer::createDepthBuffer() {
 }
 
 void GBuffer::CleanUpGBuffer() {
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	if (gBuffer != 0) { glDeleteFramebuffers(1, &gBuffer); gBuffer = 0; }
 	if (gPosition != 0) { glDeleteTextures(1, &gPosition); gPosition = 0; }
 	if (gNormal != 0) { glDeleteTextures(1, &gNormal); gNormal = 0; }
@@ -127,10 +130,10 @@ void GBuffer::constructForwardShaders() {
 }
 
 void GBuffer::deconstructDeferredShaders() {
-	if (!m_geometryPass == 0) { utils::deleteObject(m_geometryPass); }
-	if (!m_lightPass == 0) { utils::deleteObject(m_lightPass); }
+	if (m_geometryPass != 0) { utils::deleteObject(m_geometryPass); }
+	if (m_lightPass != 0) { utils::deleteObject(m_lightPass); }
 }
 
 void GBuffer::deconstructForwardShaders() {
-	if (!m_shader == 0) { utils::deleteObject(m_shader); }
+	if (m_shader != 0) { utils::deleteObject(m_shader); }
 }

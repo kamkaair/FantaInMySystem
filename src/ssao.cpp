@@ -7,12 +7,20 @@ SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 
 SSAO::~SSAO() {
 	deconstructSSAO();
+	if (ssaoBlurFBO != 0) { glDeleteFramebuffers(1, &ssaoBlurFBO); ssaoBlurFBO = 0; }
+	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
+
 	if (ssaoFBO != 0) { glDeleteFramebuffers(1, &ssaoFBO); ssaoFBO = 0; }
 	if (noiseTexture != 0) { glDeleteTextures(1, &noiseTexture); noiseTexture = 0; }
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
 	for (int i = 0; i < ssaoKernel.size(); i++) {
 		ssaoKernel[i] = glm::vec3{ 0.0f };
 	}
+}
+
+void SSAO::deconstructSSAO() {
+	if (m_SSAO != 0) { utils::deleteObject(m_SSAO); }
+	if (m_blurSSAO != 0) { utils::deleteObject(m_blurSSAO); }
 }
 
 void SSAO::constructSSAO() {
@@ -22,12 +30,6 @@ void SSAO::constructSSAO() {
 
 	if (m_blurSSAO == 0)
 		m_blurSSAO = utils::makeShader("SSAO-Vert.glsl", "blurSSAO-Frag.glsl");
-}
-
-void SSAO::deconstructSSAO() {
-	if (!m_SSAO == 0) { utils::deleteObject(m_SSAO); }
-	if (!m_blurSSAO == 0) { utils::deleteObject(m_blurSSAO);
-	}
 }
 
 void SSAO::setupSSAO() {
@@ -139,7 +141,7 @@ GLuint SSAO::createSsaoFBO() {
 GLuint SSAO::createSsaoBlurFBO() {
 	glGenFramebuffers(1, &ssaoBlurFBO);
 
-	return ssaoFBO;
+	return ssaoBlurFBO;
 }
 
 GLuint SSAO::createSsaoColorBuffer() {
@@ -163,11 +165,11 @@ GLuint SSAO::createSsaoColorBufferBlur() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "SSAO Framebuffer not complete!" << std::endl;
 
-	return ssaoColorBuffer;
+	return ssaoColorBufferBlur;
 }
 
 void SSAO::recreateColorBuffer() {

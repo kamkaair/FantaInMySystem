@@ -43,10 +43,18 @@ namespace utils {
 	}
 
 	// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
-	auto deleteObject = [](auto*& ptr) {
+	// Was unsafe...
+	//auto deleteObject = [](auto*& ptr) {
+	//	delete ptr;
+	//	ptr = 0;
+	//};
+
+	// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
+	template<typename T>
+	inline void deleteObject(T*& ptr) {
 		delete ptr;
-		ptr = 0;
-	};
+		ptr = nullptr;
+	}
 
 	class utils {
 	public:
