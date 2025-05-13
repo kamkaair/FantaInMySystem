@@ -21,6 +21,7 @@ SSAO::~SSAO() {
 void SSAO::deconstructSSAO() {
 	if (m_SSAO != 0) { utils::deleteObject(m_SSAO); }
 	if (m_blurSSAO != 0) { utils::deleteObject(m_blurSSAO); }
+	//if (m_SSR != 0) { utils::deleteObject(m_SSR); }
 }
 
 void SSAO::constructSSAO() {
@@ -30,6 +31,9 @@ void SSAO::constructSSAO() {
 
 	if (m_blurSSAO == 0)
 		m_blurSSAO = utils::makeShader("SSAO-Vert.glsl", "blurSSAO-Frag.glsl");
+
+	//if (m_SSR == 0)
+	//	m_SSR = utils::makeShader("SSAO-Vert.glsl", "SSR-Frag.glsl");
 }
 
 void SSAO::setupSSAO() {
@@ -50,6 +54,8 @@ void SSAO::setupSSAO() {
 
 	ssaoKernel = createSampleKernel(randomFloats, generator);
 	noiseTexture = createNoiseTexture(randomFloats, generator);
+
+	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 }
 
 void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight, int samples) {

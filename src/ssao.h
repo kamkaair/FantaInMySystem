@@ -32,9 +32,10 @@ public:
 private:
 	Shader* m_SSAO = 0;
 	Shader* m_blurSSAO = 0;
+	Shader* m_SSR = 0;
 	GBuffer* m_GBuffer;
 
-	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0;
+	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, ssrFBO = 0;
 
 	std::vector<glm::vec3> ssaoKernel;
 	int width = 640, height = 480;

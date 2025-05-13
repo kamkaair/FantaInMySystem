@@ -133,7 +133,6 @@ public:
 	}
 
 	void bindShaders() {
-		//m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl");
 		m_cubemapShader = utils::makeShader("cubemap_vert.glsl", "cubemap_frag.glsl");
 		m_BackgroundShader = utils::makeShader("backgroundVert.glsl", "backgroundFrag.glsl");
 		m_IrradianceShader = utils::makeShader("cubemap_vert.glsl", "irradianceFrag.glsl");
