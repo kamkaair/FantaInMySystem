@@ -1,5 +1,5 @@
 	#version 330 core
-	out float FragColor;
+	out vec4 FragColor;
 
 	in vec2 texCoords;
 
@@ -21,13 +21,23 @@
 		//vec2 texCoord = texCoords.xy / texSize;
 		
 		// Necessary variables for SSR
-		vec4 fragPos = texture(gPosition, texCoords);
-		vec3 unitFragPos = normalize(fragPos.xyz);
-		vec3 normal = normalize(texture(gNormal, texCoords).rgb);
-		vec3 pivot = normalize(reflect(unitFragPos, normal)); // The reflected direction of fragPos
+		// vec4 fragPos = texture(gPosition, texCoords);
+		// vec3 unitFragPos = normalize(fragPos.xyz);
+		// vec3 normal = normalize(texture(gNormal, texCoords).rgb);
+		// vec3 pivot = normalize(reflect(unitFragPos, normal)); // The reflected direction of fragPos
 		
-		vec4 startView = vec4(fragPos.xyz + (pivot * 0), 1;
-		vec4 endView = vec4(fragPos.xyz + (pivot * maxDistance), 1);
+		// vec4 startView = vec4(fragPos.xyz + (pivot * 0), 1;
+		// vec4 endView = vec4(fragPos.xyz + (pivot * maxDistance), 1);
+		
+		vec4 positionFrom     = texture(gPosition, texCoords);
+		vec3 unitPositionFrom = normalize(positionFrom.xyz);
+		vec3 normal           = normalize(texture(gNormal, texCoords).xyz);
+		vec3 pivot            = normalize(reflect(unitPositionFrom, normal));
+		
+		vec4 positionTo = positionFrom;
+		
+		vec4 startView = vec4(positionFrom.xyz + (pivot *           0), 1);
+		vec4 endView   = vec4(positionFrom.xyz + (pivot * maxDistance), 1);
 		
 		vec4 startFrag = startView;
 		startFrag = projection * startFrag; 		// Project to screen space
@@ -61,10 +71,10 @@
 		float viewDistance = startView.y;
 		float depth        = thickness;
 		
-	    for (i = 0; i < int(delta); ++i) {
+	    for (int i = 0; i < int(delta); ++i) {
 			frag      += increment;
 			uv.xy      = frag / texSize;
-			positionTo = texture(positionTexture, uv.xy);
+			positionTo = texture(gPosition, uv.xy);
 			
 			search1 = mix( (frag.y - startFrag.y) / deltaY, (frag.x - startFrag.x) / deltaX, useX);
 			
@@ -83,10 +93,10 @@
 		
 		steps *= hit0;
 
-		for (i = 0; i < steps; ++i) {
+		for (int i = 0; i < steps; ++i) {
 			frag       = mix(startFrag.xy, endFrag.xy, search1);
 			uv.xy      = frag / texSize;
-			positionTo = texture(positionTexture, uv.xy);
+			positionTo = texture(gPosition, uv.xy);
 			
 			viewDistance = (startView.y * endView.y) / mix(endView.y, startView.y, search1);
 			depth        = viewDistance - positionTo.y;
@@ -106,12 +116,7 @@
 		  
 		visibility = clamp(visibility, 0, 1);
 		
-		uv.ba = vec2(visibility);
-		// create TBN change-of-basis matrix: from tangent-space to view-space
-		// vec3 tangent = normalize(randomVec - normal * dot(randomVec, normal));
-		// vec3 bitangent = cross(normal, tangent);
-		// mat3 TBN = mat3(tangent, bitangent, normal);
-		// iterate over the sample kernel and calculate occlusion factor
+		uv.ba = vec2(visibility); // blue and alpha
 		
 		FragColor = uv;
 	}

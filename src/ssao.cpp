@@ -21,7 +21,7 @@ SSAO::~SSAO() {
 void SSAO::deconstructSSAO() {
 	if (m_SSAO != 0) { utils::deleteObject(m_SSAO); }
 	if (m_blurSSAO != 0) { utils::deleteObject(m_blurSSAO); }
-	//if (m_SSR != 0) { utils::deleteObject(m_SSR); }
+	if (m_SSR != 0) { utils::deleteObject(m_SSR); }
 }
 
 void SSAO::constructSSAO() {
@@ -32,8 +32,8 @@ void SSAO::constructSSAO() {
 	if (m_blurSSAO == 0)
 		m_blurSSAO = utils::makeShader("SSAO-Vert.glsl", "blurSSAO-Frag.glsl");
 
-	//if (m_SSR == 0)
-	//	m_SSR = utils::makeShader("SSAO-Vert.glsl", "SSR-Frag.glsl");
+	if (m_SSR == 0)
+		m_SSR = utils::makeShader("SSAO-Vert.glsl", "SSR-Frag.glsl");
 }
 
 void SSAO::setupSSAO() {
@@ -45,6 +45,11 @@ void SSAO::setupSSAO() {
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	ssaoColorBuffer = createSsaoColorBuffer();
 
+	// SSR
+	ssrFBO = createSsrFBO();
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	ssrColorBuffer = createSsrColorBuffer();
+
 	// Blur framebuffer
 	ssaoBlurFBO = createSsaoBlurFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
@@ -54,8 +59,6 @@ void SSAO::setupSSAO() {
 
 	ssaoKernel = createSampleKernel(randomFloats, generator);
 	noiseTexture = createNoiseTexture(randomFloats, generator);
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 }
 
 void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight, int samples) {
@@ -93,6 +96,22 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	m_blurSSAO->bind();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
+	m_meshRender->renderQuad();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// SSR
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	m_SSR->bind();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
+	m_SSR->setUniform("gPosition", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->createGNormal());
+	m_SSR->setUniform("gNormal", 1);
+
+	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -136,6 +155,26 @@ GLuint SSAO::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFl
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	return noiseTexture;
+}
+
+GLuint SSAO::createSsrColorBuffer() {
+	glGenTextures(1, &ssrColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrColorBuffer, 0);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "SSR Framebuffer not complete!" << std::endl;
+
+	return ssrColorBuffer;
+}
+
+GLuint SSAO::createSsrFBO() {
+	glGenFramebuffers(1, &ssrFBO);
+
+	return ssrFBO;
 }
 
 GLuint SSAO::createSsaoFBO() {

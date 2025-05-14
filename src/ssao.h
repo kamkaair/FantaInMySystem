@@ -23,9 +23,12 @@ public:
 	GLuint createSsaoBlurFBO();
 	GLuint createSsaoColorBuffer();
 	GLuint createSsaoColorBufferBlur();
+	GLuint createSsrColorBuffer();
+	GLuint createSsrFBO();
 
 	GLuint getColorBuffer() { return ssaoColorBuffer; }
 	GLuint getBlurColorBuffer() { return ssaoColorBufferBlur; }
+	GLuint getSsrColorBuffer() { return ssaoColorBufferBlur; }
 
 	Shader* getSsaoShader() { return m_SSAO; }
 
@@ -35,7 +38,8 @@ private:
 	Shader* m_SSR = 0;
 	GBuffer* m_GBuffer;
 
-	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, ssrFBO = 0;
+	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, 
+		ssrFBO = 0, ssrColorBuffer = 0;
 
 	std::vector<glm::vec3> ssaoKernel;
 	int width = 640, height = 480;

@@ -11,7 +11,7 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness, gDepth;
 	// SSAO
-	uniform sampler2D ssao;	
+	uniform sampler2D ssao, ssr;
 	uniform bool aoTone = false;
 	// General ImGui uniforms
 	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
@@ -98,6 +98,7 @@
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(ssao, texCoord).r;
+		vec3 SSRDebug = texture(ssr, texCoord).rgb;
 		
 		// PBR	
 		// View direction
@@ -190,7 +191,7 @@
 		color = pow(color, vec3(1.0 / HdrContrast));
 		
 		//Color out
-		FragColor = vec4(color, 1.0);
+		FragColor = vec4(SSRDebug, 1.0);
 		//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
 	}
