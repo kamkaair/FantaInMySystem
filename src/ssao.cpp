@@ -108,7 +108,7 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	m_SSR->setUniform("gPosition", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->createGNormal());
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
 	m_SSR->setUniform("gNormal", 1);
 
 	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
@@ -160,7 +160,7 @@ GLuint SSAO::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFl
 GLuint SSAO::createSsrColorBuffer() {
 	glGenTextures(1, &ssrColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 

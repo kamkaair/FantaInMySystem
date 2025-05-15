@@ -98,7 +98,9 @@
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(ssao, texCoord).r;
-		vec3 SSRDebug = texture(ssr, texCoord).rgb;
+		vec3 SSR = texture(ssr, texCoord).rgb;
+		
+		float ssrStrength = 1.0 - smoothstep(0.1, 0.9, roughness); // Blends the SSR based on the material's roughness
 		
 		// PBR	
 		// View direction
@@ -159,7 +161,7 @@
 		
 		vec3 kS = F;
 		vec3 kD = vec3(1.0) - kS;
-		kD *= 1.0 - metallic; // kD I believe is broken.
+		kD *= 1.0 - metallic;
 		
 		// HDRI
 		vec3 irradiance = texture(irradianceMap, NewN).rgb; // N Set to world-space. See the magnificent lighting all around
@@ -178,10 +180,11 @@
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
+		vec3 finalSpecular = mix(specular, SSR * F * exposure, ssrStrength); // Added the new specular for the SSR. Combines specular IBL with the SSR
 		
 		float ao = pow(AmbientOcclusion, aoStrength);
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
-		vec3 ambient = (kD * (diffuse * ao) + specular);
+		vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
 		
 		//Ambient + point lights
 		vec3 color = ambient + Lo;
@@ -191,7 +194,7 @@
 		color = pow(color, vec3(1.0 / HdrContrast));
 		
 		//Color out
-		FragColor = vec4(SSRDebug, 1.0);
+		FragColor = vec4(color, 1.0);
 		//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
 	}

@@ -117,6 +117,8 @@
 		visibility = clamp(visibility, 0, 1);
 		
 		uv.ba = vec2(visibility); // blue and alpha
-		
+
 		FragColor = uv;
+		
+		//FragColor = vec4(vec3(visibility), 1.0); // grayscale visibility mask
 	}
