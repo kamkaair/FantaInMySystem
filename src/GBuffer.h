@@ -21,6 +21,7 @@ public:
 	GLuint getGNormal() { return gNormal; }
 	GLuint getGBuffer() { return gBuffer; }
 	GLuint getGMetallicRoughness() { return gMetalRough; }
+	GLuint getGDepth() { return rboDepth; }
 
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }

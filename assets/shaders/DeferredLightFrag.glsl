@@ -184,7 +184,7 @@
 		
 		float ao = pow(AmbientOcclusion, aoStrength);
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
-		vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
+		vec3 ambient = (kD * (diffuse * ao) + finalSpecular); // Replaced specular with the new finalSpecular
 		
 		//Ambient + point lights
 		vec3 color = ambient + Lo;

@@ -45,7 +45,12 @@ void SSAO::setupSSAO() {
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	ssaoColorBuffer = createSsaoColorBuffer();
 
-	// SSR
+	// SSR Scene
+	ssrSceneFBO = createSsrSceneFBO();
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrSceneFBO);
+	sceneColorTex = createSsrSceneColor();
+
+	// SSR Color Buffer
 	ssrFBO = createSsrFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	ssrColorBuffer = createSsrColorBuffer();
@@ -104,14 +109,19 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	m_SSR->bind();
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-	m_SSR->setUniform("gPosition", 0);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
+	m_SSR->setUniform("gNormal", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
-	m_SSR->setUniform("gNormal", 1);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGAlbedo());
+	m_SSR->setUniform("colorBuffer", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
+	m_SSR->setUniform("gDepth", 2);
 
 	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
+	m_SSR->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -171,22 +181,31 @@ GLuint SSAO::createSsrColorBuffer() {
 	return ssrColorBuffer;
 }
 
-GLuint SSAO::createSsrFBO() {
-	glGenFramebuffers(1, &ssrFBO);
+GLuint SSAO::createSsrSceneColor() {
+	glGenTextures(1, &sceneColorTex);
+	glBindTexture(GL_TEXTURE_2D, sceneColorTex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, sceneColorTex, 0);
 
-	return ssrFBO;
+	return sceneColorTex;
+}
+
+GLuint SSAO::createSsrFBO() {
+	glGenFramebuffers(1, &ssrFBO); return ssrFBO;
 }
 
 GLuint SSAO::createSsaoFBO() {
-	glGenFramebuffers(1, &ssaoFBO);
+	glGenFramebuffers(1, &ssaoFBO); return ssaoFBO;
+}
 
-	return ssaoFBO;
+GLuint SSAO::createSsrSceneFBO() {
+	glGenFramebuffers(1, &ssrSceneFBO); return ssrSceneFBO;
 }
 
 GLuint SSAO::createSsaoBlurFBO() {
-	glGenFramebuffers(1, &ssaoBlurFBO);
-
-	return ssaoBlurFBO;
+	glGenFramebuffers(1, &ssaoBlurFBO); return ssaoBlurFBO;
 }
 
 GLuint SSAO::createSsaoColorBuffer() {
@@ -222,8 +241,22 @@ void SSAO::recreateColorBuffer() {
 
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
 	ssaoColorBuffer = createSsaoColorBuffer();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+
 	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
 	ssaoColorBufferBlur = createSsaoColorBufferBlur();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+
+	if (ssrColorBuffer != 0) { glDeleteTextures(1, & ssrColorBuffer); ssrColorBuffer = 0; }
+	ssrColorBuffer = createSsrColorBuffer();
+
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrSceneFBO);
+
+	if (sceneColorTex != 0) { glDeleteTextures(1, &sceneColorTex); sceneColorTex = 0; }
+	sceneColorTex = createSsrSceneColor();
+
 	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f)); // new noiseScale resolution
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
