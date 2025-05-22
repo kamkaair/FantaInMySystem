@@ -194,7 +194,7 @@
 		color = pow(color, vec3(1.0 / HdrContrast));
 		
 		//Color out
-		FragColor = vec4(color, 1.0);
+		FragColor = vec4(SSR, 1.0);
 		//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
 	}

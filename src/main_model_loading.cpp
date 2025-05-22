@@ -221,19 +221,22 @@ public:
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		// 2. SSAO pass
+		// 2. Screen Space Ambient Occlusion pass
 		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
 
-		// 3. Lighting pass
+		// 3. Screen Space Reflection pass
+		m_ssaoClass->renderSSR(m_camera, m_meshRender);
+
+		// 4. Lighting pass
 		deferredLightPass();
 
-		// 4. Render the skybox/background image
+		// 5. Render the skybox/background image
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
 
-		// 5. Render icons and UI
+		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
 			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
 			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);

@@ -15,6 +15,7 @@ public:
 	void deconstructSSAO();
 	void setupSSAO();
 	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
+	void renderSSR(Camera* m_camera, Mesh* m_meshRender);
 	void recreateColorBuffer();
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
@@ -32,7 +33,6 @@ public:
 	GLuint getColorBuffer() { return ssaoColorBuffer; }
 	GLuint getBlurColorBuffer() { return ssaoColorBufferBlur; }
 	GLuint getSsrColorBuffer() { return ssrColorBuffer; }
-	GLuint getSsrSceneTex() { return sceneColorTex; }
 
 	Shader* getSsaoShader() { return m_SSAO; }
 
@@ -43,7 +43,7 @@ private:
 	GBuffer* m_GBuffer;
 
 	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, 
-		ssrFBO = 0, ssrColorBuffer = 0, sceneColorTex = 0, ssrSceneFBO = 0;
+		ssrFBO = 0, ssrColorBuffer = 0;
 
 	std::vector<glm::vec3> ssaoKernel;
 	int width = 640, height = 480;

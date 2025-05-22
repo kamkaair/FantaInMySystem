@@ -9,7 +9,7 @@
 	uniform sampler2D colorBuffer;
 	uniform sampler2D gDepth;
 
-	uniform float width, height;
+	uniform int width = 640, height = 480;
 	uniform mat4 projection;
 	uniform mat4 invProjection;
 	
@@ -50,9 +50,11 @@ void main(){
 
 	//View Space ray calculation
 	vec3 pixelPositionTexture;
-	pixelPositionTexture.xy = vec2(gl_FragCoord.x / width,  gl_FragCoord.y / height);
-	vec3 normalView = texture(gNormal, pixelPositionTexture.xy).rgb;	
-	float pixelDepth = texture(gDepth, pixelPositionTexture.xy).r;	// 0< <1
+	//pixelPositionTexture.xy = vec2(gl_FragCoord.x / width,  gl_FragCoord.y / height);
+	pixelPositionTexture.xy = texCoords;
+	vec3 normalView = normalize(texture(gNormal, texCoords).rgb * 2.0 - 1.0);
+	vec3 debug = texture(gDepth, texCoords).rgb;
+	float pixelDepth = texture(gDepth, texCoords).r;	// 0< <1
 	pixelPositionTexture.z = pixelDepth;		
 	vec4 positionView = invProjection * vec4(pixelPositionTexture * 2 - vec3(1), 1);
 	positionView /= positionView.w;
@@ -79,5 +81,7 @@ void main(){
 
 	//trace the ray
 	vec3 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
-	reflectionColor = vec4(outColor, 1);
+	//reflectionColor = vec4(outColor, 1);
+	//reflectionColor = vec4(vec3(pixelDepth), 1.0);
+	reflectionColor = vec4(debug, 1);
 }
