@@ -47,7 +47,7 @@ void SSAO::setupSSAO() {
 
 	// SSR Color Buffer
 	ssrFBO = createSsrFBO();
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	ssrColorBuffer = createSsrColorBuffer();
 
 	// Blur framebuffer
@@ -93,6 +93,7 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 
 	// Apply the blur to the SSAO texture
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+	//glClear(GL_COLOR_BUFFER_BIT);
 	m_blurSSAO->bind();
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
@@ -103,6 +104,7 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	// SSR
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	//glClear(GL_COLOR_BUFFER_BIT);
 	m_SSR->bind();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -174,7 +176,7 @@ GLuint SSAO::createSsrColorBuffer() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrColorBuffer, 0);
 	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
 	glDrawBuffers(1, attachments);

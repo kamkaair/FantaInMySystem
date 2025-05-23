@@ -185,6 +185,8 @@
 		float ao = pow(AmbientOcclusion, aoStrength);
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
 		vec3 ambient = (kD * (diffuse * ao) + finalSpecular); // Replaced specular with the new finalSpecular
+		//vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
+		//vec3 ambient = (kD * (diffuse * ao) + specular * SSR); // Replaced specular with the new finalSpecular
 		
 		//Ambient + point lights
 		vec3 color = ambient + Lo;
@@ -194,7 +196,7 @@
 		color = pow(color, vec3(1.0 / HdrContrast));
 		
 		//Color out
-		FragColor = vec4(SSR, 1.0);
+		FragColor = vec4(color, 1.0);
 		//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
 	}

@@ -86,11 +86,21 @@ GLuint GBuffer::createGMetallicRoughness() {
 
 GLuint GBuffer::createDepthBuffer() {
 	// Depth buffer
-	glGenRenderbuffers(1, &rboDepth);
-	glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-	// Check completeness
+	//glGenRenderbuffers(1, &rboDepth);
+	//glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
+	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
+	//// Check completeness
+	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	//	std::cout << "Framebuffer not complete!" << std::endl;
+
+	// The depth buffer most likely has to be a texture instead of glRenderbufferStorage
+	glGenTextures(1, &rboDepth);
+	glBindTexture(GL_TEXTURE_2D, rboDepth);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, rboDepth, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer not complete!" << std::endl;
 
