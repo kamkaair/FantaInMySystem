@@ -20,19 +20,21 @@ public:
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
-	GLuint createSsaoFBO();
-	GLuint createSsaoBlurFBO();
+
 	GLuint createSsaoColorBuffer();
 	GLuint createSsaoColorBufferBlur();
 	GLuint createSsrColorBuffer();
 
+	GLuint createSsaoFBO();
+	GLuint createSsaoBlurFBO();
 	GLuint createSsrFBO();
-	GLuint createSsrSceneColor();
-	GLuint createSsrSceneFBO();
+	GLuint createSsrBlurFBO();
 
 	GLuint getColorBuffer() { return ssaoColorBuffer; }
 	GLuint getBlurColorBuffer() { return ssaoColorBufferBlur; }
+
 	GLuint getSsrColorBuffer() { return ssrColorBuffer; }
+	GLuint getSsrBlurColorBuffer() { return ssrColorBufferBlur; }
 
 	Shader* getSsaoShader() { return m_SSAO; }
 
@@ -40,10 +42,11 @@ private:
 	Shader* m_SSAO = 0;
 	Shader* m_blurSSAO = 0;
 	Shader* m_SSR = 0;
+	Shader* m_blurSSR = 0;
 	GBuffer* m_GBuffer;
 
 	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, 
-		ssrFBO = 0, ssrColorBuffer = 0;
+		ssrFBO = 0, ssrColorBuffer = 0, ssrColorBufferBlur = 0, ssrBlurFBO = 0;
 
 	std::vector<glm::vec3> ssaoKernel;
 	int width = 640, height = 480;
