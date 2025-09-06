@@ -23,7 +23,8 @@ public:
 
 	GLuint createSsaoColorBuffer();
 	GLuint createSsaoColorBufferBlur();
-	GLuint createSsrColorBuffer();
+	GLuint createSsrSceneColorBuffer();
+	GLuint createSsrSceneColorBufferBlur();
 
 	GLuint createSsaoFBO();
 	GLuint createSsaoBlurFBO();
@@ -35,6 +36,7 @@ public:
 
 	GLuint getSsrColorBuffer() { return ssrColorBuffer; }
 	GLuint getSsrBlurColorBuffer() { return ssrColorBufferBlur; }
+
 
 	Shader* getSsaoShader() { return m_SSAO; }
 

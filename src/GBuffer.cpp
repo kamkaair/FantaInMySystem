@@ -32,6 +32,31 @@ void GBuffer::constructGBuffer() {
 		std::cout << "Framebuffer not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Afterwards
+	createLightingFramebuffer();
+}
+
+void GBuffer::constructHistoryBuffers() {
+	for (int i = 0; i < 2; i++) {
+		glGenFramebuffers(1, &historyFBO[i]);
+		glBindFramebuffer(GL_FRAMEBUFFER, historyFBO[i]);
+
+		glGenTextures(1, &historyColorBuffer[i]);
+		glBindTexture(GL_TEXTURE_2D, historyColorBuffer[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0,
+			GL_RGBA, GL_FLOAT, nullptr);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D, historyColorBuffer[i], 0);
+
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "History framebuffer not complete!" << std::endl;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 GLuint GBuffer::createGPosition() {
@@ -105,6 +130,30 @@ GLuint GBuffer::createDepthBuffer() {
 		std::cout << "Framebuffer not complete!" << std::endl;
 
 	return rboDepth;
+}
+
+void GBuffer::createLightingFramebuffer() {
+	glGenFramebuffers(1, &lightFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
+
+	glGenTextures(1, &lightColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, lightColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL); // HDR format
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightColorBuffer, 0);
+
+	// Optional: add depth if needed
+	GLuint depthRBO;
+	glGenRenderbuffers(1, &depthRBO);
+	glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Lighting framebuffer not complete!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void GBuffer::CleanUpGBuffer() {

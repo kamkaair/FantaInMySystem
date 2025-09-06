@@ -2,7 +2,7 @@
 
 SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 	: m_GBuffer(gbuffer), width(inWidth), height(inHeight), Object(__FUNCTION__) {
-	setupSSAO(); //constructSSAO();
+	setupSSAO(); //constructSSAO(); constructed, when switching to the deferred rendering
 }
 
 SSAO::~SSAO() {
@@ -52,12 +52,12 @@ void SSAO::setupSSAO() {
 	// SSR Color Buffer
 	ssrFBO = createSsrFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	ssrColorBuffer = createSsrColorBuffer();
+	ssrColorBuffer = createSsrSceneColorBuffer();
 
 	// SSR Blur framebuffer
-	//ssrBlurFBO = createSsrBlurFBO();
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
-	//ssrColorBufferBlur = createSsaoColorBufferBlur();
+	ssrBlurFBO = createSsrBlurFBO();
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
+	ssrColorBufferBlur = createSsrSceneColorBufferBlur();
 
 	// Blur framebuffer
 	ssaoBlurFBO = createSsaoBlurFBO();
@@ -132,53 +132,76 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
 	m_SSR->setUniform("gDepth", 2);
 
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
+	m_SSR->setUniform("gPosition", 3);
+
 	m_SSR->setUniform("width", width);
 	m_SSR->setUniform("height", height);
 	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
 	m_SSR->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 
+	//m_SSR->setUniform("view", glm::vec3(0.0f, 0.0f, 0.0f));
+	m_SSR->setUniform("view", m_camera->getViewMatrix());
+	m_SSR->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
+
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// -------------------------------
+	// CRASH-OUT GAMING
+	// -------------------------------
+
+	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	////glClear(GL_COLOR_BUFFER_BIT);
+	//m_SSR->bind();
+
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
+	//m_SSR->setUniform("lightingTex", 0);
+
+	//m_meshRender->renderQuad();
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// -------------------------------
 	// BLUR
 	// -------------------------------
 
-	//// Apply the blur to the SSAO texture
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
-	////glClear(GL_COLOR_BUFFER_BIT);
-	//m_blurSSAO->bind();
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
+	// Apply the blur to the SSAO texture
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
+	//glClear(GL_COLOR_BUFFER_BIT);
+	m_blurSSAO->bind();
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
 
-	//m_meshRender->renderQuad();
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	m_meshRender->renderQuad();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	
-	//// Apply blur horizontally to the SSR
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
-	////glClear(GL_COLOR_BUFFER_BIT);
-	//m_blurSSR->bind();
+	// Apply blur horizontally to the SSR
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
+	//glClear(GL_COLOR_BUFFER_BIT);
+	m_blurSSR->bind();
 
-	//m_blurSSR->setUniform("ssrInput", 0);
-	//m_blurSSR->setUniform("direction", glm::vec2(1.0f, 0.0f));
-	//m_blurSSR->setUniform("resolution", (float)width);
+	m_blurSSR->setUniform("ssrInput", 0);
+	m_blurSSR->setUniform("direction", glm::vec2(1.0f, 0.0f));
+	m_blurSSR->setUniform("resolution", (float)width);
 
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
 
-	//m_meshRender->renderQuad();
+	m_meshRender->renderQuad();
 
-	//// Apply the blur vertically
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	//m_blurSSR->bind();
-	//m_blurSSR->setUniform("direction", glm::vec2(0.0f, 1.0f));
-	//m_blurSSR->setUniform("resolution", (float)height);
+	// Apply the blur vertically
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	m_blurSSR->bind();
+	m_blurSSR->setUniform("direction", glm::vec2(0.0f, 1.0f));
+	m_blurSSR->setUniform("resolution", (float)height);
 
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
 
-	//m_meshRender->renderQuad();
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	m_meshRender->renderQuad();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 float SSAOLerp(float a, float b, float f)
@@ -222,13 +245,13 @@ GLuint SSAO::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFl
 	return noiseTexture;
 }
 
-GLuint SSAO::createSsrColorBuffer() {
+GLuint SSAO::createSsrSceneColorBuffer() {
 	glGenTextures(1, &ssrColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrColorBuffer, 0);
@@ -241,6 +264,27 @@ GLuint SSAO::createSsrColorBuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return ssrColorBuffer;
+}
+
+GLuint SSAO::createSsrSceneColorBufferBlur() {
+	glGenTextures(1, &ssrColorBufferBlur);
+	glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrColorBufferBlur, 0);
+	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
+	glDrawBuffers(1, attachments);
+
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "SSR Framebuffer not complete!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	return ssrColorBufferBlur;
 }
 
 GLuint SSAO::createSsrFBO() {
@@ -301,7 +345,7 @@ void SSAO::recreateColorBuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 
 	if (ssrColorBuffer != 0) { glDeleteTextures(1, &ssrColorBuffer); ssrColorBuffer = 0; }
-	ssrColorBuffer = createSsrColorBuffer();
+	ssrColorBuffer = createSsrSceneColorBuffer();
 
 	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f)); // new noiseScale resolution
 

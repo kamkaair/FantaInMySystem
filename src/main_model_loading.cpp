@@ -224,11 +224,20 @@ public:
 		// 2. Screen Space Ambient Occlusion pass
 		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
 
-		// 3. Screen Space Reflection pass
+		// 3. Lighting pass
+		deferredLightPass();
+
+		// Save lighting into the history buffer!!
+		int currentFrame = m_GBuffer->getHistoryIndex();
+		int previousFrame = 1 - m_GBuffer->getHistoryIndex();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getHistoryFBO(currentFrame));
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		// 4. Screen Space Reflection pass
 		m_ssaoClass->renderSSR(m_camera, m_meshRender);
 
-		// 4. Lighting pass
-		deferredLightPass();
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 5. Render the skybox/background image
 		switch (m_uiDraw->getBackgroundMode()) {
@@ -242,9 +251,15 @@ public:
 			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw();
 		}
+
+		m_GBuffer->setHistoryIndex(previousFrame);
 	}
 
 	void deferredLightPass() {
+		// Get baked lighting
+		//glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
+		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
 
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -290,9 +305,14 @@ public:
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
 		if (m_uiDraw->getLightOrientation())
 			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
+		m_GBuffer->getLightPass()->setUniform("view", m_camera->getViewMatrix());
+		m_GBuffer->getLightPass()->setUniform("projection", m_camera->getProjectionMatrix());
+		m_GBuffer->getLightPass()->setUniform("screenSize", glm::vec2(width, height));
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
+
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void initializeLights()
