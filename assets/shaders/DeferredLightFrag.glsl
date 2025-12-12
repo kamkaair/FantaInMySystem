@@ -98,7 +98,7 @@
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(ssao, texCoord).r;
-		vec3 SSR = texture(ssr, texCoord).rgb;
+		//vec3 SSR = texture(ssr, texCoord).rgb;
 		
 		float ssrStrength = 1.0 - smoothstep(0.1, 0.9, roughness); // Blends the SSR based on the material's roughness
 		
@@ -180,7 +180,7 @@
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
-		vec3 finalSpecular = mix(specular, SSR * F * exposure, ssrStrength); // Added the new specular for the SSR. Combines specular IBL with the SSR
+		//vec3 finalSpecular = mix(specular, SSR * F * exposure, ssrStrength); // Added the new specular for the SSR. Combines specular IBL with the SSR
 		
 		float ao = pow(AmbientOcclusion, aoStrength);
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion

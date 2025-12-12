@@ -227,23 +227,16 @@ public:
 		// 3. Lighting pass
 		deferredLightPass();
 
-		// Save lighting into the history buffer!!
-		int currentFrame = m_GBuffer->getHistoryIndex();
-		int previousFrame = 1 - m_GBuffer->getHistoryIndex();
-
-		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getHistoryFBO(currentFrame));
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 		// 4. Screen Space Reflection pass
 		m_ssaoClass->renderSSR(m_camera, m_meshRender);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		m_ssaoClass->compositeSSR(m_meshRender, m_GBuffer->getLightingTex(), m_HDRI->getBackgroundTexture(), m_HDRI->getCubemapTexture());
 
 		// 5. Render the skybox/background image
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
+		//switch (m_uiDraw->getBackgroundMode()) {
+		//case 0: m_HDRI->renderSkybox(m_camera); break;
+		//case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		//}
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
@@ -251,18 +244,16 @@ public:
 			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw();
 		}
-
-		m_GBuffer->setHistoryIndex(previousFrame);
 	}
 
 	void deferredLightPass() {
 		// Get baked lighting
-		//glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
-		//glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
 
-		glClear(GL_COLOR_BUFFER_BIT);
+		//glClear(GL_COLOR_BUFFER_BIT); // Already clearing in deferredRendering()
 
 		m_GBuffer->getLightPass()->bind();
 		glActiveTexture(GL_TEXTURE3);
@@ -275,15 +266,15 @@ public:
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getBlurColorBuffer());
-		glActiveTexture(GL_TEXTURE8);
-		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSsrColorBuffer());
+		//glActiveTexture(GL_TEXTURE8);
+		//glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSsrColorBuffer());
 
 		m_GBuffer->getLightPass()->setUniform("gPosition", 3);
 		m_GBuffer->getLightPass()->setUniform("gNormal", 4);
 		m_GBuffer->getLightPass()->setUniform("gAlbedoSpec", 5);
 		m_GBuffer->getLightPass()->setUniform("gMetallicRoughness", 6);
 		m_GBuffer->getLightPass()->setUniform("ssao", 7);
-		m_GBuffer->getLightPass()->setUniform("ssr", 8);
+		//m_GBuffer->getLightPass()->setUniform("ssr", 8);
 
 		// Set light uniforms + view
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
@@ -312,7 +303,7 @@ public:
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
 
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void initializeLights()
