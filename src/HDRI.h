@@ -34,6 +34,7 @@ public:
 	GLuint getIrradiance(GLuint irradiance);
 	GLuint getPrefilter(GLuint prefilter);
 	GLuint getBRDF(GLuint BRDF);
+	GLuint getCubemapTexture() { return m_cubemapTexture; }
 	Texture* getBackgroundTexture() { return m_backgroundTexture; }
 
 
