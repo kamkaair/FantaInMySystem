@@ -121,7 +121,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	// -------------------------------
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	//glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSR->bind();
 
 	glActiveTexture(GL_TEXTURE0);
@@ -129,28 +129,33 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	m_SSR->setUniform("gNormal", 0);
 
 	glActiveTexture(GL_TEXTURE1);
-	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getHistoryColorBuffer(m_GBuffer->getHistoryIndex()));
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
-	m_SSR->setUniform("ColorBuffer", 1);
-	//	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex()); // previous frame
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
+	m_SSR->setUniform("gPosition", 1);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-	m_SSR->setUniform("gPosition", 2);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
+	m_SSR->setUniform("gColor", 2);
 
 	glActiveTexture(GL_TEXTURE3);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-	m_SSR->setUniform("gExtraComponents", 3);
+	m_SSR->setUniform("gMetalRough", 3);
 
-	//m_SSR->setUniform("width", width);
-	//m_SSR->setUniform("height", height);
-
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
+	m_SSR->setUniform("gDepth", 4);
 
 	//m_SSR->setUniform("view", glm::vec3(0.0f, 0.0f, 0.0f));
-	m_SSR->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
 	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
-	//m_SSR->setUniform("invprojection", glm::inverse(m_camera->getProjectionMatrix()));
+
+	//m_SSR->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
+	//m_SSR->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 	//m_SSR->setUniform("view", m_camera->getViewMatrix());
+	//m_SSR->setUniform("cameraPos", m_camera->getPosition());
+
+	m_SSR->setUniform("screenSize", glm::vec2(width, height));
+
+	m_SSR->setUniform("uNear", m_camera->getNear());
+	m_SSR->setUniform("uFar", m_camera->getFar());
 
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -159,7 +164,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	// BLUR
 	// -------------------------------
 
-	////Apply the blur to the SSAO texture - SSAO blur technique
+	//Apply the blur to the SSAO texture - SSAO blur technique
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
 	////glClear(GL_COLOR_BUFFER_BIT);
 	//m_blurSSAO->bind();
@@ -171,7 +176,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	
 
-	// Horizontal and vertical blur for SSR!
+	//// Horizontal and vertical blur for SSR!
 	//
 	//// Apply blur horizontally to the SSR
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
@@ -183,18 +188,18 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 
 	//m_blurSSR->setUniform("ssrInput", 0);
 	//m_blurSSR->setUniform("direction", glm::vec2(1.0f, 0.0f));
-	//m_blurSSR->setUniform("resolution", (float)width);
+	////m_blurSSR->setUniform("resolution", (float)width);
 
 	//m_meshRender->renderQuad();
 
 	//// Apply the blur vertically
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	//m_blurSSR->bind();
-	//m_blurSSR->setUniform("direction", glm::vec2(0.0f, 1.0f));
-	//m_blurSSR->setUniform("resolution", (float)height);
-
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
+	//m_blurSSR->setUniform("ssrInput", 0);
+	//m_blurSSR->setUniform("direction", glm::vec2(0.0f, 1.0f));
+	////m_blurSSR->setUniform("resolution", (float)height);
 
 	//m_meshRender->renderQuad();
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -223,14 +228,6 @@ void SSAO::compositeSSR(Mesh* m_meshRender, GLuint lightingTex, Texture* TexHDRI
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 	m_compositeSSR->setUniform("uGExtra", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, TexCubemap);
-	m_compositeSSR->setUniform("uSkybox", 3);
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, TexHDRI->getTextureId());
-	m_compositeSSR->setUniform("uBackgroundTex", 4);
 
 	m_compositeSSR->setUniform("useRoughnessMask", true);
 

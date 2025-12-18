@@ -72,6 +72,29 @@ public:
 		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
 		const int presetMode = 3;
 		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
+
+
+		// setup for the debug plane mesh
+		Material* newMaterial = m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+			ASSET_DIR + std::string("/textures/EmptyNormal.png"), // Diffuse
+			ASSET_DIR + std::string("/textures/EmptyNormal.png"), // Metallic
+			ASSET_DIR + std::string("/textures/EmptyNormal.png"), // Roughness
+			ASSET_DIR + std::string("/textures/EmptyNormal.png") // Normal
+		), "ReflectiveMat");
+
+		// Set material properties for the struct
+		newMaterial->diffuseColor = glm::vec3(29, 29, 29); // dark color
+		newMaterial->roughness = 0.1;
+		newMaterial->metallic = 1.0;
+
+		newMaterial->useDiffuseTexture = false;
+		newMaterial->useMetallicTexture = false;
+		newMaterial->useRoughnessTexture = false;
+
+		m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = newMaterial;
+
+
+
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 
 		// Load the texture for an icon
@@ -266,15 +289,12 @@ public:
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getBlurColorBuffer());
-		//glActiveTexture(GL_TEXTURE8);
-		//glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSsrColorBuffer());
 
 		m_GBuffer->getLightPass()->setUniform("gPosition", 3);
 		m_GBuffer->getLightPass()->setUniform("gNormal", 4);
 		m_GBuffer->getLightPass()->setUniform("gAlbedoSpec", 5);
 		m_GBuffer->getLightPass()->setUniform("gMetallicRoughness", 6);
 		m_GBuffer->getLightPass()->setUniform("ssao", 7);
-		//m_GBuffer->getLightPass()->setUniform("ssr", 8);
 
 		// Set light uniforms + view
 		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
@@ -293,12 +313,14 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_uiDraw->getPointLightStrength()[i]);
 		}
 
+		//std::cout << glm::to_string(m_camera->getLookAt()) << std::endl;
+
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
 		if (m_uiDraw->getLightOrientation())
 			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
-		m_GBuffer->getLightPass()->setUniform("view", m_camera->getViewMatrix());
-		m_GBuffer->getLightPass()->setUniform("projection", m_camera->getProjectionMatrix());
-		m_GBuffer->getLightPass()->setUniform("screenSize", glm::vec2(width, height));
+		//m_GBuffer->getLightPass()->setUniform("view", m_camera->getViewMatrix());
+		//m_GBuffer->getLightPass()->setUniform("projection", m_camera->getProjectionMatrix());
+		//m_GBuffer->getLightPass()->setUniform("screenSize", glm::vec2(width, height));
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();

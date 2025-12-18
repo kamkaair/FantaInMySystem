@@ -23,7 +23,7 @@
 
 		// Scale SSR by metallic and glossiness (1 - roughness)
 		float mask = metallic * (1.0 - roughness);
-		vec3 result = lighting + ssr.rgb * mask;
+		vec3 result = lighting + ssr.rgb * mask * 5;
 
 		FragColor = vec4(result, 1.0);
 	}

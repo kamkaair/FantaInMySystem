@@ -2,6 +2,7 @@
 #include <stb_image.h>
 #include <kgfw/GLUtils.h>	// Include GLUtils for checkGLError
 #include <iostream>
+#include "material.h"
 
 TextureLoading::TextureLoading() : Object(__FUNCTION__) {}
 
@@ -283,6 +284,18 @@ std::vector<std::string> TextureLoading::FileSystem(std::string& path)
 
 // Added & to pass a reference, silly dinky me...
 void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
+
+	auto PlaneMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), m_materials, "Plane");
+	for (size_t i = 0; i < PlaneMesh.size(); ++i) {
+		meshes.push_back(PlaneMesh[i]);
+
+		if (i == 0) {  // Reflectivity test plane
+			meshes.back()->setScaling(glm::vec3(6.0f));
+			meshes.back()->setMaterial(m_materials[8]);
+			meshes.back()->setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
+		}
+	}
+
 	if (presetMode >= 1) {
 		auto MP18Mesh = loadMeshes((std::string(ASSET_DIR) + "/models/MP18Low.obj"), m_materials, "MP18");
 		for (size_t i = 0; i < MP18Mesh.size(); ++i) {

@@ -5,7 +5,7 @@
 class Camera : public GameObject {
 public:
     Camera(float fov, float aspect, float near, float far)
-        : GameObject(__FUNCTION__), m_fov(fov), m_aspect(aspect), m_near(near), m_far(far) {
+        : GameObject(__FUNCTION__), m_fov(fov), m_aspect(aspect), m_near(near), m_far(far), m_width(1.0f), m_height(1.0f) {
         updateProjectionMatrix();
     }
 
@@ -14,6 +14,8 @@ public:
     }
 
     const glm::mat4& getProjectionMatrix() const { return m_projection; }
+    float getNear() { return m_near; }
+    float getFar() { return m_far; }
 
     // FOV
     void setFOV(float fov) {
@@ -40,6 +42,7 @@ private:
     float m_aspect;
 
     void updateProjectionMatrix() {
-        m_projection = glm::perspective(glm::radians(m_fov), m_width / m_height, m_near, m_far);
+        //m_projection = glm::perspective(glm::radians(m_fov), m_width / m_height, m_near, m_far);
+        m_projection = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
     }
 };

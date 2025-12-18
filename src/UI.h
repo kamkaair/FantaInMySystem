@@ -72,6 +72,7 @@ public:
 	float getRadius() { return radius; }
 	float getBias() { return bias; }
 	bool getLightOrientation() { return lightOrientationOn; }
+	SettingsMaterial getSettingsMaterial() { return m_settingsMaterial; }
 
 	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
 	void shaderSet(const char* uniform, bool value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
