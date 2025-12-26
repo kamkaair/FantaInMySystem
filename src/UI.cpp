@@ -615,6 +615,38 @@ void UI::ImGuiDraw()
 			}
 			ImGui::Separator();
 
+			if (ImGui::TreeNode("SSR"))
+			{
+				if (ImGui::InputInt("MAX_STEPS", &MAX_STEPS)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_SSAO->getSsrShader()->bind();
+						m_SSAO->getSsrShader()->setUniform("MAX_STEPS", MAX_STEPS);
+					}
+				}
+
+				if (ImGui::InputFloat("stepSize", &stepSize)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_SSAO->getSsrShader()->bind();
+						m_SSAO->getSsrShader()->setUniform("stepSize", stepSize);
+					}
+				}
+
+				if (ImGui::InputFloat("thickness", &thickness)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_SSAO->getSsrShader()->bind();
+						m_SSAO->getSsrShader()->setUniform("thickness", thickness);
+					}
+				}
+				if (ImGui::InputFloat("bias", &SSRbias)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_SSAO->getSsrShader()->bind();
+						m_SSAO->getSsrShader()->setUniform("bias", SSRbias);
+					}
+				}
+
+				ImGui::TreePop();
+			}
+
 			ImGui::EndTabItem();
 		}
 	

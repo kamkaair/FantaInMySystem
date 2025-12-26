@@ -11,92 +11,69 @@ uniform float SCR_HEIGHT;
 uniform mat4 invProjection;
 uniform mat4 projection;
 
-uniform float far;
-uniform float near;
+uniform float thickness = 0.0001;
 
-float LinearizeDepth(float depth)
-{
-    float z = depth * 2.0 - 1.0;
-    return (2.0 * near * far) / (far + near - z * (far - near));
+bool rayIsOutofScreen(vec2 ray){
+	return (ray.x > 1 || ray.y > 1 || ray.x < 0 || ray.y < 0) ? true : false;
 }
 
-vec3 TraceRay_ViewSpace(vec3 rayOriginView, vec3 rayDirView)
-{
-    const int MAX_STEPS = 64;
-    const float STEP_SIZE = 0.1;      // scene units
-    const float THICKNESS = 0.15;      // hit tolerance
+vec3 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
+	float sampleDepth;
+	vec3 hitColor = vec3(0);
+	bool hit = false;
 
-    vec3 rayPosView = rayOriginView;
+	for(int i = 0; i < iterationCount; i++){
+		rayPos += dir;
+		if(rayIsOutofScreen(rayPos.xy)){
+			break;
+		}
 
-    for (int i = 0; i < MAX_STEPS; ++i)
-    {
-        rayPosView += rayDirView * STEP_SIZE;
-
-        // Project to clip space
-        vec4 clip = projection * vec4(rayPosView, 1.0);
-        if (clip.w <= 0.0)
-            break;
-
-        vec3 ndc = clip.xyz / clip.w;
-        vec2 uv = ndc.xy * 0.5 + 0.5;
-
-        // Screen bounds
-        if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0)
-            break;
-
-        float sceneDepth = LinearizeDepth(texture(depthMap, uv).r);
-        float rayDepth   = -rayPosView.z; // view space forward is -Z
-
-        float depthDiff = rayDepth - sceneDepth;
-
-        if (depthDiff > 0.0 && depthDiff < THICKNESS)
-        {
-            return texture(colorBuffer, uv).rgb;
-        }
-    }
-
-    return vec3(0.0);
+		sampleDepth = texture(depthMap, rayPos.xy).r;
+		float depthDif = rayPos.z - sampleDepth;
+		if(depthDif >= 0 && depthDif < thickness){ //we have a hit
+			hit = true;
+			hitColor = texture(colorBuffer, rayPos.xy).rgb;
+			break;
+		}
+	}
+	return hitColor;
 }
 
-// The correct pipeline: View space -> March -> Project -> Sample depth -> Compare in view space
 void main(){
-	vec2 uv = gl_FragCoord.xy / vec2(SCR_WIDTH, SCR_HEIGHT);
+	float maxRayDistance = 100.0f;
 
-	float depth = texture(depthMap, uv).r;
-	if (depth >= 1.0) {
-		reflectionColor = vec4(0.0);
+	//View Space ray calculation
+	vec3 pixelPositionTexture;
+	pixelPositionTexture.xy = vec2(gl_FragCoord.x / SCR_WIDTH,  gl_FragCoord.y / SCR_HEIGHT);
+	vec3 normalView = texture(gNormal, pixelPositionTexture.xy).rgb;	
+	float pixelDepth = texture(depthMap, pixelPositionTexture.xy).r;	// 0< <1
+	pixelPositionTexture.z = pixelDepth;		
+	vec4 positionView = invProjection * vec4(pixelPositionTexture * 2 - vec3(1), 1);
+	positionView /= positionView.w;
+	vec3 reflectionView = normalize(reflect(positionView.xyz, normalView));
+	if(reflectionView.z > 0){
 		reflectionColor = vec4(0,0,0,1);
 		return;
 	}
+	vec3 rayEndPositionView = positionView.xyz + reflectionView * maxRayDistance;
 
-	// Reconstruct view-space position
-	vec4 posClip = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
-	vec4 posView = invProjection * posClip;
-	posView /= posView.w;
 
-	vec3 normalView = normalize(texture(gNormal, uv).rgb);
-	vec3 viewDir = normalize(posView.xyz);
-	vec3 rayDirView = normalize(reflect(viewDir, normalView));
+	//Texture Space ray calculation
+	vec4 rayEndPositionTexture = projection * vec4(rayEndPositionView,1);
+	rayEndPositionTexture /= rayEndPositionTexture.w;
+	rayEndPositionTexture.xyz = (rayEndPositionTexture.xyz + vec3(1)) / 2.0f;
+	vec3 rayDirectionTexture = rayEndPositionTexture.xyz - pixelPositionTexture;
 
-	// Reject rays going behind the camera
-	if (rayDirView.z >= 0.0)
-	{
-		reflectionColor = vec4(0.0);
-		return;
-	}
+	ivec2 screenSpaceStartPosition = ivec2(pixelPositionTexture.x * SCR_WIDTH, pixelPositionTexture.y * SCR_HEIGHT); 
+	ivec2 screenSpaceEndPosition = ivec2(rayEndPositionTexture.x * SCR_WIDTH, rayEndPositionTexture.y * SCR_HEIGHT); 
+	ivec2 screenSpaceDistance = screenSpaceEndPosition - screenSpaceStartPosition;
+	int screenSpaceMaxDistance = max(abs(screenSpaceDistance.x), abs(screenSpaceDistance.y)) / 2;
+	rayDirectionTexture /= max(screenSpaceMaxDistance, 0.001f);
 
-	vec3 reflectedColor = TraceRay_ViewSpace(posView.xyz, rayDirView);
-	reflectionColor = vec4(reflectedColor, 1.0);
-	
-	// DEBUG STUFF
-	
+
 	//trace the ray
-	//vec3 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
-	//reflectionColor = vec4(outColor, 1);
+	vec3 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
+	reflectionColor = vec4(outColor, 1);
 	
-	//float outColor = DebugTraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
-	//reflectionColor = vec4(pixelPositionTexture, 1);
-	//reflectionColor = vec4(rayDirectionTexture, 1);
-	//reflectionColor = vec4(screenSpaceMaxDistance, 0.0, 0.0, 1);
-	//reflectionColor = vec4(reflectionView * 0.5 + 0.5, 1.0);
+	//reflectionColor = vec4(screenSpaceMaxDistance, 0.0, 0.0, 1.0);
 }

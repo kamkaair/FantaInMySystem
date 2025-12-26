@@ -115,7 +115,7 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
+void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	// -------------------------------
 	// SSR
 	// -------------------------------
@@ -128,34 +128,41 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
 	m_SSR->setUniform("gNormal", 0);
 
+	//glActiveTexture(GL_TEXTURE1);
+	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
+	//m_SSR->setUniform("gPosition", 1);
+
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-	m_SSR->setUniform("gPosition", 1);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
+	m_SSR->setUniform("colorBuffer", 1);
+
+	//glActiveTexture(GL_TEXTURE3);
+	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
+	//m_SSR->setUniform("gMetalRough", 3);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
-	m_SSR->setUniform("gColor", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-	m_SSR->setUniform("gMetalRough", 3);
-
-	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
-	m_SSR->setUniform("gDepth", 4);
+	m_SSR->setUniform("depthMap", 2);
+
+	m_SSR->setUniform("SCR_WIDTH", float(width));
+	m_SSR->setUniform("SCR_HEIGHT", float(height));
+	//std::cout << m_camera->getNear() << " " << m_camera->getFar() << std::endl;
 
 	//m_SSR->setUniform("view", glm::vec3(0.0f, 0.0f, 0.0f));
+	m_SSR->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
+	//m_SSR->setUniform("far", m_camera->getFar());
+	//m_SSR->setUniform("near", m_camera->getNear());
 
-	//m_SSR->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
-	//m_SSR->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
-	//m_SSR->setUniform("view", m_camera->getViewMatrix());
+	//m_SSR->setUniform("MAX_STEPS", m_uiDraw->getSSR_MaxSteps());
+	//m_SSR->setUniform("stepSize", m_uiDraw->getSSR_StepSize());
+	m_SSR->setUniform("thickness", m_uiDraw->getSSR_Thickness());
+	//m_SSR->setUniform("bias", m_uiDraw->getSSR_bias());
+
 	//m_SSR->setUniform("cameraPos", m_camera->getPosition());
 
-	m_SSR->setUniform("screenSize", glm::vec2(width, height));
+	//m_SSR->setUniform("screenSize", glm::vec2(width, height));
 
-	m_SSR->setUniform("uNear", m_camera->getNear());
-	m_SSR->setUniform("uFar", m_camera->getFar());
 
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

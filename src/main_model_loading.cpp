@@ -19,6 +19,8 @@
 #include <stb_image.h>
 
 Inputs* g_input = 0;
+int width = 640, height = 480;
+//int width = 1280, height = 720;
 
 class Application : public kgfw::Object
 {
@@ -251,7 +253,7 @@ public:
 		deferredLightPass();
 
 		// 4. Screen Space Reflection pass
-		m_ssaoClass->renderSSR(m_camera, m_meshRender);
+		m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
 		m_ssaoClass->compositeSSR(m_meshRender, m_GBuffer->getLightingTex(), m_HDRI->getBackgroundTexture(), m_HDRI->getCubemapTexture());
 
@@ -454,7 +456,6 @@ private:
 	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
 
 	float fov = 40.0f;
-	int width = 640, height = 480;
 
 	std::vector<Texture*>		m_textures;		// Vector of texture pointers
 };
@@ -484,7 +485,7 @@ int main(void) {
 	}
 
 	// Create window and check that creation was succesful.
-	GLFWwindow* window = glfwCreateWindow(640, 480, "OpenGL Craziness", NULL, NULL);
+	GLFWwindow* window = glfwCreateWindow(width, height, "OpenGL Craziness", NULL, NULL);
 	if (!window) {
 		glfwTerminate();
 		return -1;

@@ -15,7 +15,7 @@ public:
 	void deconstructSSAO();
 	void setupSSAO();
 	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
-	void renderSSR(Camera* m_camera, Mesh* m_meshRender);
+	void renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw);
 	void compositeSSR(Mesh* m_meshRender, GLuint lightingTex, Texture* TexHDRI, GLuint TexCubemap);
 	void recreateColorBuffer();
 
@@ -40,6 +40,7 @@ public:
 
 
 	Shader* getSsaoShader() { return m_SSAO; }
+	Shader* getSsrShader() { return m_SSR; }
 
 private:
 	Shader* m_SSAO = 0;
