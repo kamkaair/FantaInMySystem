@@ -255,7 +255,7 @@ public:
 		// 4. Screen Space Reflection pass
 		m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
-		m_ssaoClass->compositeSSR(m_meshRender, m_GBuffer->getLightingTex(), m_HDRI->getBackgroundTexture(), m_HDRI->getCubemapTexture());
+		m_ssaoClass->compositeSSR(m_meshRender, m_HDRI->getBackgroundTexture(), m_HDRI->getCubemapTexture());
 
 		// 5. Render the skybox/background image
 		//switch (m_uiDraw->getBackgroundMode()) {

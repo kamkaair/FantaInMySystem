@@ -29,32 +29,27 @@ void GBuffer::constructGBuffer() {
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Framebuffer not complete!" << std::endl;
+		std::cout << "Framebuffer GBuffers not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// Afterwards
-	createLightingFramebuffer();
-}
+	// Lighting pass textures
+	glGenFramebuffers(1, &lightFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
 
-void GBuffer::constructHistoryBuffers() {
-	for (int i = 0; i < 2; i++) {
-		glGenFramebuffers(1, &historyFBO[i]);
-		glBindFramebuffer(GL_FRAMEBUFFER, historyFBO[i]);
+	//createLightingFramebuffer();
 
-		glGenTextures(1, &historyColorBuffer[i]);
-		glBindTexture(GL_TEXTURE_2D, historyColorBuffer[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0,
-			GL_RGBA, GL_FLOAT, nullptr);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	m_lightDiff = createDiffuse();
+	m_lightingSpec = createSpecular();
+	m_lightingIndirectDiff = createIndirectDiffuse();
+	m_lightingIndirectSpec = createIndirectSpecular();
 
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-			GL_TEXTURE_2D, historyColorBuffer[i], 0);
+	GLuint lightAttachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
+	glDrawBuffers(4, lightAttachments);
 
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "History framebuffer not complete!" << std::endl;
-	}
+	// Check completeness
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Framebuffer lighting textures are not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -86,7 +81,6 @@ GLuint GBuffer::createGNormal() {
 }
 
 GLuint GBuffer::createGAlbedo() {
-	// Albedo color buffer (currently optional for SSAO, but useful for deferred in general)
 	glGenTextures(1, &gAlbedo);
 	glBindTexture(GL_TEXTURE_2D, gAlbedo);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
@@ -98,7 +92,6 @@ GLuint GBuffer::createGAlbedo() {
 }
 
 GLuint GBuffer::createGMetallicRoughness() {
-	// Albedo color buffer (currently optional for SSAO, but useful for deferred in general)
 	glGenTextures(1, &gMetalRough);
 	glBindTexture(GL_TEXTURE_2D, gMetalRough);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, width, height, 0, GL_RG, GL_FLOAT, NULL);
@@ -141,10 +134,8 @@ GLuint GBuffer::createDepthBuffer() {
 	return rboDepth;
 }
 
+/*
 void GBuffer::createLightingFramebuffer() {
-	glGenFramebuffers(1, &lightFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
-
 	glGenTextures(1, &lightColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, lightColorBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL); // HDR format
@@ -152,7 +143,6 @@ void GBuffer::createLightingFramebuffer() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightColorBuffer, 0);
 
-	// Optional: add depth if needed
 	GLuint depthRBO;
 	glGenRenderbuffers(1, &depthRBO);
 	glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
@@ -161,8 +151,59 @@ void GBuffer::createLightingFramebuffer() {
 
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Lighting framebuffer not complete!" << std::endl;
+}
+*/
 
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+GLuint GBuffer::createDiffuse() {
+	glGenTextures(1, &m_lightDiff);
+	glBindTexture(GL_TEXTURE_2D, m_lightDiff);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lightDiff, 0);
+
+	return m_lightDiff;
+}
+
+GLuint GBuffer::createSpecular() {
+	glGenTextures(1, &m_lightingSpec);
+	glBindTexture(GL_TEXTURE_2D, m_lightingSpec);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_lightingSpec, 0);
+
+	return m_lightingSpec;
+}
+
+GLuint GBuffer::createIndirectDiffuse() {
+	glGenTextures(1, &m_lightingIndirectDiff);
+	glBindTexture(GL_TEXTURE_2D, m_lightingIndirectDiff);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_lightingIndirectDiff, 0);
+
+	return m_lightingIndirectDiff;
+}
+
+GLuint GBuffer::createIndirectSpecular() {
+	glGenTextures(1, &m_lightingIndirectSpec);
+	glBindTexture(GL_TEXTURE_2D, m_lightingIndirectSpec);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_lightingIndirectSpec, 0);
+
+	return m_lightingIndirectSpec;
 }
 
 void GBuffer::CleanUpGBuffer() {
@@ -175,18 +216,26 @@ void GBuffer::CleanUpGBuffer() {
 	if (gAlbedo != 0) { glDeleteTextures(1, &gAlbedo); gAlbedo = 0; }
 	if (gMetalRough != 0) { glDeleteTextures(1, &gMetalRough); gMetalRough = 0; }
 	if (rboDepth != 0) { glDeleteRenderbuffers(1, &rboDepth); rboDepth = 0; }
+
+	if (m_lightDiff != 0) { glDeleteRenderbuffers(1, &m_lightDiff); m_lightDiff = 0; }
+	if (m_lightingSpec != 0) { glDeleteRenderbuffers(1, &m_lightingSpec); m_lightingSpec = 0; }
+	if (m_lightingIndirectDiff != 0) { glDeleteRenderbuffers(1, &m_lightingIndirectDiff); m_lightingIndirectDiff = 0; }
+	if (m_lightingIndirectSpec != 0) { glDeleteRenderbuffers(1, &m_lightingIndirectSpec); m_lightingIndirectSpec = 0; }
 }
 
 void GBuffer::constructDeferredShaders() {
 	if (m_geometryPass == 0)
 		m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl");
-
+	
 	if (m_lightPass == 0)
 	{
 		setCurrentShader(0);
-		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl"); 
+		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl");
 		setCurrentShader(m_lightPass);
 	}
+	
+	if (m_compositePass == 0)
+		m_compositePass = utils::makeShader("SSAO-Vert.glsl", "CompositeFrag.glsl");
 }
 
 void GBuffer::constructForwardShaders() {
@@ -200,6 +249,7 @@ void GBuffer::constructForwardShaders() {
 void GBuffer::deconstructDeferredShaders() {
 	if (m_geometryPass != 0) { utils::deleteObject(m_geometryPass); }
 	if (m_lightPass != 0) { utils::deleteObject(m_lightPass); }
+	if (m_compositePass != 0) { utils::deleteObject(m_compositePass); }
 }
 
 void GBuffer::deconstructForwardShaders() {

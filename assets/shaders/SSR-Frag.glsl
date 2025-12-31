@@ -17,10 +17,10 @@ bool rayIsOutofScreen(vec2 ray){
 	return (ray.x > 1 || ray.y > 1 || ray.x < 0 || ray.y < 0) ? true : false;
 }
 
-vec3 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
+vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 	float sampleDepth;
 	vec3 hitColor = vec3(0);
-	bool hit = false;
+	float hit = 0.0;
 
 	for(int i = 0; i < iterationCount; i++){
 		rayPos += dir;
@@ -31,12 +31,12 @@ vec3 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 		sampleDepth = texture(depthMap, rayPos.xy).r;
 		float depthDif = rayPos.z - sampleDepth;
 		if(depthDif >= 0 && depthDif < thickness){ //we have a hit
-			hit = true;
+			hit = 1.0;
 			hitColor = texture(colorBuffer, rayPos.xy).rgb;
 			break;
 		}
 	}
-	return hitColor;
+	return vec4(hitColor, hit);
 }
 
 void main(){
@@ -72,8 +72,8 @@ void main(){
 
 
 	//trace the ray
-	vec3 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
-	reflectionColor = vec4(outColor, 1);
+	vec4 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
+	reflectionColor = outColor;
 	
 	//reflectionColor = vec4(screenSpaceMaxDistance, 0.0, 0.0, 1.0);
 }

@@ -23,7 +23,6 @@ void SSAO::deconstructSSAO() {
 	if (m_blurSSAO != 0) { utils::deleteObject(m_blurSSAO); }
 	if (m_SSR != 0) { utils::deleteObject(m_SSR); }
 	if (m_blurSSR != 0) { utils::deleteObject(m_blurSSR); }
-	if (m_compositeSSR != 0) { utils::deleteObject(m_compositeSSR); }
 }
 
 void SSAO::constructSSAO() {
@@ -39,9 +38,6 @@ void SSAO::constructSSAO() {
 
 	if (m_blurSSR == 0)
 		m_blurSSR = utils::makeShader("SSAO-Vert.glsl", "blurSSR-Frag.glsl");
-
-	if (m_compositeSSR == 0)
-		m_compositeSSR = utils::makeShader("SSAO-Vert.glsl", "SSRComposite-frag.glsl");
 }
 
 void SSAO::setupSSAO() {
@@ -133,7 +129,8 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	//m_SSR->setUniform("gPosition", 1);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
+	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
 	m_SSR->setUniform("colorBuffer", 1);
 
 	//glActiveTexture(GL_TEXTURE3);
@@ -160,7 +157,6 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	//m_SSR->setUniform("bias", m_uiDraw->getSSR_bias());
 
 	//m_SSR->setUniform("cameraPos", m_camera->getPosition());
-
 	//m_SSR->setUniform("screenSize", glm::vec2(width, height));
 
 
@@ -212,7 +208,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::compositeSSR(Mesh* m_meshRender, GLuint lightingTex, Texture* TexHDRI, GLuint TexCubemap)
+void SSAO::compositeSSR(Mesh* m_meshRender, Texture* TexHDRI, GLuint TexCubemap)
 {
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_ONE, GL_ONE); // additive blend
@@ -222,21 +218,37 @@ void SSAO::compositeSSR(Mesh* m_meshRender, GLuint lightingTex, Texture* TexHDRI
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDisable(GL_DEPTH_TEST);
 
-	m_compositeSSR->bind();
+	m_GBuffer->getCompositeShader()->bind();
+
+	//glActiveTexture(GL_TEXTURE0);
+	//glBindTexture(GL_TEXTURE_2D, lightingTex);
+	//m_GBuffer->getCompositeShader()->setUniform("uLightingTex", 0);
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, lightingTex);
-	m_compositeSSR->setUniform("uLightingTex", 0);
+	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
+	m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
+
+	//glActiveTexture(GL_TEXTURE1);
+	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
+	//m_GBuffer->getCompositeShader()->setUniform("uRoughMetal", 1);
 
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-	m_compositeSSR->setUniform("uSSRTex", 1);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getDiffuse());
+	m_GBuffer->getCompositeShader()->setUniform("uDirectDiffuse", 1);
 
 	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-	m_compositeSSR->setUniform("uGExtra", 2);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSpecular());
+	m_GBuffer->getCompositeShader()->setUniform("uDirectSpec", 2);
 
-	m_compositeSSR->setUniform("useRoughnessMask", true);
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectDiffuse());
+	m_GBuffer->getCompositeShader()->setUniform("uIndirectDiffuse", 3);
+
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
+	m_GBuffer->getCompositeShader()->setUniform("uIndirectSpecFallback", 4);
+
+	//m_GBuffer->getCompositeShader()->setUniform("useRoughnessMask", true);
 
 	m_meshRender->renderQuad();
 

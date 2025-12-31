@@ -1,6 +1,11 @@
 	// Fragment shader (lighting.frag)
 	#version 330 core
-	out vec4 FragColor;
+	//out vec4 FragColor;
+	
+	layout (location = 0) out vec3 oDirectDiff;
+	layout (location = 1) out vec3 oDirectSpec;
+	layout (location = 2) out vec3 oIndirectDiff;
+	layout (location = 3) out vec3 oIndirectSpec;
 
 	in vec2 texCoord;
 	
@@ -11,7 +16,7 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
-	uniform sampler2D ssao, ssr;
+	uniform sampler2D ssao;
 	uniform bool aoTone = false;
 	// General ImGui uniforms
 	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
@@ -121,13 +126,17 @@
 		F0 = mix(F0, albedo, metallic);
 
 		// Direct lighting loop
-		vec3 Lo = vec3(0.0);
+		//vec3 Lo = vec3(0.0);
+		oDirectDiff = vec3(0.0);
+		oDirectSpec = vec3(0.0);
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
 			// calculate per-light radiance - light calculations
 			// Light direction
 			vec3 L = normalize(pointLights[i].position - FragPos);
-			vec3 diffuse = max(dot(N, L), 0.0) * albedo * pointLights[i].color;
+			//vec3 diffuse = max(dot(N, L), 0.0) * albedo * pointLights[i].color;
+			vec3 albedoBRDF = albedo / PI;
+			
 			// Halfway direction
 			vec3 H = normalize(V + L);
 			float spec = pow(max(dot(N, H), 0.0), 16.0);
@@ -152,7 +161,10 @@
 			kD *= 1.0 - metallic;
 			float NdotL = max(dot(N, L), 0.0);
 
-			Lo += (kD * diffuse / PI + specular) * radiance * NdotL;
+			//Lo += (kD * diffuse / PI + specular) * radiance * NdotL;
+			//oDirectDiff += kD * diffuse / PI * radiance * NdotL;
+			oDirectDiff += kD * albedo / PI * radiance * NdotL;
+			oDirectSpec += specular * radiance * NdotL;
 		}
 		
 		// ambient lighting (we now use IBL as the ambient term)
@@ -178,22 +190,23 @@
 		vec3 prefilteredColor = textureLod(prefilterMap, NewR, roughness * MAX_REFLECTION_LOD).rgb; // R Set to world-space. Reflect, reflect 360 degrees around my brother
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
-		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
-		//vec3 finalSpecular = mix(specular, SSR * F * exposure, ssrStrength); // Added the new specular for the SSR. Combines specular IBL with the SSR
+		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
+		oIndirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
 		float ao = pow(AmbientOcclusion, aoStrength);
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
-		vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
+		//vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
+		oIndirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		
 		//Ambient + point lights
-		vec3 color = ambient + Lo;
-
+		//vec3 color = ambient + Lo;
+		
 		// HDR tonemapping and gamma correct
-		color = color / (color + vec3(1.0)) * HdrExposure;
-		color = pow(color, vec3(1.0 / HdrContrast));
+		//color = color / (color + vec3(1.0)) * HdrExposure;
+		//color = pow(color, vec3(1.0 / HdrContrast));
 		
 		//Color out
-		FragColor = vec4(color, 1.0);
+		//FragColor = vec4(color, 1.0);
 
 		//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
