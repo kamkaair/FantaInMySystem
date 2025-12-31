@@ -5,14 +5,14 @@
 
 	//uniform sampler2D uLightingTex;   // lighting buffer
 	uniform sampler2D uSSR;
-	//uniform sampler2D uRoughMetal;
+	uniform sampler2D uRoughMetal;
 	
 	uniform sampler2D uDirectDiffuse;
 	uniform sampler2D uDirectSpec;
 	uniform sampler2D uIndirectDiffuse;
 	uniform sampler2D uIndirectSpecFallback;
 	
-	//uniform bool useRoughnessMask;
+	uniform bool useRoughnessMask;
 
 	void main()
 	{
@@ -26,25 +26,25 @@
 		vec3 directSpecular = texture(uDirectSpec, texCoords).rgb;
 		vec3 indirectDiffuse = texture(uIndirectDiffuse, texCoords).rgb;
 		vec3 fallbackSpec = texture(uIndirectSpecFallback, texCoords).rgb;
-		
-		vec3 indirectSpecular = mix(fallbackSpec.rgb, ssr.rgb, ssr.a);
+
+		if (useRoughnessMask) {
+			vec2 mr = texture(uRoughMetal, texCoords).rg;
+			metallic = mr.r;
+			roughness = mr.g;
+		}
+	
+		// Scale SSR by metallic and glossiness (1 - roughness)
+		float mask = metallic * (1.0 - roughness);
+		vec3 result = ssr.rgb * mask; // * mask
+
+		vec3 indirectSpecular = mix(fallbackSpec.rgb, result, ssr.a);
 
 		vec3 color = directDiffuse + directSpecular + indirectDiffuse + indirectSpecular;
 		
 		color = color / (color + vec3(1.0));
 		color = pow(color, vec3(1.0 / 2.2));
 
-		/*
-		if (useRoughnessMask) {
-			vec2 mr = texture(uGExtra, texCoords).rg;
-			metallic = mr.r;
-			roughness = mr.g;
-		}
-		*/
-		
-		// Scale SSR by metallic and glossiness (1 - roughness)
-		//float mask = metallic * (1.0 - roughness);
-		//vec3 result = ssr.rgb * mask; // * mask
+
 		
 		
 		//FragColor = vec4(result, 1.0);

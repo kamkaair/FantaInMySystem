@@ -5,8 +5,8 @@
 
 	uniform sampler2D ssrInput;
 	uniform vec2 direction; // (1.0, 0.0) for horizontal, (0.0, 1.0) for vertical
-	uniform int width = 640, height = 480;
-	uniform float sigma = 4.0;
+	int width = 640, height = 480;
+	float sigma = 4.0;
 
 	const int KERNEL_RADIUS = 5;
 

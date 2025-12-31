@@ -224,31 +224,13 @@ void SSAO::compositeSSR(Mesh* m_meshRender, Texture* TexHDRI, GLuint TexCubemap)
 	//glBindTexture(GL_TEXTURE_2D, lightingTex);
 	//m_GBuffer->getCompositeShader()->setUniform("uLightingTex", 0);
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-	m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
+	for (int i = 0; i < 6; i++) {
+		glActiveTexture(GL_TEXTURE0 + i);
+		glBindTexture(GL_TEXTURE_2D, textures[i]);
+		m_GBuffer->getCompositeShader()->setUniform(texNames[i], i);
+	}
 
-	//glActiveTexture(GL_TEXTURE1);
-	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-	//m_GBuffer->getCompositeShader()->setUniform("uRoughMetal", 1);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getDiffuse());
-	m_GBuffer->getCompositeShader()->setUniform("uDirectDiffuse", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSpecular());
-	m_GBuffer->getCompositeShader()->setUniform("uDirectSpec", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectDiffuse());
-	m_GBuffer->getCompositeShader()->setUniform("uIndirectDiffuse", 3);
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
-	m_GBuffer->getCompositeShader()->setUniform("uIndirectSpecFallback", 4);
-
-	//m_GBuffer->getCompositeShader()->setUniform("useRoughnessMask", true);
+	m_GBuffer->getCompositeShader()->setUniform("useRoughnessMask", true);
 
 	m_meshRender->renderQuad();
 

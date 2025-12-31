@@ -296,17 +296,6 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 		}
 	}
 
-	auto CubeMesh = loadMeshes((std::string(ASSET_DIR) + "/models/cube.obj"), m_materials, "Cube");
-	for (size_t i = 0; i < CubeMesh.size(); ++i) {
-		meshes.push_back(CubeMesh[i]);
-
-		if (i == 0) {  // Reflectivity test plane
-			meshes.back()->setScaling(glm::vec3(1.0f));
-			meshes.back()->setMaterial(m_materials[8]);
-			meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-		}
-	}
-
 	if (presetMode >= 1) {
 		auto MP18Mesh = loadMeshes((std::string(ASSET_DIR) + "/models/MP18Low.obj"), m_materials, "MP18");
 		for (size_t i = 0; i < MP18Mesh.size(); ++i) {

@@ -25,6 +25,7 @@ vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 	for(int i = 0; i < iterationCount; i++){
 		rayPos += dir;
 		if(rayIsOutofScreen(rayPos.xy)){
+			hit = 0.0;
 			break;
 		}
 
@@ -52,7 +53,7 @@ void main(){
 	positionView /= positionView.w;
 	vec3 reflectionView = normalize(reflect(positionView.xyz, normalView));
 	if(reflectionView.z > 0){
-		reflectionColor = vec4(0,0,0,1);
+		reflectionColor = vec4(0,0,0,0);
 		return;
 	}
 	vec3 rayEndPositionView = positionView.xyz + reflectionView * maxRayDistance;
@@ -69,7 +70,6 @@ void main(){
 	ivec2 screenSpaceDistance = screenSpaceEndPosition - screenSpaceStartPosition;
 	int screenSpaceMaxDistance = max(abs(screenSpaceDistance.x), abs(screenSpaceDistance.y)) / 2;
 	rayDirectionTexture /= max(screenSpaceMaxDistance, 0.001f);
-
 
 	//trace the ray
 	vec4 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
