@@ -3,7 +3,6 @@
 
 	in vec2 texCoords;
 
-	//uniform sampler2D uLightingTex;   // lighting buffer
 	uniform sampler2D uSSR;
 	uniform sampler2D uRoughMetal;
 	
@@ -26,7 +25,8 @@
 		vec3 directSpecular = texture(uDirectSpec, texCoords).rgb;
 		vec3 indirectDiffuse = texture(uIndirectDiffuse, texCoords).rgb;
 		vec3 fallbackSpec = texture(uIndirectSpecFallback, texCoords).rgb;
-
+		
+		/*
 		if (useRoughnessMask) {
 			vec2 mr = texture(uRoughMetal, texCoords).rg;
 			metallic = mr.r;
@@ -36,8 +36,9 @@
 		// Scale SSR by metallic and glossiness (1 - roughness)
 		float mask = metallic * (1.0 - roughness);
 		vec3 result = ssr.rgb * mask; // * mask
-
-		vec3 indirectSpecular = mix(fallbackSpec.rgb, result, ssr.a);
+		*/
+		
+		vec3 indirectSpecular = mix(fallbackSpec.rgb, ssr.rgb, ssr.a);
 
 		vec3 color = directDiffuse + directSpecular + indirectDiffuse + indirectSpecular;
 		

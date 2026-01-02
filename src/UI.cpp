@@ -600,13 +600,13 @@ void UI::ImGuiDraw()
 				}
 				if (ImGui::InputFloat("Occlusion Strength", &aoStrength)) {
 					if (!m_GBuffer->getLightPass() == 0) {
-						//shaderBind();
+						shaderBind();
 						shaderSet("aoStrength", aoStrength);
 					}
 				}
 				if (ImGui::Checkbox("Clamped Midtones", &aoMidTones)) {
 					if (!m_GBuffer->getLightPass() == 0) {
-						//shaderBind();
+						shaderBind();
 						shaderSet("aoTone", aoMidTones);
 					}
 				}
@@ -617,17 +617,10 @@ void UI::ImGuiDraw()
 
 			if (ImGui::TreeNode("SSR"))
 			{
-				if (ImGui::InputInt("MAX_STEPS", &MAX_STEPS)) {
+				if (ImGui::InputInt("maxSteps", &maxSteps)) {
 					if (!m_GBuffer->getLightPass() == 0) {
 						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("MAX_STEPS", MAX_STEPS);
-					}
-				}
-
-				if (ImGui::InputFloat("stepSize", &stepSize)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("stepSize", stepSize);
+						m_SSAO->getSsrShader()->setUniform("maxSteps", maxSteps);
 					}
 				}
 
@@ -637,10 +630,17 @@ void UI::ImGuiDraw()
 						m_SSAO->getSsrShader()->setUniform("thickness", thickness);
 					}
 				}
-				if (ImGui::InputFloat("bias", &SSRbias)) {
+				if (ImGui::InputFloat("rayDirMin", &rayDirMin)) {
 					if (!m_GBuffer->getLightPass() == 0) {
 						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("bias", SSRbias);
+						m_SSAO->getSsrShader()->setUniform("rayDirMin", rayDirMin);
+					}
+				}
+
+				if (ImGui::Checkbox("useBinaryRefinement", &useBinaryRefinement)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_SSAO->getSsrShader()->bind();
+						m_SSAO->getSsrShader()->setUniform("useBinaryRefinement", useBinaryRefinement);
 					}
 				}
 

@@ -84,12 +84,6 @@ public:
 	std::vector<glm::vec3>& getPointLightColor() { return pointLightColor; }
 	std::vector<float>& getPointLightStrength() { return pointLightStrength; }
 
-	//SSR debugging
-	int getSSR_MaxSteps() { return MAX_STEPS; }
-	float getSSR_StepSize() { return stepSize; }
-	float getSSR_Thickness() { return thickness; }
-	float getSSR_bias() { return SSRbias; }
-
 	void setWindowInteract(bool newBool) { windowDisabled = newBool; }
 	ImGuiWindowFlags disableInteraction();
 
@@ -117,10 +111,10 @@ private:
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 
 	//SSR
-	int MAX_STEPS = 64;
-	float stepSize = 0.1;
+	int maxSteps = 5;
 	float thickness = 0.0001;
-	float SSRbias = 0.05;
+	float rayDirMin = 0.001;
+	bool useBinaryRefinement = false;
 
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, aoMidTones = false, lightOrientationOn = true;

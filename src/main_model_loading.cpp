@@ -85,7 +85,7 @@ public:
 		), "ReflectiveMat");
 
 		// Set material properties for the struct
-		newMaterial->diffuseColor = glm::vec3(29, 29, 29); // dark color
+		newMaterial->diffuseColor = glm::vec3(29, 29, 29);
 		newMaterial->roughness = 0.1;
 		newMaterial->metallic = 1.0;
 

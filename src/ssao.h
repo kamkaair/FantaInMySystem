@@ -54,10 +54,4 @@ private:
 
 	std::vector<glm::vec3> ssaoKernel;
 	int width = 640, height = 480;
-
-	GLuint textures[6] = { ssrColorBuffer, m_GBuffer->getGMetallicRoughness(),
-	m_GBuffer->getDiffuse(), m_GBuffer->getSpecular(),
-	m_GBuffer->getIndirectDiffuse(), m_GBuffer->getIndirectSpecular() };
-
-	const char* texNames[6] = { "uSSR", "uRoughMetal", "uDirectDiffuse", "uDirectSpec", "uIndirectDiffuse", "uIndirectSpecFallback", };
 };
