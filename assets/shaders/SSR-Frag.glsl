@@ -5,6 +5,7 @@ layout (location = 0) out vec4 reflectionColor;
 uniform sampler2D gNormal;
 uniform sampler2D colorBuffer;
 uniform sampler2D depthMap;
+uniform sampler2D gMetallicRoughness;
 
 uniform float SCR_WIDTH;
 uniform float SCR_HEIGHT;
@@ -78,6 +79,36 @@ vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 	return vec4(hitColor, hit);
 }
 
+float rand(vec2 co)
+{
+    return fract(sin(dot(co, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+vec3 sampleHemisphereGGX(vec3 N, float roughness, vec2 Xi)
+{
+    float a = roughness * roughness;
+
+    float phi = 2.0 * 3.14159265 * Xi.x;
+    float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a*a - 1.0) * Xi.y));
+    float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+    vec3 H;
+    H.x = cos(phi) * sinTheta;
+    H.y = sin(phi) * sinTheta;
+    H.z = cosTheta;
+
+    vec3 up = abs(N.z) < 0.999 ? vec3(0,0,1) : vec3(1,0,0);
+    vec3 tangent = normalize(cross(up, N));
+    vec3 bitangent = cross(N, tangent);
+
+    return normalize(tangent * H.x + bitangent * H.y + N * H.z);
+}
+
+vec3 F_Schlick(vec3 F0, float cosTheta)
+{
+    return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
 void main(){
 	float maxRayDistance = 100.0f;
 
@@ -89,13 +120,36 @@ void main(){
 	pixelPositionTexture.z = pixelDepth;		
 	vec4 positionView = invProjection * vec4(pixelPositionTexture * 2 - vec3(1), 1);
 	positionView /= positionView.w;
-	vec3 reflectionView = normalize(reflect(positionView.xyz, normalView));
+	
+	
+	vec2 gMetalRoughTex = texture(gMetallicRoughness, pixelPositionTexture.xy).rg;
+	
+	//vec3 reflectionView = normalize(reflect(positionView.xyz, normalView));	
+	vec3 V = normalize(-positionView.xyz);
+	vec3 R = reflect(-V, normalView);
+
+	float roughness = gMetalRoughTex.g;
+	vec2 Xi = vec2(rand(pixelPositionTexture.xy),
+				   rand(pixelPositionTexture.yx));
+
+	vec3 H = sampleHemisphereGGX(normalView, roughness, Xi);
+	vec3 reflectionView = normalize(reflect(-V, H));
+	
+	
+	float metallic = gMetalRoughTex.r;
+
+	vec3 albedo = texture(colorBuffer, pixelPositionTexture.xy).rgb;
+	vec3 F0 = mix(vec3(0.04), albedo, metallic);
+
+	float NdotV = clamp(dot(normalView, V), 0.0, 1.0);
+	vec3 fresnel = F_Schlick(F0, NdotV);
+	
+
 	if(reflectionView.z > 0){
 		reflectionColor = vec4(0,0,0,0);
 		return;
 	}
 	vec3 rayEndPositionView = positionView.xyz + reflectionView * maxRayDistance;
-
 
 	//Texture Space ray calculation
 	vec4 rayEndPositionTexture = projection * vec4(rayEndPositionView,1);
@@ -111,7 +165,17 @@ void main(){
 
 	//trace the ray
 	vec4 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
-	reflectionColor = outColor;
+	//reflectionColor = outColor;
+	
+	float roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
+
+	vec3 reflection = outColor.rgb * fresnel * roughnessFade;
+	
+	//float specEnergy = max(max(fresnel.r, fresnel.g), fresnel.b);
+	//float alpha = outColor.a * roughnessFade * specEnergy;	
+	float alpha = outColor.a * roughnessFade;
+
+	reflectionColor = vec4(reflection, alpha);
 	
 	//reflectionColor = vec4(screenSpaceMaxDistance, 0.0, 0.0, 1.0);
 }

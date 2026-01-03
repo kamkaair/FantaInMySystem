@@ -43,15 +43,16 @@ public:
 	Shader* getSsrShader() { return m_SSR; }
 
 private:
+	int width = 640, height = 480;
+
 	Shader* m_SSAO = 0;
 	Shader* m_blurSSAO = 0;
 	Shader* m_SSR = 0;
 	Shader* m_blurSSR = 0;
 	GBuffer* m_GBuffer;
 
-	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, 
-		ssrFBO = 0, ssrColorBuffer = 0, ssrColorBufferBlur = 0, ssrBlurFBO = 0;
+	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssrFBO = 0, ssrBlurFBO = 0;
+	GLuint ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, ssrColorBuffer = 0, ssrColorBufferBlur = 0;
 
 	std::vector<glm::vec3> ssaoKernel;
-	int width = 640, height = 480;
 };

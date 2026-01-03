@@ -133,13 +133,13 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
 	m_SSR->setUniform("colorBuffer", 1);
 
-	//glActiveTexture(GL_TEXTURE3);
-	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-	//m_SSR->setUniform("gMetalRough", 3);
-
 	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
 	m_SSR->setUniform("depthMap", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
+	m_SSR->setUniform("gMetallicRoughness", 3);
 
 	m_SSR->setUniform("SCR_WIDTH", float(width));
 	m_SSR->setUniform("SCR_HEIGHT", float(height));
@@ -234,8 +234,6 @@ void SSAO::compositeSSR(Mesh* m_meshRender, Texture* TexHDRI, GLuint TexCubemap)
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
 	m_GBuffer->getCompositeShader()->setUniform("uIndirectSpecFallback", 4);
-
-	//m_GBuffer->getCompositeShader()->setUniform("useRoughnessMask", true);
 
 	m_meshRender->renderQuad();
 
