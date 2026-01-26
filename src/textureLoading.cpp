@@ -291,7 +291,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 
 		if (i == 0) {  // Reflectivity test plane
 			meshes.back()->setScaling(glm::vec3(6.0f));
-			meshes.back()->setMaterial(m_materials[8]);
+			meshes.back()->setMaterial(m_materials[0]);
 			meshes.back()->setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
 		}
 	}

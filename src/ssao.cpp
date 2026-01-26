@@ -7,6 +7,7 @@ SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
 
 SSAO::~SSAO() {
 	deconstructSSAO();
+	deconstructSSR();
 	if (ssaoBlurFBO != 0) { glDeleteFramebuffers(1, &ssaoBlurFBO); ssaoBlurFBO = 0; }
 	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
 
@@ -21,8 +22,11 @@ SSAO::~SSAO() {
 void SSAO::deconstructSSAO() {
 	if (m_SSAO != 0) { utils::deleteObject(m_SSAO); }
 	if (m_blurSSAO != 0) { utils::deleteObject(m_blurSSAO); }
+}
+
+void SSAO::deconstructSSR() {
 	if (m_SSR != 0) { utils::deleteObject(m_SSR); }
-	if (m_blurSSR != 0) { utils::deleteObject(m_blurSSR); }
+	//if (m_blurSSR != 0) { utils::deleteObject(m_blurSSR); }
 }
 
 void SSAO::constructSSAO() {
@@ -32,12 +36,15 @@ void SSAO::constructSSAO() {
 
 	if (m_blurSSAO == 0)
 		m_blurSSAO = utils::makeShader("SSAO-Vert.glsl", "blurSSAO-Frag.glsl");
+}
 
+void SSAO::constructSSR() {
+	// Load SSAO shaders
 	if (m_SSR == 0)
 		m_SSR = utils::makeShader("SSAO-Vert.glsl", "SSR-Frag.glsl");
 
-	if (m_blurSSR == 0)
-		m_blurSSR = utils::makeShader("SSAO-Vert.glsl", "blurSSR-Frag.glsl");
+	//if (m_blurSSR == 0)
+		//m_blurSSR = utils::makeShader("SSAO-Vert.glsl", "blurSSR-Frag.glsl");
 }
 
 void SSAO::setupSSAO() {
@@ -54,7 +61,7 @@ void SSAO::setupSSAO() {
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	ssrColorBuffer = createSsrSceneColorBuffer();
 
-	// SSR Blur framebuffer
+	//// SSR Blur framebuffer
 	//ssrBlurFBO = createSsrBlurFBO();
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
 	//ssrColorBufferBlur = createSsrSceneColorBufferBlur();
@@ -162,42 +169,13 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	// BLUR
 	// -------------------------------
 
-	//Apply the blur to the SSAO texture - SSAO blur technique
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
-	////glClear(GL_COLOR_BUFFER_BIT);
-	//m_blurSSAO->bind();
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-	//m_blurSSAO->setUniform("ssaoInput", 0);
-
-	//m_meshRender->renderQuad();
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	
-
-	//// Horizontal and vertical blur for SSR!
-	//
-	//// Apply blur horizontally to the SSR
+	////Apply the blur to the SSAO texture - SSAO blur technique
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
 	////glClear(GL_COLOR_BUFFER_BIT);
 	//m_blurSSR->bind();
-
 	//glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-
-	//m_blurSSR->setUniform("ssrInput", 0);
-	//m_blurSSR->setUniform("direction", glm::vec2(1.0f, 0.0f));
-	////m_blurSSR->setUniform("resolution", (float)width);
-
-	//m_meshRender->renderQuad();
-
-	//// Apply the blur vertically
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	//m_blurSSR->bind();
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
-	//m_blurSSR->setUniform("ssrInput", 0);
-	//m_blurSSR->setUniform("direction", glm::vec2(0.0f, 1.0f));
-	////m_blurSSR->setUniform("resolution", (float)height);
+	//m_blurSSR->setUniform("colorTexture", 0);
 
 	//m_meshRender->renderQuad();
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);

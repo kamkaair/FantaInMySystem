@@ -18,6 +18,7 @@
 	// SSAO
 	uniform sampler2D ssao;
 	uniform bool aoTone = false;
+	uniform bool useSSAO = true;
 	// General ImGui uniforms
 	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
 	
@@ -193,21 +194,13 @@
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		oIndirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
-		float ao = pow(AmbientOcclusion, aoStrength);
+		float ao = 1.0f;
+		if(useSSAO){ 
+			ao = pow(AmbientOcclusion, aoStrength);
+		}
+		//float ao = pow(AmbientOcclusion, aoStrength);
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
 		//vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
-		oIndirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
-		
-		//Ambient + point lights
-		//vec3 color = ambient + Lo;
-		
-		// HDR tonemapping and gamma correct
-		//color = color / (color + vec3(1.0)) * HdrExposure;
-		//color = pow(color, vec3(1.0 / HdrContrast));
-		
-		//Color out
-		//FragColor = vec4(color, 1.0);
 
-		//FragColor = vec4(V * 0.5 + 0.5, 1.0);
-		//FragColor = vec4(AmbientOcclusion, 0.0, 0.0, 1.0);
+		oIndirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 	}

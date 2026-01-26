@@ -11,6 +11,13 @@
 	uniform sampler2D uIndirectSpecFallback;
 	
 	uniform bool useRoughnessMask;
+	
+	vec3 gammaCorrect(vec3 color){
+		color = color / (color + vec3(1.0));
+		color = pow(color, vec3(1.0 / 2.2));
+		
+		return color;
+	}
 
 	void main()
 	{
@@ -27,11 +34,8 @@
 		
 		vec3 indirectSpecular = mix(fallbackSpec.rgb, ssr.rgb, ssr.a);
 		//vec3 indirectSpecular = ssr.rgb + fallbackSpec * (1.0 - ssr.a);
-
+		
 		vec3 color = directDiffuse + directSpecular + indirectDiffuse + indirectSpecular;
 		
-		color = color / (color + vec3(1.0));
-		color = pow(color, vec3(1.0 / 2.2));
-		
-		FragColor = vec4(color, 1.0);
+		FragColor = vec4(gammaCorrect(color), 1.0);
 	}

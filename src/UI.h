@@ -72,6 +72,8 @@ public:
 	float getRadius() { return radius; }
 	float getBias() { return bias; }
 	bool getLightOrientation() { return lightOrientationOn; }
+	bool getUseSSAO() { return useSSAO; }
+	bool getUseSSR() { return useSSR; }
 	SettingsMaterial getSettingsMaterial() { return m_settingsMaterial; }
 
 	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
@@ -117,7 +119,8 @@ private:
 	bool useBinaryRefinement = false;
 
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
-		deferredRendering = false, windowDisabled = false, aoMidTones = false, lightOrientationOn = true;
+		deferredRendering = false, windowDisabled = false, aoMidTones = false, lightOrientationOn = true, 
+		useSSR = true, useSSAO = true;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };

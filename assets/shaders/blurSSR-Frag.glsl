@@ -1,34 +1,33 @@
 	#version 330 core
-	out vec4 FragColor;
+	uniform sampler2D colorTexture;
 
-	in vec2 texCoords;
+	vec2 parameters = vec2(8, 1);
 
-	uniform sampler2D ssrInput;
-	uniform vec2 direction; // (1.0, 0.0) for horizontal, (0.0, 1.0) for vertical
-	int width = 640, height = 480;
-	float sigma = 4.0;
-
-	const int KERNEL_RADIUS = 5;
-
-	float gaussian(float x, float sigma) {
-		return exp(- (x * x) / (2.0 * sigma * sigma)) / (2.0 * 3.14159265 * sigma * sigma);
-	}
+	out vec4 fragColor;
 
 	void main() {
-		int resolution = width * height;
-		vec2 texOffset = direction / resolution; // per-pixel offset for blur direction
-		vec3 result = texture(ssrInput, texCoords).rgb * gaussian(0.0, sigma);
-		float weightSum = gaussian(0.0, sigma);
+	  vec2 texSize  = textureSize(colorTexture, 0).xy;
+	  vec2 texCoord = gl_FragCoord.xy / texSize;
 
-		for (int i = 1; i <= KERNEL_RADIUS; ++i) {
-			float weight = gaussian(float(i), sigma);
-			vec2 offset = texOffset * float(i);
+	  fragColor = texture(colorTexture, texCoord);
 
-			result += texture(ssrInput, texCoords + offset).rgb * weight;
-			result += texture(ssrInput, texCoords - offset).rgb * weight;
-			weightSum += 2.0 * weight;
+	  int size = int(parameters.x);
+	  if (size <= 0) { return; }
+
+	  float separation = parameters.y;
+			separation = max(separation, 1);
+
+	  fragColor.rgb = vec3(0);
+
+	  float count = 0.0;
+
+	  for (int i = -size; i <= size; ++i) {
+		for (int j = -size; j <= size; ++j) {
+		  fragColor.rgb += texture( colorTexture, ( gl_FragCoord.xy + (vec2(i, j) * separation)) / texSize).rgb;
+
+		  count += 1.0;
 		}
+	  }
 
-		result /= weightSum;
-		FragColor = vec4(result, 1.0);
+	  fragColor.rgb /= count;
 	}

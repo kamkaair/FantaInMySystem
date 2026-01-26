@@ -174,8 +174,14 @@ void main(){
 	//float specEnergy = max(max(fresnel.r, fresnel.g), fresnel.b);
 	//float alpha = outColor.a * roughnessFade * specEnergy;	
 	float alpha = outColor.a * roughnessFade;
-
+	
+	
+	//reflection = reflection / (reflection + vec3(1.0));
+	//reflection = pow(reflection, vec3(1.0 / 2.2));
+	
+	
 	reflectionColor = vec4(reflection, alpha);
 	
+	//reflectionColor = vec4(fresnel.r, fresnel.g, fresnel.b, 1.0);
 	//reflectionColor = vec4(screenSpaceMaxDistance, 0.0, 0.0, 1.0);
 }

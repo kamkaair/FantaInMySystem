@@ -143,10 +143,12 @@ void UI::ImGuiDraw()
 			m_GBuffer->constructDeferredShaders();
 			m_GBuffer->deconstructForwardShaders();
 			m_SSAO->constructSSAO();
+			m_SSAO->constructSSR();
 		}
 		else if (!deferredRendering) {
 			glUseProgram(0); // Unbind any active shader
 			m_SSAO->deconstructSSAO();
+			m_SSAO->deconstructSSR();
 			m_GBuffer->constructForwardShaders();
 			m_GBuffer->deconstructDeferredShaders();
 		}
@@ -586,6 +588,12 @@ void UI::ImGuiDraw()
 		{
 			if (ImGui::TreeNode("SSAO"))
 			{
+				if(ImGui::Checkbox("Use SSAO", &useSSAO) ) {
+					m_SSAO->recreateColorBuffer();
+					m_GBuffer->getLightPass()->bind();
+					m_GBuffer->getLightPass()->setUniform("useSSAO", useSSAO);
+				}
+
 				if (ImGui::InputInt("Kernel Samples", &kernelSize)) {
 					m_SSAO->getSsaoShader()->bind();
 					m_SSAO->getSsaoShader()->setUniform("kernelSize", kernelSize);
@@ -617,6 +625,10 @@ void UI::ImGuiDraw()
 
 			if (ImGui::TreeNode("SSR"))
 			{
+				if(ImGui::Checkbox("Use SSR", &useSSR)) {
+					m_SSAO->recreateColorBuffer();
+				}
+
 				if (ImGui::InputInt("maxSteps", &maxSteps)) {
 					if (!m_GBuffer->getLightPass() == 0) {
 						m_SSAO->getSsrShader()->bind();

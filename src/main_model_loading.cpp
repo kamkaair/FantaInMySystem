@@ -76,6 +76,7 @@ public:
 		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
 
 
+
 		// setup for the debug plane mesh
 		Material* newMaterial = m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
 			ASSET_DIR + std::string("/textures/EmptyNormal.png"), // Diffuse
@@ -247,13 +248,15 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. Screen Space Ambient Occlusion pass
-		m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
+		if(m_uiDraw->getUseSSAO()) // CLEAR THE BUFFER
+			m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
 
 		// 3. Lighting pass
 		deferredLightPass();
 
 		// 4. Screen Space Reflection pass
-		m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
+		if (m_uiDraw->getUseSSR()) // CLEAR THE BUFFER
+			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
 		m_ssaoClass->compositeSSR(m_meshRender, m_HDRI->getBackgroundTexture(), m_HDRI->getCubemapTexture());
 

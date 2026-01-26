@@ -12,7 +12,9 @@ public:
 	~SSAO();
 
 	void constructSSAO();
+	void constructSSR();
 	void deconstructSSAO();
+	void deconstructSSR();
 	void setupSSAO();
 	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
 	void renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw);
