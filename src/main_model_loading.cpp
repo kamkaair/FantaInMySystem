@@ -258,13 +258,13 @@ public:
 		if (m_uiDraw->getUseSSR()) // CLEAR THE BUFFER
 			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
-		m_ssaoClass->compositeSSR(m_meshRender, m_HDRI->getBackgroundTexture(), m_HDRI->getCubemapTexture());
-
 		// 5. Render the skybox/background image
-		//switch (m_uiDraw->getBackgroundMode()) {
-		//case 0: m_HDRI->renderSkybox(m_camera); break;
-		//case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		//}
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
+
+		m_ssaoClass->compositeSSR(m_meshRender, m_camera, m_HDRI->getCubemapTexture());
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {

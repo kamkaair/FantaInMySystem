@@ -10,6 +10,12 @@
 	uniform sampler2D uIndirectDiffuse;
 	uniform sampler2D uIndirectSpecFallback;
 	
+	uniform sampler2D uDepth;
+	uniform samplerCube uSkybox;
+	
+	uniform mat4 invProjection;
+	uniform mat4 invView;
+	
 	uniform bool useRoughnessMask;
 	
 	vec3 gammaCorrect(vec3 color){
@@ -18,11 +24,29 @@
 		
 		return color;
 	}
+	
+	vec3 reconstructViewDir(vec2 uv, float depth)
+	{
+		vec4 clip = vec4(uv * 2.0 - 1.0, depth * 2.0 - 1.0, 1.0);
+		vec4 view = invProjection * clip;
+		view /= view.w;
+		vec4 world = invView * vec4(view.xyz, 0.0);
+		return normalize(world.xyz);
+	}
 
 	void main()
 	{
+
 		//vec3 lighting = texture(uLightingTex, texCoords).rgb;
 		//vec3 lightingDiff = texture(uLightingDiffuse, texCoords).rgb;
+		float depth = texture(uDepth, texCoords).r;
+		if(depth >= 0.9999) {		
+			vec3 dir = reconstructViewDir(texCoords, depth);
+			vec3 sky = texture(uSkybox, dir).rgb;
+			FragColor = vec4(gammaCorrect(sky), 1.0);
+			return;		
+		}
+		
 		vec4 ssr = texture(uSSR, texCoords);
 		float metallic = 1.0;
 		float roughness = 0.0;

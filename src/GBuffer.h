@@ -20,6 +20,7 @@ public:
 	GLuint createSpecular();
 	GLuint createIndirectDiffuse();
 	GLuint createIndirectSpecular();
+	//GLuint createBackground();
 
 	GLuint getGPosition() { return gPosition; }
 	GLuint getGAlbedo() { return gAlbedo; }

@@ -18,7 +18,7 @@ public:
 	void setupSSAO();
 	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
 	void renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw);
-	void compositeSSR(Mesh* m_meshRender, Texture* TexHDRI, GLuint TexCubemap);
+	void compositeSSR(Mesh* m_meshRender, Camera* m_camera, GLuint TexCubemap);
 	void recreateColorBuffer();
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
