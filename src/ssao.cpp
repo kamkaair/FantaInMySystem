@@ -181,7 +181,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::compositeSSR(Mesh* m_meshRender, Camera* m_camera, GLuint TexCubemap)
+void SSAO::compositeSSR(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, int backgroundMode)
 {
 	//glEnable(GL_BLEND);
 	//glBlendFunc(GL_ONE, GL_ONE); // additive blend
@@ -218,10 +218,15 @@ void SSAO::compositeSSR(Mesh* m_meshRender, Camera* m_camera, GLuint TexCubemap)
 	m_GBuffer->getCompositeShader()->setUniform("uDepth", 5);
 
 	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, TexCubemap);
+	glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDRI->getCubemapTexture());
 	m_GBuffer->getCompositeShader()->setUniform("uSkybox", 6);
 
+	glActiveTexture(GL_TEXTURE7);
+	glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
+	m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);
+
 	//m_GBuffer->getCompositeShader()->setUniform("view", glm::vec3(0.0f, 0.0f, 0.0f));
+	m_GBuffer->getCompositeShader()->setUniform("backgroundMode", backgroundMode);
 	m_GBuffer->getCompositeShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 	m_GBuffer->getCompositeShader()->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
 
