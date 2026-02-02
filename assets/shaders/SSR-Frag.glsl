@@ -58,9 +58,11 @@ vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 		float depthDif = rayPos.z - sampleDepth;
 		
 		float prevDepthDiff = prevRayPos.z - sampleDepth;
+		//float prevDepthDiff = prevRayPos.z - texture(depthMap, prevRayPos.xy).r;
 		
 		//if(depthDif >= 0 && prevDepthDiff >= 0.0 && depthDif < thickness) {
-		if(depthDif >= 0 && depthDif < thickness) { // we have a hit / ray has crossed the geometry
+		//if (depthDif >= 0.0 && prevDepthDiff <= 0.0 && depthDif < thickness) {
+		if(depthDif >= 0 && depthDif < thickness) { // we have a hit / ray has crossed the geometry				
 			hit = 1.0;
 			
 			if(useBinaryRefinement){
@@ -72,6 +74,10 @@ vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 				hitPos = rayPos;
 			}
 			hitColor = texture(colorBuffer, hitPos.xy).rgb;
+			
+			// kill the pixels, which have been set to black at grazing angles
+			if(hitColor == vec3(0.0,0.0,0.0))
+				hit = 0.0;
 			
 			break;
 		}
@@ -145,7 +151,7 @@ void main(){
 	vec3 fresnel = F_Schlick(F0, NdotV);
 	
 
-	if(reflectionView.z > 0){
+	if(reflectionView.z > 0.01){
 		reflectionColor = vec4(0,0,0,0);
 		return;
 	}
