@@ -71,6 +71,7 @@
 		//vec3 indirectSpecular = ssr.rgb + fallbackSpec * (1.0 - ssr.a);
 		
 		vec3 color = directDiffuse + directSpecular + indirectDiffuse + indirectSpecular;
+		//vec3 color = indirectSpecular;
 		
 		FragColor = vec4(gammaCorrect(color), 1.0);
 	}

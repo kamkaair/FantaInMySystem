@@ -13,7 +13,7 @@ uniform mat4 invProjection;
 uniform mat4 projection;
 
 uniform int maxSteps = 5;
-uniform float thickness = 0.0001;
+uniform float thickness = 0.00014;
 uniform float rayDirMin = 0.001;
 uniform bool useBinaryRefinement = false;
 
@@ -45,6 +45,8 @@ vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 	vec3 hitPos = vec3(0);
 	vec3 prevRayPos = rayPos;
 	float hit = 0.0;
+	
+	//float thickness = max(0.00009, rayPos.z * 0.0001);
 
 	for(int i = 0; i < iterationCount; i++){
 		prevRayPos = rayPos;
@@ -76,7 +78,7 @@ vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 			hitColor = texture(colorBuffer, hitPos.xy).rgb;
 			
 			// kill the pixels, which have been set to black at grazing angles
-			if(hitColor == vec3(0.0,0.0,0.0))
+			if (hitColor == vec3(0.0, 0.0, 0.0))
 				hit = 0.0;
 			
 			break;
@@ -169,25 +171,19 @@ void main(){
 	int screenSpaceMaxDistance = max(abs(screenSpaceDistance.x), abs(screenSpaceDistance.y)) / 2;
 	rayDirectionTexture /= max(screenSpaceMaxDistance, rayDirMin);
 
-	//trace the ray
+	// Trace the ray
 	vec4 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
-	//reflectionColor = outColor;
 	
 	float roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
-
 	vec3 reflection = outColor.rgb * fresnel * roughnessFade;
 	
 	//float specEnergy = max(max(fresnel.r, fresnel.g), fresnel.b);
 	//float alpha = outColor.a * roughnessFade * specEnergy;	
-	float alpha = outColor.a * roughnessFade;
 	
+	float angleFade = smoothstep(0.05, 0.3, NdotV);
+	float alpha = outColor.a * roughnessFade * angleFade;
 	
-	//reflection = reflection / (reflection + vec3(1.0));
-	//reflection = pow(reflection, vec3(1.0 / 2.2));
-	
+	//float alpha = outColor.a * roughnessFade;
 	
 	reflectionColor = vec4(reflection, alpha);
-	
-	//reflectionColor = vec4(fresnel.r, fresnel.g, fresnel.b, 1.0);
-	//reflectionColor = vec4(screenSpaceMaxDistance, 0.0, 0.0, 1.0);
 }

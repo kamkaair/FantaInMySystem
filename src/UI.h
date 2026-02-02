@@ -114,7 +114,7 @@ private:
 
 	//SSR
 	int maxSteps = 5;
-	float thickness = 0.0001;
+	float thickness = 0.00014;
 	float rayDirMin = 0.001;
 	bool useBinaryRefinement = false;
 
