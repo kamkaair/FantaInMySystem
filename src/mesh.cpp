@@ -59,15 +59,14 @@ std::string Mesh::getBackgroundName() const {
 	return m_meshBackgroundName;
 }
 
-void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
-	const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const
+void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 {
 	shader->bind();
 	// Set uniform values to the shader
 	// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
 	shader->setUniform("M", getModelMatrix());
-	shader->setUniform("VP", projectionMatrix * viewMatrix);
-	shader->setUniform("V", viewMatrix);
+	shader->setUniform("VP", m_camera->getProjectionMatrix() * m_camera->getViewMatrix());
+	shader->setUniform("V", m_camera->getViewMatrix());
 
 	// Bind material textures
 	if (m_material) {
@@ -117,14 +116,14 @@ void Mesh::RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix,
 	}
 }
 
-void Mesh::Render(Shader* shader, const glm::vec3& viewPos, const std::vector<glm::vec3> LightP, const std::vector<glm::vec3> LightColor, std::vector<float> LightStrength, const glm::mat4& viewMatrix, const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const
+void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<glm::vec3> LightP, const std::vector<glm::vec3> LightColor, std::vector<float> LightStrength) const
 {
 	// Bind the shader
 	shader->bind();
 
 	// Set uniform values to the shader
 	// MVP Matrix (or I guess it's VP, since the model matrix is down there? :D)
-	shader->setUniform("VP", projectionMatrix * viewMatrix);
+	shader->setUniform("VP", m_camera->getProjectionMatrix() * m_camera->getViewMatrix());
 
 	// Model matrix
 	shader->setUniform("M", getModelMatrix());
@@ -146,8 +145,11 @@ void Mesh::Render(Shader* shader, const glm::vec3& viewPos, const std::vector<gl
 	int lightAmount = LightP.size();
 	shader->setUniform("NUM_POINT_LIGHTS", lightAmount);
 
-	shader->setUniform("viewPos", viewPos.x, viewPos.y, viewPos.z);
-
+	shader->setUniform("viewPos", m_camera->getPosition().x, m_camera->getPosition().y, m_camera->getPosition().z);
+	//shader->setUniform("invModel", glm::transpose(glm::mat3(getModelMatrix())));
+	//shader->setUniform("view", m_camera->getViewMatrix());
+	//shader->setUniform("proj", m_camera->getProjectionMatrix());
+	
 	// Bind material textures
 	if (m_material) {
 

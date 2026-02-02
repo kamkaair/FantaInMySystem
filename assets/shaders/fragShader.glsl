@@ -66,7 +66,11 @@
 
 		vec3 N = normalize(normal);
 		vec3 T = normalize(Q1 * st2.t - Q2 * st1.t);
-		vec3 B = -normalize(cross(N, T));
+		
+		T = normalize(T - N * dot(N, T));
+		vec3 B = cross(N, T);
+		//vec3 B = -normalize(cross(N, T));
+
 		mat3 TBN = mat3(T, B, N);
 
 		return normalize(TBN * tangentNormal);
@@ -144,7 +148,7 @@
 
 	vec3 N = getNormalFromMap();
 	vec3 V = normalize(viewPos - fragPos);
-	vec3 R = reflect(-V, N);
+	vec3 R = reflect(-V, N);	
 	//vec3 R = mix(N, reflect(-V, N), distanceFactor);
 
 	vec3 F0 = vec3(0.04);
@@ -223,6 +227,8 @@
 	
 	//Color out
 	FragColor = vec4(color, 1.0);
+	//FragColor = vec4(normalize(R) * 0.5 + 0.5, 1.0);
+	
 	//FragColor = vec4(V * 0.5 + 0.5, 1.0);
 	//FragColor = sharpen(DiffuseMap, texCoord, vec2(HueChange, HueChange));
 	};

@@ -93,7 +93,7 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 		ASSET_DIR + std::string("/textures/checkerboard.png"),
 		ASSET_DIR + std::string("/textures/checkerboard.png"),
 		ASSET_DIR + std::string("/textures/checkerboard.png"),
-		ASSET_DIR + std::string("/textures/checkerboard.png")
+		ASSET_DIR + std::string("/textures/checkerboardNormal.png")
 	), "TestMaterial");
 
 	if (presetMode >= 1) {

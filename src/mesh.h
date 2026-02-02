@@ -7,6 +7,7 @@
 #include "shader.h"
 #include "material.h"
 #include "texture.h"
+#include "camera.h"
 
 #include <glad/gl.h>		// Include glad
 #include <glm/glm.hpp>      // Include glm
@@ -30,8 +31,8 @@ public:
 	Mesh(const std::vector< Vertex >& vertices, const std::vector< unsigned int >& indices);
 	~Mesh();
 	//const std::vector<glm::vec3> 
-	void RenderGBuffer(Shader* shader, const glm::mat4& viewMatrix, const glm::mat4& modelMatrix, const glm::mat4& projectionMatrix) const;
-	void Render(Shader* shader, const glm::vec3& viewPos, const std::vector<glm::vec3> LightP, std::vector<glm::vec3> LightColor, const std::vector<float> LightStrength, const glm::mat4& viewMatrix = glm::mat4(1.0f), const glm::mat4& modelMatrix = glm::mat4(1.0f), const glm::mat4& projectionMatrix = glm::mat4(1.0f)) const;
+	void RenderGBuffer(Shader* shader, Camera* m_camera) const;
+	void Render(Shader* shader, Camera* m_camera, const std::vector<glm::vec3> LightP, const std::vector<glm::vec3> LightColor, std::vector<float> LightStrength) const;
 	void renderCube();
 	void renderQuad();
 	void setMaterial(Material* material);

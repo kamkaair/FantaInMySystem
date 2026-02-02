@@ -331,7 +331,6 @@ void HDRI::renderSkybox(Camera* m_camera) {
 	//glDepthMask(GL_FALSE); // disable writing to depth
 
 	glm::mat4 view = glm::mat4(glm::mat3(m_camera->getViewMatrix()));  // Remove translation from the view matrix
-	//std::cout << "View Matrix: " << glm::to_string(view) << std::endl;
 	glm::mat4 projection = m_camera->getProjectionMatrix();
 
 	m_BackgroundShader->bind();  // Bind the cubemap shader

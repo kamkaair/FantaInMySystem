@@ -75,29 +75,6 @@ public:
 		const int presetMode = 3;
 		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
 
-
-
-		// setup for the debug plane mesh
-		Material* newMaterial = m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
-			ASSET_DIR + std::string("/textures/EmptyNormal.png"), // Diffuse
-			ASSET_DIR + std::string("/textures/EmptyNormal.png"), // Metallic
-			ASSET_DIR + std::string("/textures/EmptyNormal.png"), // Roughness
-			ASSET_DIR + std::string("/textures/EmptyNormal.png") // Normal
-		), "ReflectiveMat");
-
-		// Set material properties for the struct
-		newMaterial->diffuseColor = glm::vec3(29, 29, 29);
-		newMaterial->roughness = 0.1;
-		newMaterial->metallic = 1.0;
-
-		newMaterial->useDiffuseTexture = false;
-		newMaterial->useMetallicTexture = false;
-		newMaterial->useRoughnessTexture = false;
-
-		m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = newMaterial;
-
-
-
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 
 		// Load the texture for an icon
@@ -211,8 +188,8 @@ public:
 			// Forward rendering
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera->getPosition(), m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightColor(), 
-					m_uiDraw->getPointLightStrength(), m_camera->getViewMatrix(), m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
+				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_uiDraw->getPointLightPos(), 
+					m_uiDraw->getPointLightColor(), m_uiDraw->getPointLightStrength());
 			}
 		}
 
@@ -241,29 +218,23 @@ public:
 
 		// Render meshes
 		for (Mesh* mesh : m_uiDraw->getMeshes()) {
-			mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera->getViewMatrix(),
-				m_camera->getModelMatrix(), m_camera->getProjectionMatrix());
+			mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. Screen Space Ambient Occlusion pass
-		if(m_uiDraw->getUseSSAO()) // CLEAR THE BUFFER
+		if(m_uiDraw->getUseSSAO())
 			m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
 
 		// 3. Lighting pass
 		deferredLightPass();
 
 		// 4. Screen Space Reflection pass
-		if (m_uiDraw->getUseSSR()) // CLEAR THE BUFFER
+		if (m_uiDraw->getUseSSR())
 			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
-		// 5. Render the skybox/background image
-		//switch (m_uiDraw->getBackgroundMode()) {
-		//case 0: m_HDRI->renderSkybox(m_camera); break;
-		//case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		//}
-
+		// 5. Render the final image
 		m_ssaoClass->compositeSSR(m_meshRender, m_camera, m_HDRI, m_uiDraw->getBackgroundMode());
 
 		// 6. Render icons and UI

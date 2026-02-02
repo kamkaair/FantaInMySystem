@@ -1,6 +1,6 @@
 #version 330 core
 out vec4 FragColor;
-in vec3 worldPos;
+in vec3 localPos;
 
 uniform samplerCube environmentMap;
 uniform float roughness;
@@ -63,7 +63,7 @@ vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness)
 // ----------------------------------------------------------------------------
 void main()
 {		
-    vec3 N = normalize(worldPos);
+    vec3 N = normalize(localPos);
     
     // make the simplifying assumption that V equals R equals the normal 
     vec3 R = N;

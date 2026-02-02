@@ -15,6 +15,7 @@
 	{
 	fragPos = vec3(M * vec4(in_position, 1.0));
 	normal = mat3(transpose(inverse(M))) * in_normal;
+	//normal = mat3(M) * in_normal;
 	texCoord = in_texCoord;
 	
 	gl_Position = VP * vec4(fragPos, 1.0);
