@@ -24,37 +24,57 @@ public:
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 
+	// Create textures
 	GLuint createSsaoColorBuffer();
 	GLuint createSsaoColorBufferBlur();
 	GLuint createSsrSceneColorBuffer();
 	GLuint createSsrSceneColorBufferBlur();
 
+	// Create FBOs
 	GLuint createSsaoFBO();
 	GLuint createSsaoBlurFBO();
 	GLuint createSsrFBO();
 	GLuint createSsrBlurFBO();
+	void createSSR_HistoryFramebuffer();
+	void createTemporalBuffers();
 
-	GLuint getColorBuffer() { return ssaoColorBuffer; }
-	GLuint getBlurColorBuffer() { return ssaoColorBufferBlur; }
+	// Screen space gets
+	GLuint getSsaoColorBuffer() { return ssaoColorBuffer; }
+	GLuint getSsaoBlurColorBuffer() { return ssaoColorBufferBlur; }
 
 	GLuint getSsrColorBuffer() { return ssrColorBuffer; }
 	GLuint getSsrBlurColorBuffer() { return ssrColorBufferBlur; }
 
-
 	Shader* getSsaoShader() { return m_SSAO; }
 	Shader* getSsrShader() { return m_SSR; }
 
+	// Temp accumulation
+	GLuint getSSRHistoryRead() const { return ssrTemporalBuffer[1 - ssrHistoryIndex]; }
+	GLuint getSSRHistoryWriteFBO() const { return ssrHistoryFBO[ssrHistoryIndex]; }
+	void swapSSRHistory() { ssrHistoryIndex = 1 - ssrHistoryIndex; }
+
 private:
-	int width = 640, height = 480;
+	int width = 640, height = 480, ssrHistoryIndex = 0;
+	int frameIndex = 0;
 
 	Shader* m_SSAO = 0;
+	Shader* m_SSR_TAF = 0;
 	Shader* m_blurSSAO = 0;
 	Shader* m_SSR = 0;
 	Shader* m_blurSSR = 0;
 	GBuffer* m_GBuffer;
 
-	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssrFBO = 0, ssrBlurFBO = 0;
-	GLuint ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, ssrColorBuffer = 0, ssrColorBufferBlur = 0;
+	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssrFBO = 0, 
+		ssrHistoryFBO[2], ssrBlurFBO = 0;
+
+	GLuint ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, 
+		ssrColorBuffer = 0, ssrTemporalBuffer[2], ssrColorBufferBlur = 0;
+
+	// For the temp accumulation of ssr
+	GLuint prevDepthTex = 0, prevNormalTex = 0;
+	GLuint prevDepthFBO = 0, prevNormalFBO = 0;
+	glm::mat4 prevView, prevProj;
+	bool firstFrame = true;
 
 	std::vector<glm::vec3> ssaoKernel;
 };

@@ -27,6 +27,7 @@ void SSAO::deconstructSSAO() {
 void SSAO::deconstructSSR() {
 	if (m_SSR != 0) { utils::deleteObject(m_SSR); }
 	//if (m_blurSSR != 0) { utils::deleteObject(m_blurSSR); }
+	if (m_SSR_TAF != 0) { utils::deleteObject(m_SSR_TAF); }
 }
 
 void SSAO::constructSSAO() {
@@ -45,6 +46,9 @@ void SSAO::constructSSR() {
 
 	//if (m_blurSSR == 0)
 		//m_blurSSR = utils::makeShader("SSAO-Vert.glsl", "blurSSR-Frag.glsl");
+
+	if (m_SSR_TAF == 0)
+		m_SSR_TAF = utils::makeShader("SSAO-Vert.glsl", "SSR-TAF.glsl");
 }
 
 void SSAO::setupSSAO() {
@@ -60,6 +64,13 @@ void SSAO::setupSSAO() {
 	ssrFBO = createSsrFBO();
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	ssrColorBuffer = createSsrSceneColorBuffer();
+
+	// SSR Temporal Accumulation FBO
+	//ssr_TAF_FBO = createSsrFBO();
+	//glBindFramebuffer(GL_FRAMEBUFFER, ssr_TAF_FBO);
+	//ssrTemporalBuffer = createSsrTemporalBuffer();
+	createSSR_HistoryFramebuffer();
+	createTemporalBuffers();
 
 	//// SSR Blur framebuffer
 	//ssrBlurFBO = createSsrBlurFBO();
@@ -131,12 +142,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
 	m_SSR->setUniform("gNormal", 0);
 
-	//glActiveTexture(GL_TEXTURE1);
-	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-	//m_SSR->setUniform("gPosition", 1);
-
 	glActiveTexture(GL_TEXTURE1);
-	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightingTex());
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
 	m_SSR->setUniform("colorBuffer", 1);
 
@@ -150,20 +156,98 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 
 	m_SSR->setUniform("SCR_WIDTH", float(width));
 	m_SSR->setUniform("SCR_HEIGHT", float(height));
-	//std::cout << m_camera->getNear() << " " << m_camera->getFar() << std::endl;
 
-	//m_SSR->setUniform("view", glm::vec3(0.0f, 0.0f, 0.0f));
 	m_SSR->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
+
+	m_SSR->setUniform("frameIndex", frameIndex);
+
 	//m_SSR->setUniform("far", m_camera->getFar());
 	//m_SSR->setUniform("near", m_camera->getNear());
 
 	//m_SSR->setUniform("cameraPos", m_camera->getPosition());
 	//m_SSR->setUniform("screenSize", glm::vec2(width, height));
 
+	m_meshRender->renderQuad();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Temporal Accumulation
+	glBindFramebuffer(GL_FRAMEBUFFER, getSSRHistoryWriteFBO());
+	m_SSR_TAF->bind();
+
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
+	m_SSR_TAF->setUniform("uSSRCurrent", 0);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, getSSRHistoryRead());
+	m_SSR_TAF->setUniform("uSSRHistory", 1);
+
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
+	m_SSR_TAF->setUniform("depthMap", 2);
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
+	m_SSR_TAF->setUniform("gNormal", 3);
+
+	// Previous depth
+	glActiveTexture(GL_TEXTURE4);
+	glBindTexture(GL_TEXTURE_2D, prevDepthTex);
+	m_SSR_TAF->setUniform("uPrevDepth", 4);
+
+	// Previous normal
+	glActiveTexture(GL_TEXTURE5);
+	glBindTexture(GL_TEXTURE_2D, prevNormalTex);
+	m_SSR_TAF->setUniform("uPrevNormal", 5);
+
+	m_SSR_TAF->setUniform("near", m_camera->getNear());
+	m_SSR_TAF->setUniform("far", m_camera->getFar());
+
+	glm::mat4 currView = m_camera->getViewMatrix();
+	glm::mat4 currProj = m_camera->getProjectionMatrix();
+
+	if (firstFrame)
+	{
+		prevView = currView;
+		prevProj = currProj;
+		firstFrame = false;
+	}
+
+	//m_SSR_TAF->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
+	//m_SSR_TAF->setUniform("prevView", prevView);
+
+	m_SSR_TAF->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
+	m_SSR_TAF->setUniform("prevProjection", prevProj);
+
+	//m_SSR_TAF->setUniform("SCR_WIDTH", float(width));
+	//m_SSR_TAF->setUniform("SCR_HEIGHT", float(height));
 
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	swapSSRHistory();
+
+	// Copy depth to prevDepth
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDepthFBO);
+
+	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+
+	// Copy normal
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevNormalFBO);
+
+	glReadBuffer(GL_COLOR_ATTACHMENT1); // gNormal
+	glDrawBuffer(GL_COLOR_ATTACHMENT0);
+
+	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	prevView = currView;
+	prevProj = currProj;
+	frameIndex++; // frame index used for the random
 
 	// -------------------------------
 	// BLUR
@@ -194,7 +278,8 @@ void SSAO::compositeSSR(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, int 
 	m_GBuffer->getCompositeShader()->bind();
 
 	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
+	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer); //getSSRHistoryRead
+	glBindTexture(GL_TEXTURE_2D, getSSRHistoryRead());
 	m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
 
 	glActiveTexture(GL_TEXTURE1);
@@ -298,6 +383,72 @@ GLuint SSAO::createSsrSceneColorBuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	return ssrColorBuffer;
+}
+
+void SSAO::createSSR_HistoryFramebuffer() {
+	glGenFramebuffers(2, ssrHistoryFBO);
+	glGenTextures(2, ssrTemporalBuffer);
+
+	for (int i = 0; i < 2; ++i)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, ssrHistoryFBO[i]);
+
+		glBindTexture(GL_TEXTURE_2D, ssrTemporalBuffer[i]);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F,
+			width, height, 0,
+			GL_RGBA, GL_FLOAT, nullptr);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+		glFramebufferTexture2D(GL_FRAMEBUFFER,
+			GL_COLOR_ATTACHMENT0,
+			GL_TEXTURE_2D,
+			ssrTemporalBuffer[i],
+			0);
+
+		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+			std::cout << "SSR history FBO incomplete!" << std::endl;
+	}
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void SSAO::createTemporalBuffers()
+{
+	// prevDepth
+	glGenTextures(1, &prevDepthTex);
+	glBindTexture(GL_TEXTURE_2D, prevDepthTex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F,
+		width, height, 0,
+		GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glGenFramebuffers(1, &prevDepthFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, prevDepthFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,
+		GL_DEPTH_ATTACHMENT,
+		GL_TEXTURE_2D,
+		prevDepthTex, 0);
+
+	// prevNormal
+	glGenTextures(1, &prevNormalTex);
+	glBindTexture(GL_TEXTURE_2D, prevNormalTex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F,
+		width, height, 0,
+		GL_RGB, GL_FLOAT, nullptr);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+	glGenFramebuffers(1, &prevNormalFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, prevNormalFBO);
+	glFramebufferTexture2D(GL_FRAMEBUFFER,
+		GL_COLOR_ATTACHMENT0,
+		GL_TEXTURE_2D,
+		prevNormalTex, 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 GLuint SSAO::createSsrSceneColorBufferBlur() {

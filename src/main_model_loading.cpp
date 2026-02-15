@@ -264,7 +264,7 @@ public:
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getBlurColorBuffer());
+		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSsaoBlurColorBuffer());
 
 		m_GBuffer->getLightPass()->setUniform("gPosition", 3);
 		m_GBuffer->getLightPass()->setUniform("gNormal", 4);

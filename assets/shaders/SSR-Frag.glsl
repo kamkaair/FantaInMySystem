@@ -17,6 +17,8 @@ uniform float thickness = 0.00014;
 uniform float rayDirMin = 0.001;
 uniform bool useBinaryRefinement = false;
 
+uniform int frameIndex;
+
 bool rayIsOutofScreen(vec2 ray){
 	return (ray.x > 1 || ray.y > 1 || ray.x < 0 || ray.y < 0) ? true : false;
 }
@@ -59,7 +61,7 @@ vec4 TraceRay(vec3 rayPos, vec3 dir, int iterationCount){
 		sampleDepth = texture(depthMap, rayPos.xy).r;
 		float depthDif = rayPos.z - sampleDepth;
 		
-		float prevDepthDiff = prevRayPos.z - sampleDepth;
+		//float prevDepthDiff = prevRayPos.z - sampleDepth;
 		//float prevDepthDiff = prevRayPos.z - texture(depthMap, prevRayPos.xy).r;
 		
 		//if(depthDif >= 0 && prevDepthDiff >= 0.0 && depthDif < thickness) {
@@ -119,7 +121,7 @@ vec3 F_Schlick(vec3 F0, float cosTheta)
 
 void main(){
 	float maxRayDistance = 100.0f;
-
+	
 	//View Space ray calculation
 	vec3 pixelPositionTexture;
 	pixelPositionTexture.xy = vec2(gl_FragCoord.x / SCR_WIDTH,  gl_FragCoord.y / SCR_HEIGHT);
@@ -130,15 +132,24 @@ void main(){
 	positionView /= positionView.w;
 	
 	
-	vec2 gMetalRoughTex = texture(gMetallicRoughness, pixelPositionTexture.xy).rg;
+	vec2 gMetalRoughTex = texture(gMetallicRoughness, pixelPositionTexture.xy).rg;	
 	
 	//vec3 reflectionView = normalize(reflect(positionView.xyz, normalView));	
 	vec3 V = normalize(-positionView.xyz);
 	vec3 R = reflect(-V, normalView);
 
 	float roughness = gMetalRoughTex.g;
-	vec2 Xi = vec2(rand(pixelPositionTexture.xy),
-				   rand(pixelPositionTexture.yx));
+	//vec2 Xi = vec2(rand(pixelPositionTexture.xy),
+				   //rand(pixelPositionTexture.yx));
+				   
+	vec2 jitter = vec2(
+		fract(sin(float(frameIndex) * 12.9898) * 43758.5453),
+		fract(sin(float(frameIndex) * 78.233)  * 12345.6789));
+
+	vec2 Xi = vec2(
+		rand(pixelPositionTexture.xy + jitter),
+		rand(pixelPositionTexture.yx + jitter)
+);
 
 	vec3 H = sampleHemisphereGGX(normalView, roughness, Xi);
 	vec3 reflectionView = normalize(reflect(-V, H));
@@ -153,7 +164,7 @@ void main(){
 	vec3 fresnel = F_Schlick(F0, NdotV);
 	
 
-	if(reflectionView.z > 0.01){
+	if(reflectionView.z >= 0.0){
 		reflectionColor = vec4(0,0,0,0);
 		return;
 	}
@@ -176,14 +187,16 @@ void main(){
 	
 	float roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
 	vec3 reflection = outColor.rgb * fresnel * roughnessFade;
+	//vec3 reflection = outColor.rgb * roughnessFade;
 	
 	//float specEnergy = max(max(fresnel.r, fresnel.g), fresnel.b);
 	//float alpha = outColor.a * roughnessFade * specEnergy;	
 	
 	float angleFade = smoothstep(0.05, 0.3, NdotV);
-	float alpha = outColor.a * roughnessFade * angleFade;
 	
+	//float alpha = outColor.a * roughnessFade * angleFade;
 	//float alpha = outColor.a * roughnessFade;
+	float alpha = outColor.a;
 	
 	reflectionColor = vec4(reflection, alpha);
 }

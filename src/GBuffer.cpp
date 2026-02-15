@@ -37,8 +37,6 @@ void GBuffer::constructGBuffer() {
 	glGenFramebuffers(1, &lightFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
 
-	//createLightingFramebuffer();
-
 	m_lightDiff = createDiffuse();
 	m_lightingSpec = createSpecular();
 	m_lightingIndirectDiff = createIndirectDiffuse();
@@ -134,26 +132,6 @@ GLuint GBuffer::createDepthBuffer() {
 	return rboDepth;
 }
 
-/*
-void GBuffer::createLightingFramebuffer() {
-	glGenTextures(1, &lightColorBuffer);
-	glBindTexture(GL_TEXTURE_2D, lightColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL); // HDR format
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, lightColorBuffer, 0);
-
-	GLuint depthRBO;
-	glGenRenderbuffers(1, &depthRBO);
-	glBindRenderbuffer(GL_RENDERBUFFER, depthRBO);
-	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthRBO);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Lighting framebuffer not complete!" << std::endl;
-}
-*/
-
 GLuint GBuffer::createDiffuse() {
 	glGenTextures(1, &m_lightDiff);
 	glBindTexture(GL_TEXTURE_2D, m_lightDiff);
@@ -217,10 +195,10 @@ void GBuffer::CleanUpGBuffer() {
 	if (gMetalRough != 0) { glDeleteTextures(1, &gMetalRough); gMetalRough = 0; }
 	if (rboDepth != 0) { glDeleteRenderbuffers(1, &rboDepth); rboDepth = 0; }
 
-	if (m_lightDiff != 0) { glDeleteRenderbuffers(1, &m_lightDiff); m_lightDiff = 0; }
-	if (m_lightingSpec != 0) { glDeleteRenderbuffers(1, &m_lightingSpec); m_lightingSpec = 0; }
-	if (m_lightingIndirectDiff != 0) { glDeleteRenderbuffers(1, &m_lightingIndirectDiff); m_lightingIndirectDiff = 0; }
-	if (m_lightingIndirectSpec != 0) { glDeleteRenderbuffers(1, &m_lightingIndirectSpec); m_lightingIndirectSpec = 0; }
+	if (m_lightDiff != 0) { glDeleteTextures(1, &m_lightDiff); m_lightDiff = 0; }
+	if (m_lightingSpec != 0) { glDeleteTextures(1, &m_lightingSpec); m_lightingSpec = 0; }
+	if (m_lightingIndirectDiff != 0) { glDeleteTextures(1, &m_lightingIndirectDiff); m_lightingIndirectDiff = 0; }
+	if (m_lightingIndirectSpec != 0) { glDeleteTextures(1, &m_lightingIndirectSpec); m_lightingIndirectSpec = 0; }
 }
 
 void GBuffer::constructDeferredShaders() {

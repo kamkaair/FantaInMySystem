@@ -20,7 +20,6 @@ public:
 	GLuint createSpecular();
 	GLuint createIndirectDiffuse();
 	GLuint createIndirectSpecular();
-	//GLuint createBackground();
 
 	GLuint getGPosition() { return gPosition; }
 	GLuint getGAlbedo() { return gAlbedo; }
@@ -35,7 +34,6 @@ public:
 	GLuint getIndirectSpecular() { return m_lightingIndirectSpec; }
 
 	GLuint getLightingFBO() { return lightFBO; }
-	GLuint getLightingTex() { return lightColorBuffer; }
 
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }
@@ -46,8 +44,6 @@ public:
 
 	void constructDeferredShaders();
 	void constructForwardShaders();
-
-	//void createLightingFramebuffer();
 
 	void deconstructDeferredShaders();
 	void deconstructForwardShaders();
@@ -80,5 +76,5 @@ private:
 
 	// Textures
 	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0,
-		lightColorBuffer = 0, m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0;
+		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0;
 };
