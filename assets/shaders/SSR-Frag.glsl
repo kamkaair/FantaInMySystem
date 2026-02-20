@@ -16,6 +16,7 @@ uniform int maxSteps = 5;
 uniform float thickness = 0.00014;
 uniform float rayDirMin = 0.001;
 uniform bool useBinaryRefinement = false;
+uniform bool useRoughnessScatterSSR = true;
 
 uniform int frameIndex;
 
@@ -131,16 +132,9 @@ void main(){
 	vec4 positionView = invProjection * vec4(pixelPositionTexture * 2 - vec3(1), 1);
 	positionView /= positionView.w;
 	
-	
 	vec2 gMetalRoughTex = texture(gMetallicRoughness, pixelPositionTexture.xy).rg;	
-	
-	//vec3 reflectionView = normalize(reflect(positionView.xyz, normalView));	
-	vec3 V = normalize(-positionView.xyz);
-	vec3 R = reflect(-V, normalView);
 
 	float roughness = gMetalRoughTex.g;
-	//vec2 Xi = vec2(rand(pixelPositionTexture.xy),
-				   //rand(pixelPositionTexture.yx));
 				   
 	vec2 jitter = vec2(
 		fract(sin(float(frameIndex) * 12.9898) * 43758.5453),
@@ -148,12 +142,18 @@ void main(){
 
 	vec2 Xi = vec2(
 		rand(pixelPositionTexture.xy + jitter),
-		rand(pixelPositionTexture.yx + jitter)
-);
-
-	vec3 H = sampleHemisphereGGX(normalView, roughness, Xi);
-	vec3 reflectionView = normalize(reflect(-V, H));
+		rand(pixelPositionTexture.yx + jitter));
+		
+	vec3 H;
+	if(useRoughnessScatterSSR) {
+		H = sampleHemisphereGGX(normalView, roughness, Xi);
+	}
+	else {
+		H = sampleHemisphereGGX(normalView, roughness, vec2(0));
+	}
 	
+	vec3 V = normalize(-positionView.xyz);
+	vec3 reflectionView = normalize(reflect(-V, H));
 	
 	float metallic = gMetalRoughTex.r;
 
@@ -187,16 +187,15 @@ void main(){
 	
 	float roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
 	vec3 reflection = outColor.rgb * fresnel * roughnessFade;
-	//vec3 reflection = outColor.rgb * roughnessFade;
+	
+	float alpha = outColor.a;
+	
+	reflectionColor = vec4(reflection, alpha);
 	
 	//float specEnergy = max(max(fresnel.r, fresnel.g), fresnel.b);
 	//float alpha = outColor.a * roughnessFade * specEnergy;	
 	
-	float angleFade = smoothstep(0.05, 0.3, NdotV);
-	
+	//float angleFade = smoothstep(0.05, 0.3, NdotV);
 	//float alpha = outColor.a * roughnessFade * angleFade;
 	//float alpha = outColor.a * roughnessFade;
-	float alpha = outColor.a;
-	
-	reflectionColor = vec4(reflection, alpha);
 }

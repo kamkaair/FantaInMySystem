@@ -74,6 +74,8 @@ public:
 	bool getLightOrientation() { return lightOrientationOn; }
 	bool getUseSSAO() { return useSSAO; }
 	bool getUseSSR() { return useSSR; }
+	bool getUseSSR_TA() { return useTA_SSR; }
+	bool getUseRoughnessScatter() { return useRoughnessScatterSSR; }
 	SettingsMaterial getSettingsMaterial() { return m_settingsMaterial; }
 
 	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
@@ -116,7 +118,7 @@ private:
 	int maxSteps = 5;
 	float thickness = 0.00014;
 	float rayDirMin = 0.001;
-	bool useBinaryRefinement = false;
+	bool useBinaryRefinement = false, useTA_SSR = true, useRoughnessScatterSSR = true;
 
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, aoMidTones = false, lightOrientationOn = true, 

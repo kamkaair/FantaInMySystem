@@ -235,7 +235,7 @@ public:
 			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
 		// 5. Render the final image
-		m_ssaoClass->compositeSSR(m_meshRender, m_camera, m_HDRI, m_uiDraw->getBackgroundMode());
+		m_ssaoClass->compositeSSR(m_meshRender, m_camera, m_HDRI, m_uiDraw);
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {

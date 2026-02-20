@@ -18,8 +18,11 @@ public:
 	void setupSSAO();
 	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
 	void renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw);
-	void compositeSSR(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, int backgroundMode);
+	void renderSSR_TA(Camera* m_camera, Mesh* m_meshRender);
+	void compositeSSR(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw);
 	void recreateColorBuffer();
+
+	void resetTA_SSR();
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
@@ -45,8 +48,10 @@ public:
 	GLuint getSsrColorBuffer() { return ssrColorBuffer; }
 	GLuint getSsrBlurColorBuffer() { return ssrColorBufferBlur; }
 
+	// Shaders
 	Shader* getSsaoShader() { return m_SSAO; }
 	Shader* getSsrShader() { return m_SSR; }
+	Shader* getSsrTaShader() { return m_SSR_TA; }
 
 	// Temp accumulation
 	GLuint getSSRHistoryRead() const { return ssrTemporalBuffer[1 - ssrHistoryIndex]; }
@@ -58,7 +63,7 @@ private:
 	int frameIndex = 0;
 
 	Shader* m_SSAO = 0;
-	Shader* m_SSR_TAF = 0;
+	Shader* m_SSR_TA = 0;
 	Shader* m_blurSSAO = 0;
 	Shader* m_SSR = 0;
 	Shader* m_blurSSR = 0;

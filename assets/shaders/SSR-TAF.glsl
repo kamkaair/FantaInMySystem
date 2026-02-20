@@ -85,7 +85,7 @@ void main()
     }
 
     // Confidence-based blending	
-	float accumulationRate  = 0.1;
+	float accumulationRate = 0.1;
 	float valid = currSSR.a;
 
 	vec3 blended = mix(historySSR.rgb, currSSR.rgb, accumulationRate * valid); // Accumulate when valid 

@@ -583,50 +583,64 @@ void UI::ImGuiDraw()
 
 			ImGui::EndTabItem();
 		}
-
-		if (ImGui::BeginTabItem("POST-PROCESS"))
-		{
-			if (ImGui::TreeNode("SSAO"))
-			{
-				if(ImGui::Checkbox("Use SSAO", &useSSAO) ) {
-					m_SSAO->recreateColorBuffer();
-					m_GBuffer->getLightPass()->bind();
-					m_GBuffer->getLightPass()->setUniform("useSSAO", useSSAO);
-				}
-
-				if (ImGui::InputInt("Kernel Samples", &kernelSize)) {
-					m_SSAO->getSsaoShader()->bind();
-					m_SSAO->getSsaoShader()->setUniform("kernelSize", kernelSize);
-				}
-				if (ImGui::InputFloat("Radius", &radius)) {
-					m_SSAO->getSsaoShader()->bind();
-					m_SSAO->getSsaoShader()->setUniform("radius", radius);
-				}
-				if (ImGui::InputFloat("Bias", &bias)) {
-					m_SSAO->getSsaoShader()->bind();
-					m_SSAO->getSsaoShader()->setUniform("bias", bias);
-				}
-				if (ImGui::InputFloat("Occlusion Strength", &aoStrength)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						shaderBind();
-						shaderSet("aoStrength", aoStrength);
+		if (deferredRendering) {
+			if (ImGui::BeginTabItem("SCREEN-SPACE"))
+			{		
+				if (ImGui::TreeNode("SSAO"))
+				{
+					if (ImGui::Checkbox("Use SSAO", &useSSAO)) {
+						m_SSAO->recreateColorBuffer();
+						m_GBuffer->getLightPass()->bind();
+						m_GBuffer->getLightPass()->setUniform("useSSAO", useSSAO);
 					}
-				}
-				if (ImGui::Checkbox("Clamped Midtones", &aoMidTones)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						shaderBind();
-						shaderSet("aoTone", aoMidTones);
+
+					if (ImGui::InputInt("Kernel Samples", &kernelSize)) {
+						m_SSAO->getSsaoShader()->bind();
+						m_SSAO->getSsaoShader()->setUniform("kernelSize", kernelSize);
 					}
+					if (ImGui::InputFloat("Radius", &radius)) {
+						m_SSAO->getSsaoShader()->bind();
+						m_SSAO->getSsaoShader()->setUniform("radius", radius);
+					}
+					if (ImGui::InputFloat("Bias", &bias)) {
+						m_SSAO->getSsaoShader()->bind();
+						m_SSAO->getSsaoShader()->setUniform("bias", bias);
+					}
+					if (ImGui::InputFloat("Occlusion Strength", &aoStrength)) {
+						if (!m_GBuffer->getLightPass() == 0) {
+							shaderBind();
+							shaderSet("aoStrength", aoStrength);
+						}
+					}
+					if (ImGui::Checkbox("Clamped Midtones", &aoMidTones)) {
+						if (!m_GBuffer->getLightPass() == 0) {
+							shaderBind();
+							shaderSet("aoTone", aoMidTones);
+						}
+					}
+
+					ImGui::TreePop();
+				}
+				ImGui::Separator();
+
+				if (ImGui::TreeNode("SSR"))
+			{
+				if (ImGui::Checkbox("Use SSR", &useSSR)) {
+					m_SSAO->recreateColorBuffer();
 				}
 
-				ImGui::TreePop();
-			}
-			ImGui::Separator();
+				if (ImGui::Checkbox("Use Temporary Accumulation - TA", &useTA_SSR)) {
+					if (!useTA_SSR)
+						m_SSAO->resetTA_SSR();
+					else
+						m_SSAO->recreateColorBuffer();
+				}
 
-			if (ImGui::TreeNode("SSR"))
-			{
-				if(ImGui::Checkbox("Use SSR", &useSSR)) {
-					m_SSAO->recreateColorBuffer();
+				if (ImGui::Checkbox("Use Roughness Ray Scattering (recommended with TA)", &useRoughnessScatterSSR)) {
+					if (!m_GBuffer->getLightPass() == 0) {
+						m_SSAO->getSsrShader()->bind();
+						m_SSAO->getSsrShader()->setUniform("useRoughnessScatterSSR", useRoughnessScatterSSR);
+					}
 				}
 
 				if (ImGui::InputInt("maxSteps", &maxSteps)) {
@@ -649,7 +663,7 @@ void UI::ImGuiDraw()
 					}
 				}
 
-				if (ImGui::Checkbox("useBinaryRefinement", &useBinaryRefinement)) {
+				if (ImGui::Checkbox("Use Binary Refinement", &useBinaryRefinement)) {
 					if (!m_GBuffer->getLightPass() == 0) {
 						m_SSAO->getSsrShader()->bind();
 						m_SSAO->getSsrShader()->setUniform("useBinaryRefinement", useBinaryRefinement);
@@ -659,9 +673,9 @@ void UI::ImGuiDraw()
 				ImGui::TreePop();
 			}
 
-			ImGui::EndTabItem();
+				ImGui::EndTabItem();
+			}
 		}
-	
 		if (ImGui::BeginTabItem("MATERIALS"))
 		{
 			if (ImGui::TreeNode("ADD MATERIAL"))
