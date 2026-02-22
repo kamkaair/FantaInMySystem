@@ -545,5 +545,13 @@ void SSAO::resetTA_SSR() {
 	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClear(GL_COLOR_BUFFER_BIT);
 
+	/*if ((ssrTemporalBuffer[0] != 0) && (ssrTemporalBuffer[1] != 0)) {
+		for (int i = 0; i < 2; i++) {
+			glBindFramebuffer(GL_FRAMEBUFFER, ssrHistoryFBO[i]);
+			glDeleteTextures(1, &ssrTemporalBuffer[i]);
+			ssrTemporalBuffer[i] = 0;
+		}
+	}*/
+
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

@@ -135,25 +135,27 @@ void main(){
 	vec2 gMetalRoughTex = texture(gMetallicRoughness, pixelPositionTexture.xy).rg;	
 
 	float roughness = gMetalRoughTex.g;
-				   
-	vec2 jitter = vec2(
-		fract(sin(float(frameIndex) * 12.9898) * 43758.5453),
-		fract(sin(float(frameIndex) * 78.233)  * 12345.6789));
-
-	vec2 Xi = vec2(
-		rand(pixelPositionTexture.xy + jitter),
-		rand(pixelPositionTexture.yx + jitter));
 		
-	vec3 H;
+	vec3 H, reflectionView, V = normalize(-positionView.xyz);
+	vec2 Xi, jitter;
+	float alphaPre;
 	if(useRoughnessScatterSSR) {
+		alphaPre = 1.0;
+		jitter = vec2(
+			fract(sin(float(frameIndex) * 12.9898) * 43758.5453),
+			fract(sin(float(frameIndex) * 78.233)  * 12345.6789));
+
+		Xi = vec2(
+			rand(pixelPositionTexture.xy + jitter),
+			rand(pixelPositionTexture.yx + jitter));
+		
 		H = sampleHemisphereGGX(normalView, roughness, Xi);
+		reflectionView = normalize(reflect(-V, H));
 	}
 	else {
-		H = sampleHemisphereGGX(normalView, roughness, vec2(0));
+		alphaPre = normalize(mix(1.0, 0.0, roughness)); // mix roughness, output opacity (kinda whack, but it's fine)	
+		reflectionView = normalize(reflect(-V, normalView));
 	}
-	
-	vec3 V = normalize(-positionView.xyz);
-	vec3 reflectionView = normalize(reflect(-V, H));
 	
 	float metallic = gMetalRoughTex.r;
 
@@ -185,10 +187,15 @@ void main(){
 	// Trace the ray
 	vec4 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
 	
-	float roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
-	vec3 reflection = outColor.rgb * fresnel * roughnessFade;
+	vec3 reflection;
+	if(useRoughnessScatterSSR) {
+		float roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
+		reflection = outColor.rgb * fresnel * roughnessFade;
+	} else {
+		reflection = outColor.rgb * fresnel;
+	}
 	
-	float alpha = outColor.a;
+	float alpha = outColor.a * alphaPre;
 	
 	reflectionColor = vec4(reflection, alpha);
 	
