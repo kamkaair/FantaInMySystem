@@ -470,11 +470,13 @@ void UI::ImGuiDraw()
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
-				if (ImGui::Checkbox("Lighting Orientation (only for deferred!)", &lightOrientationOn)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						shaderSet("worldCoords", lightOrientationOn);
+				if (deferredRendering) {
+					if (ImGui::Checkbox("Lighting Orientation (only for deferred!)", &lightOrientationOn)) {
+						if (!m_GBuffer->getLightPass() == 0) {
+							shaderSet("worldCoords", lightOrientationOn);
+						}
 					}
-				}
+				}				
 
 				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
 					shaderSet("HdrExposure", HdrExposure);
@@ -742,23 +744,31 @@ void UI::ImGuiDraw()
 				ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
 				// ComboBox for Normal (only texture currently)
-				ImGui::Text("Normal Map");
-				if (ImGui::BeginCombo("Normal Texture", materialFileNames[currentItem[3]]))
-				{
-					displayMatList(3, currentItem, materialFileNames);
-					ImGui::EndCombo();
+				ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
+				if (useNormalTexture) {
+					if (ImGui::BeginCombo("Normal Texture", materialFileNames[currentItem[3]]))
+					{
+						displayMatList(3, currentItem, materialFileNames);
+						ImGui::EndCombo();
+					}
 				}
+
+				ImGui::Dummy(ImVec2(0.0, 4.0f));
 
 				ImGui::InputText("Set name for the material", materialName, IM_ARRAYSIZE(materialName));
 				if (ImGui::Button("Create a new material"))
 				{
 					stbi_set_flip_vertically_on_load(false);
 
+					std::string normalMapName = "EmptyNormal.png";
+					if (useNormalTexture)
+						normalMapName = materialFiles[currentItem[3]];
+
 					Material* newMaterial = m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
 						ASSET_DIR + std::string("/textures/" + materialFiles[currentItem[0]]), // Diffuse
 						ASSET_DIR + std::string("/textures/" + materialFiles[currentItem[1]]), // Metallic
 						ASSET_DIR + std::string("/textures/" + materialFiles[currentItem[2]]), // Roughness
-						ASSET_DIR + std::string("/textures/" + materialFiles[currentItem[3]]) // Normal
+						ASSET_DIR + std::string("/textures/" + normalMapName) // Normal
 					), materialName);
 
 					// Set material properties for the struct

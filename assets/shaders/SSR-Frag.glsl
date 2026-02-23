@@ -138,7 +138,7 @@ void main(){
 		
 	vec3 H, reflectionView, V = normalize(-positionView.xyz);
 	vec2 Xi, jitter;
-	float alphaPre;
+	float alphaPre, roughnessFade;
 	if(useRoughnessScatterSSR) {
 		alphaPre = 1.0;
 		jitter = vec2(
@@ -151,10 +151,14 @@ void main(){
 		
 		H = sampleHemisphereGGX(normalView, roughness, Xi);
 		reflectionView = normalize(reflect(-V, H));
+		
+		roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
 	}
 	else {
 		alphaPre = normalize(mix(1.0, 0.0, roughness)); // mix roughness, output opacity (kinda whack, but it's fine)	
 		reflectionView = normalize(reflect(-V, normalView));
+		
+		roughnessFade = 1.0;
 	}
 	
 	float metallic = gMetalRoughTex.r;
@@ -187,13 +191,7 @@ void main(){
 	// Trace the ray
 	vec4 outColor = TraceRay(pixelPositionTexture, rayDirectionTexture, screenSpaceMaxDistance);
 	
-	vec3 reflection;
-	if(useRoughnessScatterSSR) {
-		float roughnessFade = clamp(1.0 - roughness * roughness, 0.0, 1.0);
-		reflection = outColor.rgb * fresnel * roughnessFade;
-	} else {
-		reflection = outColor.rgb * fresnel;
-	}
+	vec3 reflection = outColor.rgb * fresnel * roughnessFade;
 	
 	float alpha = outColor.a * alphaPre;
 	

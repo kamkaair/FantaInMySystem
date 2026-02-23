@@ -122,7 +122,7 @@ private:
 
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, aoMidTones = false, lightOrientationOn = true, 
-		useSSR = true, useSSAO = true;
+		useSSR = true, useSSAO = true, useNormalTexture = true;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };
