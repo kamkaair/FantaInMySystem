@@ -6,6 +6,29 @@
 #include "UI.h"
 #include <random>
 
+struct SSAO_Settings {
+	bool useSSAO = true;
+	int kernelSize = 64;
+	float radius = 0.5f;
+	float bias = 0.025f;
+	float occlusionStrength = 10.0f;
+	bool clampedMidTones = false;
+
+	bool dirty = false;
+};
+
+struct SSR_Settings {
+	bool useSSR = true;
+	bool useTA = true;
+	bool useRayScattering = true;
+	int maxSteps = 5;
+	float thickness = 0.00014;
+	float rayDirMin = 0.001;
+
+	bool bufferDirty = false;
+	bool dirty = false;
+};
+
 class SSAO : public kgfw::Object {
 public:
 	SSAO(GBuffer* gbuffer, int inWidth, int inHeight);
@@ -19,10 +42,15 @@ public:
 	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
 	void renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw);
 	void renderSSR_TA(Camera* m_camera, Mesh* m_meshRender);
-	void compositeSSR(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw);
+	void renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw);
 	void recreateColorBuffer();
 
 	void resetTA_SSR();
+
+	void updateSSAOUniforms();
+	void updateSSRUniforms();
+	SSAO_Settings getSSAO_Settings() { return m_ssaoSettings; }
+	SSR_Settings getSSR_Settings() { return m_ssrSettings; }
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
@@ -59,6 +87,9 @@ public:
 	void swapSSRHistory() { ssrHistoryIndex = 1 - ssrHistoryIndex; }
 
 private:
+	SSAO_Settings m_ssaoSettings;
+	SSR_Settings m_ssrSettings;
+
 	int width = 640, height = 480, ssrHistoryIndex = 0;
 	int frameIndex = 0;
 

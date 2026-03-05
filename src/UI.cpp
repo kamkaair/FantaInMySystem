@@ -214,23 +214,6 @@ void UI::ImGuiDraw()
 					//			m_meshes.back()->setMaterial(m_materials[0]);
 					if (ImGui::TreeNode(("Mesh " + m_meshes[i]->getDisplayName()).c_str()))
 					{
-						//if (ImGui::Button("Hide mesh", ImVec2(128, 32))) {
-						//	meshHide = !meshHide;
-						//	if (meshHide) {
-						//		//m_hiddenMeshes.push_back(m_meshes[i]);
-						//		m_meshes.erase(m_meshes.begin() + i);
-						//		printf("erase mesh");
-						//		//meshHide = false;
-						//	}
-
-						//	else {
-						//		m_meshes.push_back(m_meshes[i]);
-						//		printf("add mesh");
-						//		//m_hiddenMeshes.erase(m_hiddenMeshes.begin() + i);
-						//		//meshHide = true;
-						//	}
-						//	
-						//}
 
 						//std::string koko = "Object Name: " + m_meshes[i]->getBackgroundName();
 						//ImGui::Text(koko.c_str());
@@ -310,14 +293,6 @@ void UI::ImGuiDraw()
 				ImGui::Text("You can load your own 3D-models!");
 				ImGui::Text("Supports at least .obj and .fbx");
 				ImGui::Text("File path: ../opengl-graphicsengine/assets/models");
-				std::vector<std::string> meshFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/models/"));
-
-				std::vector<const char*> meshFileNames;
-				for (const auto& file : meshFiles)
-				{
-					// file into c_str()
-					meshFileNames.push_back(file.c_str());
-				}
 
 				static int currentItem = 0;
 
@@ -620,6 +595,22 @@ void UI::ImGuiDraw()
 							shaderSet("aoTone", aoMidTones);
 						}
 					}
+
+					/*
+					//SSAO_Settings ssao = m_SSAO->getSSAO_Settings();
+					if (ImGui::Checkbox("Use SSAO", &ssao.useSSAO)) 
+						ssao.dirty = true;			
+					if (ImGui::InputInt("Kernel Samples", &ssao.kernelSize)) 
+						ssao.dirty = true;
+					if (ImGui::InputFloat("Radius", &ssao.radius)) 
+						ssao.dirty = true;
+					if (ImGui::InputFloat("Bias", &ssao.bias)) 
+						ssao.dirty = true;
+					if (ImGui::InputFloat("Occlusion Strength", &ssao.occlusionStrength)) 
+						ssao.dirty = true;	
+					if (ImGui::Checkbox("Clamped Midtones", &ssao.clampedMidTones)) 
+						ssao.dirty = true;
+					*/
 
 					ImGui::TreePop();
 				}

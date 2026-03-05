@@ -89,6 +89,8 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	width = inWidth;
 	height = inHeight;
 
+	//updateSSAOUniforms();
+
 	// SSAO texture
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	glClear(GL_COLOR_BUFFER_BIT);
@@ -263,7 +265,7 @@ void SSAO::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	frameIndex++; // frame index used for the random
 }
 
-void SSAO::compositeSSR(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw)
+void SSAO::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw)
 {
 	// -------------------------------
 	// SSR Composite - Final Image
@@ -315,6 +317,30 @@ void SSAO::compositeSSR(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* 
 	m_meshRender->renderQuad();
 
 	glEnable(GL_DEPTH_TEST);
+}
+
+void SSAO::updateSSAOUniforms() {
+	if (m_ssaoSettings.dirty) {
+		m_SSAO->bind();
+		m_SSAO->setUniform("kernelSize", m_ssaoSettings.kernelSize);
+		m_SSAO->setUniform("radius", m_ssaoSettings.radius);
+		m_SSAO->setUniform("bias", m_ssaoSettings.bias);
+		m_SSAO->setUniform("aoStrength", m_ssaoSettings.occlusionStrength);
+		m_SSAO->setUniform("aoTone", m_ssaoSettings.clampedMidTones);
+
+		m_GBuffer->getLightPass()->bind();
+		m_GBuffer->getLightPass()->setUniform("useSSAO", m_ssaoSettings.useSSAO);
+
+		m_ssaoSettings.dirty = false;
+	}
+}
+
+void SSAO::updateSSRUniforms() {
+	m_SSR->setUniform("useRoughnessScatterSSR", m_ssrSettings.useRayScattering);
+	m_SSR->setUniform("maxSteps", m_ssrSettings.maxSteps);
+	m_SSR->setUniform("thickness", m_ssrSettings.thickness);
+	m_SSR->setUniform("rayDirMin", m_ssrSettings.rayDirMin);
+	//m_SSR->setUniform("useBinaryRefinement", m_ssrSettings.useBinaryRefinement);
 }
 
 float SSAOLerp(float a, float b, float f)

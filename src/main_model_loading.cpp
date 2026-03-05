@@ -76,10 +76,12 @@ public:
 		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
 
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
+		m_uiDraw->updateMeshFiles();
 
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
+
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -235,7 +237,7 @@ public:
 			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
 		// 5. Render the final image
-		m_ssaoClass->compositeSSR(m_meshRender, m_camera, m_HDRI, m_uiDraw);
+		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw);
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {

@@ -55,11 +55,8 @@ public:
 	void ImGuiDraw();
 
 	// Gets and Sets
-	int getBackgroundMode() const { return backgroundMode; }
-
 	void toggleMeshRotation() { meshRotationEnabled = !meshRotationEnabled; }
 	bool boolMeshRotation() const { return meshRotationEnabled; }
-
 	void toggleDoOnce() { doOnce = !doOnce; }
 	bool boolDoOnce() const { return doOnce; }
 
@@ -67,6 +64,7 @@ public:
 	void setImGuiAlpha(float alpha) { ImGuiAlpha = alpha; }
 
 	bool getRenderMode() { return deferredRendering; }
+	int getBackgroundMode() const { return backgroundMode; }
 
 	int getKernelSize() { return kernelSize; }
 	float getRadius() { return radius; }
@@ -76,6 +74,7 @@ public:
 	bool getUseSSR() { return useSSR; }
 	bool getUseSSR_TA() { return useTA_SSR; }
 	bool getUseRoughnessScatter() { return useRoughnessScatterSSR; }
+
 	SettingsMaterial getSettingsMaterial() { return m_settingsMaterial; }
 
 	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
@@ -87,6 +86,15 @@ public:
 	std::vector<glm::vec3>& getPointLightPos() { return pointLightPos; }
 	std::vector<glm::vec3>& getPointLightColor() { return pointLightColor; }
 	std::vector<float>& getPointLightStrength() { return pointLightStrength; }
+
+	void updateMeshFiles() { 
+		meshFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/models/"));
+		for (const auto& file : meshFiles)
+		{
+			// file into c_str()
+			meshFileNames.push_back(file.c_str());
+		}
+	}
 
 	void setWindowInteract(bool newBool) { windowDisabled = newBool; }
 	ImGuiWindowFlags disableInteraction();
@@ -107,11 +115,16 @@ private:
 	std::vector<float> pointLightStrength;
 	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
+	// Meshes
+	std::vector<std::string> meshFiles;
+	std::vector<const char*> meshFileNames;
+
 	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
 		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f,
 		radius = 0.5, bias = 0.025, aoStrength = 10.0f;
 
 	int backgroundMode = 0, kernelSize = 64;
+	
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 
 	//SSR
