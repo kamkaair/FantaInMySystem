@@ -6,6 +6,9 @@ CMakeLists.txt.user
 CMakeFiles/
 CMakeCache.txt
 
+# Ignore imgui.ini
+imgui.ini
+
 # Prerequisites
 *.d
 
