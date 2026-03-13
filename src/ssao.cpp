@@ -89,7 +89,7 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	width = inWidth;
 	height = inHeight;
 
-	//updateSSAOUniforms();
+	updateSSAOUniforms();
 
 	// SSAO texture
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
@@ -165,7 +165,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Temporal Accumulation
-	if(m_uiDraw->getUseSSR_TA()) {
+	if(m_ssrSettings.useTA) {
 		glBindFramebuffer(GL_FRAMEBUFFER, getSSRHistoryWriteFBO());
 		m_SSR_TA->bind();
 
@@ -194,6 +194,7 @@ void SSAO::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	// -------------------------------
 	// SSR Temporal Accumulation
 	// -------------------------------
+
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
 	m_SSR_TA->setUniform("uSSRCurrent", 0);
@@ -275,7 +276,7 @@ void SSAO::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_H
 
 	m_GBuffer->getCompositeShader()->bind();
 
-	GLuint ssrSelect = m_uiDraw->getUseSSR_TA() ? getSSRHistoryRead() : ssrColorBuffer;
+	GLuint ssrSelect = m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer;
 
 	glActiveTexture(GL_TEXTURE0);
 	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer); //getSSRHistoryRead
@@ -320,27 +321,39 @@ void SSAO::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_H
 }
 
 void SSAO::updateSSAOUniforms() {
-	if (m_ssaoSettings.dirty) {
-		m_SSAO->bind();
-		m_SSAO->setUniform("kernelSize", m_ssaoSettings.kernelSize);
-		m_SSAO->setUniform("radius", m_ssaoSettings.radius);
-		m_SSAO->setUniform("bias", m_ssaoSettings.bias);
-		m_SSAO->setUniform("aoStrength", m_ssaoSettings.occlusionStrength);
-		m_SSAO->setUniform("aoTone", m_ssaoSettings.clampedMidTones);
+	if (!m_ssaoSettings.dirty)
+		return;
 
-		m_GBuffer->getLightPass()->bind();
-		m_GBuffer->getLightPass()->setUniform("useSSAO", m_ssaoSettings.useSSAO);
+	m_SSAO->bind();
+	m_SSAO->setUniform("kernelSize", m_ssaoSettings.kernelSize);
+	m_SSAO->setUniform("radius", m_ssaoSettings.radius);
+	m_SSAO->setUniform("bias", m_ssaoSettings.bias);
 
-		m_ssaoSettings.dirty = false;
-	}
+	m_GBuffer->getLightPass()->bind();
+	m_GBuffer->getLightPass()->setUniform("aoTone", m_ssaoSettings.clampedMidTones);
+	m_GBuffer->getLightPass()->setUniform("useSSAO", m_ssaoSettings.useSSAO);
+	m_GBuffer->getLightPass()->setUniform("aoStrength", m_ssaoSettings.occlusionStrength);
+
+	m_ssaoSettings.dirty = false;
 }
 
 void SSAO::updateSSRUniforms() {
+	if (!m_ssrSettings.useTA) {
+		resetTA_SSR();
+		return;
+	}
+
+	if (!m_ssrSettings.dirty)
+		return;
+
+	m_SSR->bind();
 	m_SSR->setUniform("useRoughnessScatterSSR", m_ssrSettings.useRayScattering);
 	m_SSR->setUniform("maxSteps", m_ssrSettings.maxSteps);
 	m_SSR->setUniform("thickness", m_ssrSettings.thickness);
 	m_SSR->setUniform("rayDirMin", m_ssrSettings.rayDirMin);
-	//m_SSR->setUniform("useBinaryRefinement", m_ssrSettings.useBinaryRefinement);
+	m_SSR->setUniform("useBinaryRefinement", m_ssrSettings.useBinaryRefinement);
+
+	m_ssrSettings.dirty = false;
 }
 
 float SSAOLerp(float a, float b, float f)

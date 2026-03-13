@@ -21,11 +21,11 @@ struct SSR_Settings {
 	bool useSSR = true;
 	bool useTA = true;
 	bool useRayScattering = true;
+	bool useBinaryRefinement = false;
 	int maxSteps = 5;
 	float thickness = 0.00014;
 	float rayDirMin = 0.001;
 
-	bool bufferDirty = false;
 	bool dirty = false;
 };
 
@@ -49,8 +49,8 @@ public:
 
 	void updateSSAOUniforms();
 	void updateSSRUniforms();
-	SSAO_Settings getSSAO_Settings() { return m_ssaoSettings; }
-	SSR_Settings getSSR_Settings() { return m_ssrSettings; }
+	SSAO_Settings& getSSAO_Settings() { return m_ssaoSettings; }
+	SSR_Settings& getSSR_Settings() { return m_ssrSettings; }
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);

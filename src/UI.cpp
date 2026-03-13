@@ -564,42 +564,13 @@ void UI::ImGuiDraw()
 			if (ImGui::BeginTabItem("SCREEN-SPACE"))
 			{		
 				if (ImGui::TreeNode("SSAO"))
-				{
-					if (ImGui::Checkbox("Use SSAO", &useSSAO)) {
+				{			
+					SSAO_Settings& ssao = m_SSAO->getSSAO_Settings();
+					if (ImGui::Checkbox("Use SSAO", &ssao.useSSAO)) { // Could be better
 						m_SSAO->recreateColorBuffer();
-						m_GBuffer->getLightPass()->bind();
-						m_GBuffer->getLightPass()->setUniform("useSSAO", useSSAO);
-					}
-
-					if (ImGui::InputInt("Kernel Samples", &kernelSize)) {
-						m_SSAO->getSsaoShader()->bind();
-						m_SSAO->getSsaoShader()->setUniform("kernelSize", kernelSize);
-					}
-					if (ImGui::InputFloat("Radius", &radius)) {
-						m_SSAO->getSsaoShader()->bind();
-						m_SSAO->getSsaoShader()->setUniform("radius", radius);
-					}
-					if (ImGui::InputFloat("Bias", &bias)) {
-						m_SSAO->getSsaoShader()->bind();
-						m_SSAO->getSsaoShader()->setUniform("bias", bias);
-					}
-					if (ImGui::InputFloat("Occlusion Strength", &aoStrength)) {
-						if (!m_GBuffer->getLightPass() == 0) {
-							shaderBind();
-							shaderSet("aoStrength", aoStrength);
-						}
-					}
-					if (ImGui::Checkbox("Clamped Midtones", &aoMidTones)) {
-						if (!m_GBuffer->getLightPass() == 0) {
-							shaderBind();
-							shaderSet("aoTone", aoMidTones);
-						}
-					}
-
-					/*
-					//SSAO_Settings ssao = m_SSAO->getSSAO_Settings();
-					if (ImGui::Checkbox("Use SSAO", &ssao.useSSAO)) 
-						ssao.dirty = true;			
+						ssao.dirty = true;
+						m_SSAO->updateSSAOUniforms();	
+					}				
 					if (ImGui::InputInt("Kernel Samples", &ssao.kernelSize)) 
 						ssao.dirty = true;
 					if (ImGui::InputFloat("Radius", &ssao.radius)) 
@@ -610,61 +581,30 @@ void UI::ImGuiDraw()
 						ssao.dirty = true;	
 					if (ImGui::Checkbox("Clamped Midtones", &ssao.clampedMidTones)) 
 						ssao.dirty = true;
-					*/
-
+					
 					ImGui::TreePop();
 				}
 				ImGui::Separator();
 
 				if (ImGui::TreeNode("SSR"))
-			{
-				if (ImGui::Checkbox("Use SSR", &useSSR)) {
-					m_SSAO->recreateColorBuffer();
-				}
-
-				if (ImGui::Checkbox("Use Temporary Accumulation - TA", &useTA_SSR)) {
-					if (!useTA_SSR)
-						m_SSAO->resetTA_SSR();
-					else
+				{
+					SSR_Settings& ssr = m_SSAO->getSSR_Settings();
+					if (ImGui::Checkbox("Use SSR", &ssr.useSSR)) 
 						m_SSAO->recreateColorBuffer();
-				}
+					if (ImGui::Checkbox("Use Temporary Accumulation - TA", &ssr.useTA))
+					if (ImGui::Checkbox("Use Roughness Ray Scattering (recommended with TA)", &ssr.useBinaryRefinement))
+						ssr.dirty = true;			
+					if (ImGui::InputInt("maxSteps", &ssr.maxSteps)) 
+						ssr.dirty = true;			
+					if (ImGui::InputFloat("thickness", &ssr.thickness))
+						ssr.dirty = true;
+					if (ImGui::InputFloat("rayDirMin", &ssr.rayDirMin))
+						ssr.dirty = true;
+					if (ImGui::Checkbox("Use Binary Refinement", &ssr.useBinaryRefinement))
+						ssr.dirty = true;
 
-				if (ImGui::Checkbox("Use Roughness Ray Scattering (recommended with TA)", &useRoughnessScatterSSR)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("useRoughnessScatterSSR", useRoughnessScatterSSR);
-					}
+					ImGui::TreePop();
 				}
-
-				if (ImGui::InputInt("maxSteps", &maxSteps)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("maxSteps", maxSteps);
-					}
-				}
-
-				if (ImGui::InputFloat("thickness", &thickness)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("thickness", thickness);
-					}
-				}
-				if (ImGui::InputFloat("rayDirMin", &rayDirMin)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("rayDirMin", rayDirMin);
-					}
-				}
-
-				if (ImGui::Checkbox("Use Binary Refinement", &useBinaryRefinement)) {
-					if (!m_GBuffer->getLightPass() == 0) {
-						m_SSAO->getSsrShader()->bind();
-						m_SSAO->getSsrShader()->setUniform("useBinaryRefinement", useBinaryRefinement);
-					}
-				}
-
-				ImGui::TreePop();
-			}
 
 				ImGui::EndTabItem();
 			}

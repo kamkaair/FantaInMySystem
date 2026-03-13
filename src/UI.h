@@ -66,14 +66,7 @@ public:
 	bool getRenderMode() { return deferredRendering; }
 	int getBackgroundMode() const { return backgroundMode; }
 
-	int getKernelSize() { return kernelSize; }
-	float getRadius() { return radius; }
-	float getBias() { return bias; }
 	bool getLightOrientation() { return lightOrientationOn; }
-	bool getUseSSAO() { return useSSAO; }
-	bool getUseSSR() { return useSSR; }
-	bool getUseSSR_TA() { return useTA_SSR; }
-	bool getUseRoughnessScatter() { return useRoughnessScatterSSR; }
 
 	SettingsMaterial getSettingsMaterial() { return m_settingsMaterial; }
 
@@ -120,22 +113,14 @@ private:
 	std::vector<const char*> meshFileNames;
 
 	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
-		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f,
-		radius = 0.5, bias = 0.025, aoStrength = 10.0f;
+		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
 
-	int backgroundMode = 0, kernelSize = 64;
+	int backgroundMode = 0;
 	
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 
-	//SSR
-	int maxSteps = 5;
-	float thickness = 0.00014;
-	float rayDirMin = 0.001;
-	bool useBinaryRefinement = false, useTA_SSR = true, useRoughnessScatterSSR = true;
-
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
-		deferredRendering = false, windowDisabled = false, aoMidTones = false, lightOrientationOn = true, 
-		useSSR = true, useSSAO = true, useNormalTexture = true;
+		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };

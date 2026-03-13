@@ -226,14 +226,14 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. Screen Space Ambient Occlusion pass
-		if(m_uiDraw->getUseSSAO())
+		if(m_ssaoClass->getSSAO_Settings().useSSAO)
 			m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
 
 		// 3. Lighting pass
 		deferredLightPass();
 
 		// 4. Screen Space Reflection pass
-		if (m_uiDraw->getUseSSR())
+		if (m_ssaoClass->getSSR_Settings().useSSR)
 			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
 		// 5. Render the final image
