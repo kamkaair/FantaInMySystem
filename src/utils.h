@@ -9,8 +9,7 @@
 
 #include <GLFW/glfw3.h>				// Include glfw for windows
 
-#include "mesh.h"
-#include "texture.h"
+#include "shader.h"
 
 namespace utils {
 

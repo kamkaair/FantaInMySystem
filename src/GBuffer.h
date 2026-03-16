@@ -2,8 +2,8 @@
 #include "gameobject.h"     // Include base class
 #include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 #include <glad/gl.h>		// Include glad
-#include <iostream>
-#include "shader.h"
+
+class Shader;
 
 class GBuffer : public kgfw::Object {
 public:

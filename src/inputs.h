@@ -1,6 +1,7 @@
 #pragma once
 #include "gameobject.h"     // Include base class
 #include "UI.h"
+#include "camera.h"
 
 class Inputs : public kgfw::Object {
 public:

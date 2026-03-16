@@ -2,7 +2,6 @@
 #include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 #include <glad/gl.h>		// Include glad
 #include "material.h"
-#include "utils.h"
 #include <unordered_map>
 
 class Texture : public kgfw::Object {

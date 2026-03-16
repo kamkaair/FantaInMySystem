@@ -1,12 +1,8 @@
 #pragma once
 #include <vector>
 #include <string>           // Inlude std::string
-#include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 
-#include "gameobject.h"
-#include "shader.h"
 #include "material.h"
-#include "texture.h"
 #include "camera.h"
 
 #include <glad/gl.h>		// Include glad
@@ -14,7 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>      // Include matrix transforms
 #include <glm/gtc/type_ptr.hpp>
 #include <kgfw/GLUtils.h>
-#include <kgfw/Object.h>
+#include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 
 class Shader;
 

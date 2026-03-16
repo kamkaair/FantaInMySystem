@@ -2,6 +2,7 @@
 #include <stb_image.h>
 #include <kgfw/GLUtils.h>	// Include GLUtils for checkGLError
 #include <iostream>
+#include <filesystem>
 #include "material.h"
 
 TextureLoading::TextureLoading() : Object(__FUNCTION__) {}

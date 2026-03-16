@@ -1,7 +1,4 @@
 #pragma once
-#ifndef MATERIAL_H
-#define MATERIAL_H
-
 #include <vector>
 #include <glad/gl.h>
 #include <string>
@@ -30,5 +27,3 @@ private:
     std::vector<GLuint> m_texturesC;
     std::string m_name;
 };
-
-#endif

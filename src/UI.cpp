@@ -1,6 +1,10 @@
 #include "UI.h"
 #include "ssao.h"
 
+#include <iostream>
+#include <fstream>
+#include <filesystem>
+
 UI::UI(Shader* backImage,
 	TextureLoading* texLoad,
 	HDRI* hdri,
@@ -117,6 +121,8 @@ void UI::ImGuiStyleSetup()
 	style.ChildRounding = 4;
 }
 
+
+
 void UI::ImGuiDraw()
 {
 	ImGui_ImplOpenGL3_NewFrame();
@@ -209,14 +215,8 @@ void UI::ImGuiDraw()
 				for (size_t i = 0; i < m_meshes.size(); i++)
 				{
 					Mesh* meshes = m_meshes[i];
-
-					//std::to_string(i)).c_str())
-					//			m_meshes.back()->setMaterial(m_materials[0]);
 					if (ImGui::TreeNode(("Mesh " + m_meshes[i]->getDisplayName()).c_str()))
 					{
-
-						//std::string koko = "Object Name: " + m_meshes[i]->getBackgroundName();
-						//ImGui::Text(koko.c_str());
 						ImGui::Text(m_meshes[i]->getBackgroundName().c_str());
 						ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
@@ -229,10 +229,6 @@ void UI::ImGuiDraw()
 						ImGui::Checkbox("Scalelock", &scaleLock);
 						glm::vec3 scale = meshes->getScaling();
 						if (!scaleLock) {
-							// Reset the uniform scale and original scale when ScaleLock is disabled
-							//originalScale = scale;
-							//totalScale = 1.0f;
-
 							// Set indiviudal XYZ scaling
 							if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.01f)) {
 								meshes->setScaling(scale);
@@ -248,10 +244,6 @@ void UI::ImGuiDraw()
 								scale = originalScale * scaleSet;
 								meshes->setScaling(scale);
 							}
-							//if (ImGui::IsItemDeactivated()) {
-							//	//originalScale = scale;
-							//	//totalScale = 1.0f;
-							//}
 						}
 
 						// Control for rotation

@@ -1,4 +1,5 @@
 #include "HDRI.h"
+#include <iostream>
 
 HDRI::HDRI(Shader* cubemap, Shader* background, Shader* irradiance, Shader* prefilter, Shader* brdf) : 
 	m_cubemapShader(cubemap), m_BackgroundShader(background), m_IrradianceShader(irradiance), m_Prefilter(prefilter), m_brdf(brdf), Object(__FUNCTION__) {

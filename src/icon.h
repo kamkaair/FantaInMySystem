@@ -2,11 +2,13 @@
 #include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 #include <glm/glm.hpp>      // Include glm
 
-#include "UI.h"
 #include "inputs.h"
-#include "shader.h"
-#include "textureLoading.h"
 #include "camera.h"
+
+class Mesh;
+class Shader;
+class TextureLoading;
+class UI;
 
 class Icon : public kgfw::Object {
 public:

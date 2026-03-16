@@ -2,10 +2,9 @@
 #include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 #include <glad/gl.h>		// Include glad
 #include "material.h"
-#include "utils.h"
 #include <unordered_map>
 #include "texture.h"
-#include <iostream>
+#include "mesh.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>

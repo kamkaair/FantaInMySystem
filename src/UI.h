@@ -9,20 +9,14 @@
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>
 
-#include <vector>
-#include <fstream>
-#include <filesystem>
-#include <stb_image.h>
-#include <iostream>
-#include <initializer_list>
-
-#include "shader.h"
-#include "material.h"
 #include "mesh.h"
-#include "utils.h"
 #include "textureLoading.h"
 #include "HDRI.h"
 #include "GBuffer.h"
+
+#include <vector>
+#include <stb_image.h>
+#include <initializer_list>
 
 struct SettingsMaterial {
 	glm::vec3 diffuseColor = glm::vec3(1.0f);  // Default white color

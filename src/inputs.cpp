@@ -1,4 +1,5 @@
 #include "inputs.h"
+#include <GLFW/glfw3.h>				// Include glfw for windows
 
 Inputs::Inputs(UI* ui, Camera* camera) : m_uiDraw(ui), m_camera(camera), Object(__FUNCTION__) {}
 

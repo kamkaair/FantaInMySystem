@@ -7,10 +7,10 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <stb_image.h>
-#include <iostream>
-#include "shader.h"
-#include "mesh.h"
 #include "camera.h"
+#include "mesh.h"
+#include "texture.h"
+#include "shader.h"
 
 class HDRI : public kgfw::Object
 {

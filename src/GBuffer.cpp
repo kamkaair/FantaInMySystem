@@ -1,5 +1,6 @@
 #include "GBuffer.h"
 #include "utils.h"
+#include <iostream>
 
 GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), Object(__FUNCTION__) {
 	constructForwardShaders(); constructGBuffer();
