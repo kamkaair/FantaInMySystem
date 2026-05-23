@@ -133,6 +133,8 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	// SSR
 	// -------------------------------
 
+	updateSSRUniforms();
+
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSR->bind();
@@ -347,11 +349,11 @@ void SSAO::updateSSRUniforms() {
 		return;
 
 	m_SSR->bind();
-	m_SSR->setUniform("useRoughnessScatterSSR", m_ssrSettings.useRayScattering);
 	m_SSR->setUniform("maxSteps", m_ssrSettings.maxSteps);
 	m_SSR->setUniform("thickness", m_ssrSettings.thickness);
 	m_SSR->setUniform("rayDirMin", m_ssrSettings.rayDirMin);
 	m_SSR->setUniform("useBinaryRefinement", m_ssrSettings.useBinaryRefinement);
+	m_SSR->setUniform("useRoughnessScatterSSR", m_ssrSettings.useRayScattering);
 
 	m_ssrSettings.dirty = false;
 }

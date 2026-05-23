@@ -584,7 +584,8 @@ void UI::ImGuiDraw()
 					if (ImGui::Checkbox("Use SSR", &ssr.useSSR)) 
 						m_SSAO->recreateColorBuffer();
 					if (ImGui::Checkbox("Use Temporary Accumulation - TA", &ssr.useTA))
-					if (ImGui::Checkbox("Use Roughness Ray Scattering (recommended with TA)", &ssr.useBinaryRefinement))
+						ssr.dirty = true;
+					if (ImGui::Checkbox("Use Roughness Ray Scattering (recommended with TA)", &ssr.useRayScattering))
 						ssr.dirty = true;			
 					if (ImGui::InputInt("maxSteps", &ssr.maxSteps)) 
 						ssr.dirty = true;			

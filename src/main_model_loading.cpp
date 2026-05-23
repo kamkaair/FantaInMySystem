@@ -9,6 +9,7 @@
 #include "GBuffer.h"
 #include "icon.h"
 #include "ssao.h"
+#include "savefile.h"
 
 // Include STB-image library
 #define STB_IMAGE_IMPLEMENTATION
@@ -62,6 +63,18 @@ public:
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
+
+		// Create and serialize an object
+		/*SaveFile original("Alice", 25);
+		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
+
+		// Deserialize the object
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/data.bin");
+
+		// Test the  deserialized object
+		std::cout << "Deserialized Object:\n";
+		std::cout << "Name: " << restored.getName() << std::endl;
+		std::cout << "Age: " << restored.getAge() << std::endl;*/
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -424,6 +437,7 @@ private:
 	GBuffer*					m_GBuffer;
 	Icon*						m_iconClass;
 	SSAO*						m_ssaoClass;
+	SaveFile*					m_saveFile;
 
 	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
 

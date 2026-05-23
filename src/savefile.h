@@ -10,6 +10,64 @@ struct FileLights {
 
 class SaveFile {
 public:
+	SaveFile(std::string name, int age) : m_name(name), m_age(age) {}
+
+	void serialize(const std::string& filename) {
+		std::ofstream file(filename, std::ios::binary);
+		if (!file.is_open()) {
+			std::cerr << "Error: Failed to open file for writing." << std::endl;
+			return;
+		}
+
+		// Reading and writing takes in a pointer to the address of the value and the number of bytes
+		// file.read(pointer, bytesNum)
+		size_t nameLength = m_name.size();
+
+		// char is treated as a raw byte in c++! The reinterpret_cast<char*> is treating the memory of a variable as raw bytes
+		file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength)); // Get the memory address &nameLength (possibly nameLength has value of 5, stored in 0x1000) 
+
+		// The string characters are written. name.c_str() points to the beginning of the string letters' address (0x2000, 0x2001, 0x2003...)
+		file.write(m_name.c_str(), nameLength); // address pointer and how many bytes?
+
+		file.write(reinterpret_cast<char*>(&m_age), sizeof(m_age)); // integer's address and size in bytes
+		std::cout << "Object serialized successfully." << std::endl;
+	}
+
+	static SaveFile deserialize(const std::string& filename)
+	{
+		std::ifstream file(filename, std::ios::binary);
+		if (!file.is_open()) {
+			std::cerr << "Error: Failed to open file for reading." << std::endl;
+			return SaveFile("", 0);
+		}
+
+		// Read 8 bytes from the file and copy into memory
+		size_t nameLength;
+		file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+
+		// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
+		std::string name(nameLength, '\0');
+		file.read(&name[0], nameLength);
+
+		// Next 4 bytes for the integer memory with sizeof()
+		int age;
+		file.read(reinterpret_cast<char*>(&age), sizeof(age));
+		std::cout << "Object deserialized successfully." << std::endl;
+
+		return SaveFile(name, age);
+	}
+
+	// Getter methods for the class
+	std::string getName() const { return m_name; }
+	int getAge() const { return m_age; }
+
+private:
+	std::string m_name;
+	int m_age;
+};
+
+/*class SaveFile {
+public:
 	SaveFile() {
 		//std::ofstream file(std::string(ASSET_DIR) + "/Saves/testSave.txt");
 		file.open(std::string(ASSET_DIR) + "/Saves/testSave.txt");
@@ -62,9 +120,6 @@ public:
 										std::cout << "ERROR " << vecArray.size() << std::endl;
 										break;
 								}
-								/*for (auto p : printVec) {
-									std::cout << p << std::endl;
-								}*/
 
 								allLights.push_back(pondTech);
 
@@ -115,4 +170,4 @@ private:
 	}
 	std::ifstream file;
 	std::vector<FileLights> allLights;
-};
+};*/
