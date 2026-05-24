@@ -65,24 +65,15 @@ public:
 		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
 
 		// Preset light positions, colors and light strength
-		/*std::vector<glm::vec3> pos, color;
-		std::vector<float> strength;
-		pos.push_back(glm::vec3(-2.72f, 1.20f, 3.68f));
-		pos.push_back(glm::vec3(2.70, 1.50, 3.10));
-		pos.push_back(glm::vec3(0.30f, 3.10f, -5.80f));
-
-		color.push_back(glm::vec3(0.07f, 0.18f, 1.00f));
-		color.push_back(glm::vec3(0.77f, 0.11f, 0.91f));
-		color.push_back(glm::vec3(0.10f, 0.89f, 0.5f));
-
-		strength.push_back(4.0f);
-		strength.push_back(2.0f);
-		strength.push_back(6.0f);
+		std::vector<FileLights> fileLights;
+		fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
+		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
+		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
 		// Create and serialize an object
-		SaveFile original("Alice", 25, pos, color, strength);
+		SaveFile original("Alice", 25, fileLights);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
-
+		
 		// Deserialize the object
 		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/data.bin");
 
@@ -90,12 +81,12 @@ public:
 		std::cout << "Deserialized Object:\n";
 		std::cout << "Name: " << restored.getName() << std::endl;
 		std::cout << "Age: " << restored.getAge() << std::endl;
-		for(auto pos : restored.getPosition())
-			std::cout << "Position: " << glm::to_string(pos) << std::endl;
-		for (auto color : restored.getColor())
-			std::cout << "Color: " << glm::to_string(color) << std::endl;
-		for (auto strena : restored.getStrength())
-			std::cout << "Strength: " << strena << std::endl;*/
+		for (auto lightData : restored.getLightData()) {
+			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
+			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
+			std::cout << "Strength: " << lightData.strength << std::endl;
+			std::cout << std::endl;
+		}
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -104,7 +95,7 @@ public:
 		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
 		const int presetMode = 3;
 		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
-
+		
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		m_uiDraw->updateMeshFiles();
 
@@ -122,8 +113,8 @@ public:
 		m_HDRI->ProcessHDRI("/HDRI/newport_loft.hdr");
 
 		// Set up lights and color
-		//initializeLights(pos, color, strength);
-		initializeLightsOld();
+		initializeLights(fileLights);
+		//initializeLightsOld();
 
 		// Alpha blending
 		glEnable(GL_BLEND);
@@ -337,12 +328,12 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void initializeLights(std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength)
+	void initializeLights(std::vector<FileLights> fileLights)
 	{
-		for (int i = 0; i < pos.size(); i++) {
-			m_uiDraw->getPointLightPos().push_back(pos[i]);
-			m_uiDraw->getPointLightColor().push_back(color[i]);
-			m_uiDraw->getPointLightStrength().push_back(strength[i]);
+		for (int i = 0; i < fileLights.size(); i++) {
+			m_uiDraw->getPointLightPos().push_back(fileLights[i].pos);
+			m_uiDraw->getPointLightColor().push_back(fileLights[i].color);
+			m_uiDraw->getPointLightStrength().push_back(fileLights[i].strength);
 		}
 	}
 

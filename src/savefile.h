@@ -25,8 +25,11 @@ void writeVector(std::ofstream& file, const std::vector<T>& vec) {
 
 class SaveFile {
 public:
-	SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
-		m_pos(pos), m_color(color), m_strength(strength) {}
+	/*SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
+		m_pos(pos), m_color(color), m_strength(strength) {}*/
+	SaveFile(std::string name, int age, std::vector<FileLights> lightData) : m_name(name), m_age(age),
+		m_lightData(lightData) {}
+
 
 	void serialize(const std::string& filename) {
 		std::ofstream file(filename, std::ios::binary);
@@ -51,14 +54,13 @@ public:
 		//std::cout << "vec3: " << sizeof(m_pos) << " nameLength: " << sizeof(size_t) << " m_name: " << sizeof(m_name) << " integer: " << sizeof(m_age) << " float: " << sizeof(testFloat) << std::endl;
 		
 		//file.write(reinterpret_cast<char*>(&m_pos), sizeof(m_pos));
-		std::cout << "Array: " << sizeof(m_lightData) << " Vector: " << sizeof(m_lightDataVec) << std::endl;
+		std::cout << " Vector: " << sizeof(m_lightData) << std::endl;
 		std::cout << "Pos: " << sizeof(m_pos) << " Color: " << sizeof(m_color) << " Strena: " << sizeof(m_strength) << std::endl;
 
-		writeVector(file, m_pos);
-		writeVector(file, m_color);
-		writeVector(file, m_strength);
+		writeVector(file, m_lightData);
 
 		std::cout << "Object serialized successfully." << std::endl;
+		file.close();
 	}
 
 	static SaveFile deserialize(const std::string& filename)
@@ -66,7 +68,7 @@ public:
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.is_open()) {
 			std::cerr << "Error: Failed to open file for reading." << std::endl;
-			return SaveFile("", 0, std::vector<glm::vec3>(0), std::vector<glm::vec3>(0), std::vector<float>(0.0));
+			return SaveFile("", 0, std::vector<FileLights>(0));
 		}
 
 		// Read 8 bytes from the file and copy into memory
@@ -90,26 +92,23 @@ public:
 		pos.resize(size);
 		file.read(reinterpret_cast<char*>(pos.data()), size * sizeof(glm::vec3));*/
 
-		std::vector<glm::vec3> pos;
-		readVector(file, pos);
-
-		std::vector<glm::vec3> color;
-		readVector(file, color);
-
-		std::vector<float> strength;
-		readVector(file, strength);
+		std::vector<FileLights> lights;
+		readVector(file, lights);
 
 		std::cout << "Object deserialized successfully." << std::endl;
-
-		return SaveFile(name, age, pos, color, strength);
+		file.close();
+		return SaveFile(name, age, lights);
 	}
 
 	// Getter methods for the class
 	std::string getName() const { return m_name; }
 	int getAge() const { return m_age; }
-	std::vector<glm::vec3> getPosition() const { return m_pos; }
+
+	std::vector<FileLights> getLightData() const { return m_lightData; }
+
+	/*std::vector<glm::vec3> getPosition() const { return m_pos; }
 	std::vector<glm::vec3> getColor() const { return m_color; }
-	std::vector<float> getStrength() const { return m_strength; }
+	std::vector<float> getStrength() const { return m_strength; }*/
 
 private:
 	std::string m_name;
@@ -118,7 +117,5 @@ private:
 	std::vector<glm::vec3> m_color;
 	std::vector<float> m_strength;
 
-	std::vector<FileLights> m_lightDataVec;
-	FileLights m_lightData[3];
-
+	std::vector<FileLights> m_lightData;
 };
