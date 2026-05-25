@@ -134,8 +134,9 @@ void UI::ImGuiDraw()
 	ImGuiStyleSetup();
 	ImGui::Begin("Control Window", 0, disableInteraction()); // Make a new window
 
-	ImGui::Text("Sup broidi, press 'E' to lock/unlock mouse. Feel free to try out different settings!");
-	ImGui::Text("Press 'H' to hide the window! Toggle 'V' for camera orbit/freecam");
+	ImGui::Text("Press 'E' to lock/unlock mouse from UI. Feel free to try out different settings!");
+	ImGui::Text("Press 'H' to hide the UI window! Toggle 'V' for camera orbit/freecam");
+	ImGui::Text("Enable Deferred Rendering for Screen Space effects like SSR and SSAO");
 	//ImGui::Text(("Milliseconds Per Frame: " + std::to_string(1000.0 / calculateFPS())).c_str());
 	ImGui::Text(("Frames Per Second: " + std::to_string(fpsCounter.calculateFPS())).c_str());
 
@@ -143,7 +144,7 @@ void UI::ImGuiDraw()
 
 	shaderBind();
 
-	if (ImGui::Checkbox("Deferred rendering", &deferredRendering)) {
+	if (ImGui::Checkbox("Deferred Rendering", &deferredRendering)) {
 		if (deferredRendering) {
 			glUseProgram(0); // Unbind any active shader
 			m_GBuffer->constructDeferredShaders();

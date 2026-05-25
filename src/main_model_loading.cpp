@@ -71,7 +71,7 @@ public:
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
 		// Create and serialize an object
-		SaveFile original("Alice", 25, fileLights);
+		/*SaveFile original("Alice", 25, fileLights);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
 		
 		// Deserialize the object
@@ -86,7 +86,7 @@ public:
 			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
 			std::cout << "Strength: " << lightData.strength << std::endl;
 			std::cout << std::endl;
-		}
+		}*/
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
