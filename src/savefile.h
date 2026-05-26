@@ -8,6 +8,13 @@ struct FileLights {
 	float strength;
 };
 
+struct MaterialPaths {
+	std::string colorPath;
+	std::string metallicPath;
+	std::string roughnessPath;
+	std::string normalPath;
+};
+
 template<typename T>
 void readVector(std::ifstream& file, std::vector<T>& vec) {
 	size_t size;
@@ -27,8 +34,8 @@ class SaveFile {
 public:
 	/*SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
 		m_pos(pos), m_color(color), m_strength(strength) {}*/
-	SaveFile(std::string name, int age, std::vector<FileLights> lightData) : m_name(name), m_age(age),
-		m_lightData(lightData) {}
+	SaveFile(std::string name, int age, std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames) : m_name(name), m_age(age),
+		m_lightData(lightData), m_pathNames(pathNames) {}
 
 
 	void serialize(const std::string& filename) {
@@ -55,9 +62,12 @@ public:
 		
 		//file.write(reinterpret_cast<char*>(&m_pos), sizeof(m_pos));
 		std::cout << " Vector: " << sizeof(m_lightData) << std::endl;
-		std::cout << "Pos: " << sizeof(m_pos) << " Color: " << sizeof(m_color) << " Strena: " << sizeof(m_strength) << std::endl;
 
 		writeVector(file, m_lightData);
+
+		std::cout << "Path names: " << sizeof(m_pathNames) << std::endl;
+
+		// TODO: write materials here
 
 		std::cout << "Object serialized successfully." << std::endl;
 		file.close();
@@ -68,7 +78,7 @@ public:
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.is_open()) {
 			std::cerr << "Error: Failed to open file for reading." << std::endl;
-			return SaveFile("", 0, std::vector<FileLights>(0));
+			return SaveFile("", 0, std::vector<FileLights>(0), std::vector<MaterialPaths>());
 		}
 
 		// Read 8 bytes from the file and copy into memory
@@ -95,9 +105,12 @@ public:
 		std::vector<FileLights> lights;
 		readVector(file, lights);
 
+		std::vector<MaterialPaths> materialPaths;
+		// TODO: read paths here
+
 		std::cout << "Object deserialized successfully." << std::endl;
 		file.close();
-		return SaveFile(name, age, lights);
+		return SaveFile(name, age, lights, materialPaths);
 	}
 
 	// Getter methods for the class
@@ -105,6 +118,7 @@ public:
 	int getAge() const { return m_age; }
 
 	std::vector<FileLights> getLightData() const { return m_lightData; }
+	std::vector<MaterialPaths> getPathNames() const { return m_pathNames; }
 
 	/*std::vector<glm::vec3> getPosition() const { return m_pos; }
 	std::vector<glm::vec3> getColor() const { return m_color; }
@@ -113,9 +127,16 @@ public:
 private:
 	std::string m_name;
 	int m_age;
-	std::vector<glm::vec3> m_pos;
-	std::vector<glm::vec3> m_color;
-	std::vector<float> m_strength;
+
+	//std::vector<glm::vec3> m_pos;
+	//std::vector<glm::vec3> m_color;
+	//std::vector<float> m_strength;
 
 	std::vector<FileLights> m_lightData;
+	std::vector<MaterialPaths> m_pathNames;
+
+	void writeMaterials(std::ifstream& file, std::vector<MaterialPaths> inPaths) {
+
+		
+	}
 };

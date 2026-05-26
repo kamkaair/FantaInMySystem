@@ -24,6 +24,7 @@ public:
 	Texture* loadTexture(const std::string& path);
 	Material* checkAndAddMaterial(const std::pair<std::vector<GLuint>, std::vector<Texture*>>& textureData, const std::string& materialName);
 	std::unordered_map<int, Material*> loadMaterials(int presetMode);
+	std::unordered_map<int, Material*> MaterialsPushback(std::vector<std::pair<std::vector<GLuint>, std::vector<Texture*>>> materialList);
 	std::pair<std::vector<GLuint>, std::vector<Texture*>> loadTextureSet(const std::string& baseColorPath, const std::string& metallicMapPath, const std::string& roughnessMapPath, const std::string& normalMapPath);
 	
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::vector<Material*>& loadedMaterials);

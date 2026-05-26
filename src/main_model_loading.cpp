@@ -70,8 +70,24 @@ public:
 		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
+		std::vector<MaterialPaths> materialPath;
+		materialPath.push_back(MaterialPaths{ ASSET_DIR + std::string("/textures/checkerboard.png"),
+			ASSET_DIR + std::string("/textures/checkerboard.png"),
+			ASSET_DIR + std::string("/textures/checkerboard.png"),
+			ASSET_DIR + std::string("/textures/checkerboardNormal.png") });
+
+		materialPath.push_back(MaterialPaths{ ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
+			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
+			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
+			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
+
+		materialPath.push_back(MaterialPaths{ ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
+			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
+			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
+			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
+
 		// Create and serialize an object
-		/*SaveFile original("Alice", 25, fileLights);
+		SaveFile original("Alice", 25, fileLights, materialPath);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
 		
 		// Deserialize the object
@@ -86,15 +102,16 @@ public:
 			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
 			std::cout << "Strength: " << lightData.strength << std::endl;
 			std::cout << std::endl;
-		}*/
+		}
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 		// Load and push back textures/materials
 		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
-		const int presetMode = 3;
+		const int presetMode = 2;
 		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
+		//m_texLoading->MaterialsPushback(pathNames);
 		
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		m_uiDraw->updateMeshFiles();

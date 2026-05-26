@@ -161,6 +161,15 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 	return materialsMap;
 }
 
+std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(std::vector<std::pair<std::vector<GLuint>, std::vector<Texture*>>> materialList) {
+
+	for (int i = 0; i < materialList.size(); i++) {
+		materialsMap[i] = checkAndAddMaterial(materialList[i], "TestMaterial" + i);
+	}
+
+	return materialsMap;
+}
+
 Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::vector<Material*>& loadedMaterials) {
 	//TODO 1: add data containers for vertices and indices
 	std::vector<Vertex> vertices;
