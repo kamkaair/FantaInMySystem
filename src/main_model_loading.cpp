@@ -103,6 +103,12 @@ public:
 			std::cout << "Strength: " << lightData.strength << std::endl;
 			std::cout << std::endl;
 		}
+		for (auto mat : restored.getPathNames()) {
+			std::cout << "Color: " << mat.colorPath << std::endl;
+			std::cout << "Metal: " << mat.metallicPath << std::endl;
+			std::cout << "Rough: " << mat.roughnessPath << std::endl;
+			std::cout << "Normal: " << mat.normalPath << std::endl;
+		}
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -110,8 +116,8 @@ public:
 		// Load and push back textures/materials
 		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
 		const int presetMode = 2;
-		m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
-		//m_texLoading->MaterialsPushback(pathNames);
+		//m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
+		m_texLoading->MaterialsPushback(restored.getPathNames());
 		
 		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		m_uiDraw->updateMeshFiles();

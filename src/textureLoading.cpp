@@ -161,10 +161,14 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 	return materialsMap;
 }
 
-std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(std::vector<std::pair<std::vector<GLuint>, std::vector<Texture*>>> materialList) {
-
+std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
 	for (int i = 0; i < materialList.size(); i++) {
-		materialsMap[i] = checkAndAddMaterial(materialList[i], "TestMaterial" + i);
+		materialsMap[7] = checkAndAddMaterial(loadTextureSet(
+			(materialList[i].colorPath),
+			(materialList[i].metallicPath),
+			(materialList[i].roughnessPath),
+			(materialList[i].normalPath)
+		), "Material"+i);
 	}
 
 	return materialsMap;

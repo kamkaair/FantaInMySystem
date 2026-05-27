@@ -1,19 +1,14 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include "savefileStructs.h"
 
-struct FileLights {
-	glm::vec3 pos;
-	glm::vec3 color;
-	float strength;
-};
-
-struct MaterialPaths {
-	std::string colorPath;
-	std::string metallicPath;
-	std::string roughnessPath;
-	std::string normalPath;
-};
+template<typename T>
+void writeVector(std::ofstream& file, const std::vector<T>& vec) {
+	size_t size = vec.size();
+	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
+	file.write(reinterpret_cast<const char*>(vec.data()), size * sizeof(T));
+}
 
 template<typename T>
 void readVector(std::ifstream& file, std::vector<T>& vec) {
@@ -23,11 +18,49 @@ void readVector(std::ifstream& file, std::vector<T>& vec) {
 	file.read(reinterpret_cast<char*>(vec.data()), size * sizeof(T));
 }
 
-template<typename T>
-void writeVector(std::ofstream& file, const std::vector<T>& vec) {
-	size_t size = vec.size();
+// Inline allows multiple identical definitions (normally this would trigger an error with identical defs), when each .cpp file gets it's own copy of this function
+inline void writeString(std::ofstream& file, const std::string inString) {
+	size_t nameLength = inString.size();
+
+	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+	file.write(inString.c_str(), nameLength);
+}
+
+inline void readString(std::ifstream& file, std::string& stringCache) {
+	// Read 8 bytes from the file and copy into memory
+	size_t nameLength;
+	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+
+	// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
+	std::string outString(nameLength, '\0');
+	file.read(&outString[0], nameLength);
+	stringCache = outString;
+}
+
+inline void writeStringVector(std::ofstream& file, const std::vector<MaterialPaths>& inVec) {
+	size_t size = inVec.size();
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
-	file.write(reinterpret_cast<const char*>(vec.data()), size * sizeof(T));
+
+	for (int i = 0; i < inVec.size(); i++) {
+		writeString(file, inVec[i].colorPath);
+		writeString(file, inVec[i].metallicPath);
+		writeString(file, inVec[i].roughnessPath);
+		writeString(file, inVec[i].normalPath);
+	}
+}
+
+inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& inVec) {
+	size_t size;
+	file.read(reinterpret_cast<char*>(&size), sizeof(size));
+	inVec.resize(size);
+	std::cout << "Vector size: " << inVec.size() << std::endl;
+
+	for (int i = 0; i < inVec.size(); i++) {
+		readString(file, inVec[i].colorPath);
+		readString(file, inVec[i].metallicPath);
+		readString(file, inVec[i].roughnessPath);
+		readString(file, inVec[i].normalPath);
+	}
 }
 
 class SaveFile {
@@ -36,7 +69,6 @@ public:
 		m_pos(pos), m_color(color), m_strength(strength) {}*/
 	SaveFile(std::string name, int age, std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames) : m_name(name), m_age(age),
 		m_lightData(lightData), m_pathNames(pathNames) {}
-
 
 	void serialize(const std::string& filename) {
 		std::ofstream file(filename, std::ios::binary);
@@ -55,20 +87,22 @@ public:
 		// The string characters are written. name.c_str() points to the beginning of the string letters' address (0x2000, 0x2001, 0x2003...)
 		file.write(m_name.c_str(), nameLength); // address pointer and how many bytes?
 
-		file.write(reinterpret_cast<char*>(&m_age), sizeof(m_age)); // integer's address and size in bytes
+		std::cout << "nameLength: " << m_name.size() << " Sizeof size_t " << sizeof(size_t) << " m_name: " << sizeof(m_name) << std::endl;
 
-		//float testFloat = 0.5;
-		//std::cout << "vec3: " << sizeof(m_pos) << " nameLength: " << sizeof(size_t) << " m_name: " << sizeof(m_name) << " integer: " << sizeof(m_age) << " float: " << sizeof(testFloat) << std::endl;
+		file.write(reinterpret_cast<char*>(&m_age), sizeof(m_age)); // integer's address and size in bytes
 		
 		//file.write(reinterpret_cast<char*>(&m_pos), sizeof(m_pos));
 		std::cout << " Vector: " << sizeof(m_lightData) << std::endl;
 
+		// Write lightdata
 		writeVector(file, m_lightData);
 
-		std::cout << "Path names: " << sizeof(m_pathNames) << std::endl;
+		// Write MaterialPaths
+		std::cout << "Path names sizeof: " << sizeof(m_pathNames) << " pathnames.size(): " << m_pathNames.size() << std::endl;
+		std::cout << "Pathname[0] sizeof: " << sizeof(m_pathNames[0]) << " Sizeof color: " << sizeof(m_pathNames[0].colorPath) << " - " << sizeof(m_pathNames[0].roughnessPath) << std::endl;
+		writeStringVector(file, m_pathNames);
 
-		// TODO: write materials here
-
+		std::cout << std::endl;
 		std::cout << "Object serialized successfully." << std::endl;
 		file.close();
 	}
@@ -95,18 +129,14 @@ public:
 
 		//glm::vec3 pos;
 		//file.read(reinterpret_cast<char*>(&pos), sizeof(pos));
-		
-		/*std::vector<glm::vec3> pos;
-		size_t size;
-		file.read(reinterpret_cast<char*>(&size), sizeof(size));
-		pos.resize(size);
-		file.read(reinterpret_cast<char*>(pos.data()), size * sizeof(glm::vec3));*/
 
+		// Read lights
 		std::vector<FileLights> lights;
 		readVector(file, lights);
 
+		// Read MaterialPaths strings
 		std::vector<MaterialPaths> materialPaths;
-		// TODO: read paths here
+		readStringVector(file, materialPaths);
 
 		std::cout << "Object deserialized successfully." << std::endl;
 		file.close();
@@ -120,10 +150,6 @@ public:
 	std::vector<FileLights> getLightData() const { return m_lightData; }
 	std::vector<MaterialPaths> getPathNames() const { return m_pathNames; }
 
-	/*std::vector<glm::vec3> getPosition() const { return m_pos; }
-	std::vector<glm::vec3> getColor() const { return m_color; }
-	std::vector<float> getStrength() const { return m_strength; }*/
-
 private:
 	std::string m_name;
 	int m_age;
@@ -134,9 +160,4 @@ private:
 
 	std::vector<FileLights> m_lightData;
 	std::vector<MaterialPaths> m_pathNames;
-
-	void writeMaterials(std::ifstream& file, std::vector<MaterialPaths> inPaths) {
-
-		
-	}
 };
