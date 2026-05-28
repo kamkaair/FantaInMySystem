@@ -32,6 +32,7 @@ public:
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::vector<Material*>& loadedMaterials);
 	std::vector<Mesh*> loadMeshes(const std::string& path, const std::vector<Material*>& loadedMaterials, const std::string& meshName);
 	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
+	void loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes);
 	std::vector<std::string> FileSystem(std::string& path);
 
 	std::vector<Material*>& getMaterials() { return m_materials; }

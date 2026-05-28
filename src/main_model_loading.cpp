@@ -38,6 +38,7 @@ public:
 	{
 		bindShaders();
 
+		// Creates GBuffer
 		m_GBuffer = new GBuffer(width, height);
 
 		// texloading function class
@@ -71,23 +72,42 @@ public:
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
 		std::vector<MaterialPaths> materialPath;
-		materialPath.push_back(MaterialPaths{ ASSET_DIR + std::string("/textures/checkerboard.png"),
-			ASSET_DIR + std::string("/textures/checkerboard.png"),
-			ASSET_DIR + std::string("/textures/checkerboard.png"),
-			ASSET_DIR + std::string("/textures/checkerboardNormal.png") });
+		materialPath.push_back(MaterialPaths{ std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboardNormal.png") });
 
-		materialPath.push_back(MaterialPaths{ ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
+		materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
 
-		materialPath.push_back(MaterialPaths{ ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
+		materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
+
+		std::vector<FileMeshes> fileMeshes;
+		fileMeshes.push_back(FileMeshes{ std::string("/models/plane.obj"),
+			std::string("Plane"),
+			glm::vec3(0.0f, -1.0f, 0.0f),
+			glm::vec3(6.0f),
+			glm::vec3(0.0f), 0 });
+
+		fileMeshes.push_back(FileMeshes{ std::string("/models/MP18Low.obj"),
+			std::string("MP18"),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f),
+			glm::vec3(0.0f), 1 });
+
+		fileMeshes.push_back(FileMeshes{ std::string("/models/barrel.obj"),
+			std::string("Barrel"),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f),
+			glm::vec3(0.0f), 2 });
 
 		// Create and serialize an object
-		SaveFile original("Alice", 25, fileLights, materialPath);
+		SaveFile original("Alice", 25, fileLights, materialPath, fileMeshes);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
 		
 		// Deserialize the object
@@ -97,7 +117,7 @@ public:
 		std::cout << "Deserialized Object:\n";
 		std::cout << "Name: " << restored.getName() << std::endl;
 		std::cout << "Age: " << restored.getAge() << std::endl;
-		for (auto lightData : restored.getLightData()) {
+		/*for (auto lightData : restored.getLightData()) {
 			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
 			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
 			std::cout << "Strength: " << lightData.strength << std::endl;
@@ -108,6 +128,15 @@ public:
 			std::cout << "Metal: " << mat.metallicPath << std::endl;
 			std::cout << "Rough: " << mat.roughnessPath << std::endl;
 			std::cout << "Normal: " << mat.normalPath << std::endl;
+		}*/
+		for (auto mesh : restored.getFileMeshes()) {
+			std::cout << "Path: " << mesh.modelPath << std::endl;
+			std::cout << "Name: " << mesh.modelName << std::endl;
+			std::cout << "Pos: " << glm::to_string(mesh.pos) << std::endl;
+			std::cout << "Scale: " << glm::to_string(mesh.scaling) << std::endl;
+			std::cout << "Rotate: " << glm::to_string(mesh.rotation) << std::endl;
+			std::cout << "TexID: " << mesh.textureID << std::endl;
+			std::cout << std::endl;
 		}
 
 		// Enable seamless cubemaps
@@ -119,7 +148,8 @@ public:
 		//m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
 		m_texLoading->MaterialsPushback(restored.getPathNames());
 		
-		m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
+		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
+		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), fileMeshes); // Preset modes from 0 - 3
 		m_uiDraw->updateMeshFiles();
 
 		// Load the texture for an icon

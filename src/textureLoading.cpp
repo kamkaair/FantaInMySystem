@@ -163,11 +163,11 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 
 std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
 	for (int i = 0; i < materialList.size(); i++) {
-		materialsMap[7] = checkAndAddMaterial(loadTextureSet(
-			(materialList[i].colorPath),
-			(materialList[i].metallicPath),
-			(materialList[i].roughnessPath),
-			(materialList[i].normalPath)
+		materialsMap[i] = checkAndAddMaterial(loadTextureSet(
+			(ASSET_DIR + materialList[i].colorPath),
+			(ASSET_DIR + materialList[i].metallicPath),
+			(ASSET_DIR + materialList[i].roughnessPath),
+			(ASSET_DIR + materialList[i].normalPath)
 		), "Material"+i);
 	}
 
@@ -368,5 +368,33 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 		}
 	}
 
+	std::cout << "Amount of meshes in the scene: " << meshes.size() << std::endl;
+}
+
+/*Material findMaterial(std::vector<Material> vecMat, Material targetMat) {
+	for (auto mat : vecMat) {
+		if (targetMat.getTextures() == mat.getTextures()) {
+			std::cout << "Found material" << mat.getName() << std::endl;
+			return mat;
+		}	
+	}
+	std::cout << "ERROR: Could not find the corresponding material" << std::endl;
+	return;
+}*/
+
+// Added & to pass a reference, silly dinky me...
+void TextureLoading::loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes) {
+	for (int i = 0; i < fileMeshes.size(); i++) {
+		//auto newMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), m_materials, "Plane");
+		auto newMesh = loadMeshes((std::string(ASSET_DIR) + fileMeshes[i].modelPath), m_materials, fileMeshes[i].modelName);
+		for (size_t j = 0; j < newMesh.size(); ++j) {
+			meshes.push_back(newMesh[j]);
+
+			meshes.back()->setPosition(fileMeshes[i].pos);
+			meshes.back()->setRotation(fileMeshes[i].rotation);
+			meshes.back()->setScaling(fileMeshes[i].scaling);
+			meshes.back()->setMaterial(m_materials[fileMeshes[i].textureID]);			
+		}
+	}
 	std::cout << "Amount of meshes in the scene: " << meshes.size() << std::endl;
 }

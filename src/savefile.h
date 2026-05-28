@@ -63,12 +63,45 @@ inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& in
 	}
 }
 
+inline void writeFileMeshes(std::ofstream& file, std::vector<FileMeshes>& inVec) {
+	size_t size = inVec.size();
+	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
+
+	for (int i = 0; i < inVec.size(); i++) {
+		writeString(file, inVec[i].modelPath);
+		writeString(file, inVec[i].modelName);
+
+		file.write(reinterpret_cast<char*>(&inVec[i].pos), sizeof(inVec[i].pos));
+		file.write(reinterpret_cast<char*>(&inVec[i].scaling), sizeof(inVec[i].scaling));
+		file.write(reinterpret_cast<char*>(&inVec[i].rotation), sizeof(inVec[i].rotation));
+
+		file.write(reinterpret_cast<char*>(&inVec[i].textureID), sizeof(inVec[i].textureID));
+	}
+}
+
+inline void readFileMeshes(std::ifstream& file, std::vector<FileMeshes>& inVec) {
+	size_t size;
+	file.read(reinterpret_cast<char*>(&size), sizeof(size));
+	inVec.resize(size);
+
+	for (int i = 0; i < inVec.size(); i++) {
+		readString(file, inVec[i].modelPath);
+		readString(file, inVec[i].modelName);
+
+		file.read(reinterpret_cast<char*>(&inVec[i].pos), sizeof(inVec[i].pos));
+		file.read(reinterpret_cast<char*>(&inVec[i].scaling), sizeof(inVec[i].scaling));
+		file.read(reinterpret_cast<char*>(&inVec[i].rotation), sizeof(inVec[i].rotation));
+
+		file.read(reinterpret_cast<char*>(&inVec[i].textureID), sizeof(inVec[i].textureID));
+	}
+}
+
 class SaveFile {
 public:
 	/*SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
 		m_pos(pos), m_color(color), m_strength(strength) {}*/
-	SaveFile(std::string name, int age, std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames) : m_name(name), m_age(age),
-		m_lightData(lightData), m_pathNames(pathNames) {}
+	SaveFile(std::string name, int age, std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes) 
+		: m_name(name), m_age(age), m_lightData(lightData), m_pathNames(pathNames), m_fileMeshes(fileMeshes) {}
 
 	void serialize(const std::string& filename) {
 		std::ofstream file(filename, std::ios::binary);
@@ -102,6 +135,9 @@ public:
 		std::cout << "Pathname[0] sizeof: " << sizeof(m_pathNames[0]) << " Sizeof color: " << sizeof(m_pathNames[0].colorPath) << " - " << sizeof(m_pathNames[0].roughnessPath) << std::endl;
 		writeStringVector(file, m_pathNames);
 
+		// Write FileMeshes
+		writeFileMeshes(file, m_fileMeshes);
+
 		std::cout << std::endl;
 		std::cout << "Object serialized successfully." << std::endl;
 		file.close();
@@ -112,7 +148,7 @@ public:
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.is_open()) {
 			std::cerr << "Error: Failed to open file for reading." << std::endl;
-			return SaveFile("", 0, std::vector<FileLights>(0), std::vector<MaterialPaths>());
+			return SaveFile("", 0, std::vector<FileLights>(0), std::vector<MaterialPaths>(), std::vector<FileMeshes>());
 		}
 
 		// Read 8 bytes from the file and copy into memory
@@ -138,9 +174,12 @@ public:
 		std::vector<MaterialPaths> materialPaths;
 		readStringVector(file, materialPaths);
 
+		std::vector<FileMeshes> fileMesh;
+		readFileMeshes(file, fileMesh);
+
 		std::cout << "Object deserialized successfully." << std::endl;
 		file.close();
-		return SaveFile(name, age, lights, materialPaths);
+		return SaveFile(name, age, lights, materialPaths, fileMesh);
 	}
 
 	// Getter methods for the class
@@ -149,15 +188,13 @@ public:
 
 	std::vector<FileLights> getLightData() const { return m_lightData; }
 	std::vector<MaterialPaths> getPathNames() const { return m_pathNames; }
+	std::vector<FileMeshes> getFileMeshes() const { return m_fileMeshes; }
 
 private:
 	std::string m_name;
 	int m_age;
 
-	//std::vector<glm::vec3> m_pos;
-	//std::vector<glm::vec3> m_color;
-	//std::vector<float> m_strength;
-
 	std::vector<FileLights> m_lightData;
 	std::vector<MaterialPaths> m_pathNames;
+	std::vector<FileMeshes> m_fileMeshes;
 };
