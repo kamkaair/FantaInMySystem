@@ -100,8 +100,8 @@ class SaveFile {
 public:
 	/*SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
 		m_pos(pos), m_color(color), m_strength(strength) {}*/
-	SaveFile(std::string name, int age, std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes) 
-		: m_name(name), m_age(age), m_lightData(lightData), m_pathNames(pathNames), m_fileMeshes(fileMeshes) {}
+	SaveFile(std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes, std::string hdriPath) 
+		: m_lightData(lightData), m_pathNames(pathNames), m_fileMeshes(fileMeshes), m_hdriPath(hdriPath) {}
 
 	void serialize(const std::string& filename) {
 		std::ofstream file(filename, std::ios::binary);
@@ -109,20 +109,6 @@ public:
 			std::cerr << "Error: Failed to open file for writing." << std::endl;
 			return;
 		}
-
-		// Reading and writing takes in a pointer to the address of the value and the number of bytes
-		// file.read(pointer, bytesNum)
-		size_t nameLength = m_name.size();
-
-		// char is treated as a raw byte in c++! The reinterpret_cast<char*> is treating the memory of a variable as raw bytes
-		file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength)); // Get the memory address &nameLength (possibly nameLength has value of 5, stored in 0x1000) 
-
-		// The string characters are written. name.c_str() points to the beginning of the string letters' address (0x2000, 0x2001, 0x2003...)
-		file.write(m_name.c_str(), nameLength); // address pointer and how many bytes?
-
-		std::cout << "nameLength: " << m_name.size() << " Sizeof size_t " << sizeof(size_t) << " m_name: " << sizeof(m_name) << std::endl;
-
-		file.write(reinterpret_cast<char*>(&m_age), sizeof(m_age)); // integer's address and size in bytes
 		
 		//file.write(reinterpret_cast<char*>(&m_pos), sizeof(m_pos));
 		std::cout << " Vector: " << sizeof(m_lightData) << std::endl;
@@ -138,6 +124,9 @@ public:
 		// Write FileMeshes
 		writeFileMeshes(file, m_fileMeshes);
 
+		// Write HDRI
+		writeString(file, m_hdriPath);
+
 		std::cout << std::endl;
 		std::cout << "Object serialized successfully." << std::endl;
 		file.close();
@@ -148,23 +137,8 @@ public:
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.is_open()) {
 			std::cerr << "Error: Failed to open file for reading." << std::endl;
-			return SaveFile("", 0, std::vector<FileLights>(0), std::vector<MaterialPaths>(), std::vector<FileMeshes>());
+			return SaveFile(std::vector<FileLights>(0), std::vector<MaterialPaths>(), std::vector<FileMeshes>(), "");
 		}
-
-		// Read 8 bytes from the file and copy into memory
-		size_t nameLength;
-		file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-
-		// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
-		std::string name(nameLength, '\0');
-		file.read(&name[0], nameLength);
-
-		// Next 4 bytes for the integer memory with sizeof()
-		int age;
-		file.read(reinterpret_cast<char*>(&age), sizeof(age));
-
-		//glm::vec3 pos;
-		//file.read(reinterpret_cast<char*>(&pos), sizeof(pos));
 
 		// Read lights
 		std::vector<FileLights> lights;
@@ -177,24 +151,61 @@ public:
 		std::vector<FileMeshes> fileMesh;
 		readFileMeshes(file, fileMesh);
 
+		std::string hdri;
+		readString(file, hdri);
+
 		std::cout << "Object deserialized successfully." << std::endl;
 		file.close();
-		return SaveFile(name, age, lights, materialPaths, fileMesh);
+		return SaveFile(lights, materialPaths, fileMesh, hdri);
 	}
-
-	// Getter methods for the class
-	std::string getName() const { return m_name; }
-	int getAge() const { return m_age; }
 
 	std::vector<FileLights> getLightData() const { return m_lightData; }
 	std::vector<MaterialPaths> getPathNames() const { return m_pathNames; }
 	std::vector<FileMeshes> getFileMeshes() const { return m_fileMeshes; }
+	std::string getHdriPath() const { return m_hdriPath; }
 
 private:
-	std::string m_name;
-	int m_age;
-
 	std::vector<FileLights> m_lightData;
 	std::vector<MaterialPaths> m_pathNames;
 	std::vector<FileMeshes> m_fileMeshes;
+	std::string m_hdriPath;
 };
+
+/* READING:
+* 
+	// Read 8 bytes from the file and copy into memory
+	size_t nameLength;
+	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+
+	// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
+	std::string name(nameLength, '\0');
+	file.read(&name[0], nameLength);
+
+	// Next 4 bytes for the integer memory with sizeof()
+	int age;
+	file.read(reinterpret_cast<char*>(&age), sizeof(age));
+
+	// vec3
+	glm::vec3 pos;
+	file.read(reinterpret_cast<char*>(&pos), sizeof(pos));
+*
+*/
+
+/* WRITING
+* 
+ 	// Reading and writing takes in a pointer to the address of the value and the number of bytes
+	// file.read(pointer, bytesNum)
+	size_t nameLength = m_name.size();
+
+	// std::string + "Alice". 8 + 5 = 13 bytes
+	// char is treated as a raw byte in c++! The reinterpret_cast<char*> is treating the memory of a variable as raw bytes
+	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength)); // Get the memory address &nameLength (possibly nameLength has value of 5, stored in 0x1000) 
+
+	// The string characters are written. name.c_str() points to the beginning of the string letters' address (0x2000, 0x2001, 0x2003...)
+	file.write(m_name.c_str(), nameLength); // address pointer and how many bytes?
+
+	std::cout << "nameLength: " << m_name.size() << " Sizeof size_t " << sizeof(size_t) << " m_name: " << sizeof(m_name) << std::endl;
+
+	file.write(reinterpret_cast<char*>(&m_age), sizeof(m_age)); // integer's address and size in bytes
+*
+*/

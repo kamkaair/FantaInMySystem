@@ -107,7 +107,7 @@ public:
 			glm::vec3(0.0f), 2 });
 
 		// Create and serialize an object
-		SaveFile original("Alice", 25, fileLights, materialPath, fileMeshes);
+		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
 		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
 		
 		// Deserialize the object
@@ -115,8 +115,6 @@ public:
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
-		std::cout << "Name: " << restored.getName() << std::endl;
-		std::cout << "Age: " << restored.getAge() << std::endl;
 		/*for (auto lightData : restored.getLightData()) {
 			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
 			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
@@ -138,13 +136,15 @@ public:
 			std::cout << "TexID: " << mesh.textureID << std::endl;
 			std::cout << std::endl;
 		}
+		std::cout << "HDRI path: " << restored.getHdriPath() << std::endl;
+		std::cout << std::endl;
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 		// Load and push back textures/materials
 		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
-		const int presetMode = 2;
+		//const int presetMode = 2;
 		//m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
 		m_texLoading->MaterialsPushback(restored.getPathNames());
 		
@@ -163,7 +163,7 @@ public:
 		m_HDRI->setBackgroundTexture(backgroundImage);
 
 		// Load the HDR texture and create all the HDRI maps
-		m_HDRI->ProcessHDRI("/HDRI/newport_loft.hdr");
+		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
 
 		// Set up lights and color
 		initializeLights(fileLights);
