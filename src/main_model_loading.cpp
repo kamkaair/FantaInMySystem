@@ -66,7 +66,7 @@ public:
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
 
-		// Preset light positions, colors and light strength
+		/*// Preset light positions, colors and light strength
 		std::vector<FileLights> fileLights;
 		fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
 		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
@@ -109,7 +109,7 @@ public:
 
 		// Create and serialize an object
 		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
-		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
+		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");*/
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -181,7 +181,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/data.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Yiper.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";

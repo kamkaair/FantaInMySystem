@@ -5,8 +5,7 @@
 #include <GLFW/glfw3.h>		// Include glfw
 
 Mesh::Mesh(const std::vector< Vertex >& vertices, const std::vector< unsigned int >& indices)
-	: GameObject(__FUNCTION__)
-{
+	: GameObject(__FUNCTION__) {
 	m_indiceCount = indices.size();
 	// create buffers/arrays
 	glGenVertexArrays(1, &m_VAO);
@@ -57,6 +56,14 @@ void Mesh::setBackgroundName(const std::string name) {
 
 std::string Mesh::getBackgroundName() const {
 	return m_meshBackgroundName;
+}
+
+void Mesh::setModelPath(std::string inPath) {
+	m_modelPath = inPath;
+}
+
+std::string Mesh::getModelPath() const {
+	return m_modelPath;
 }
 
 void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const

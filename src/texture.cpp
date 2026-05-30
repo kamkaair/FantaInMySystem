@@ -3,7 +3,8 @@
 #include <kgfw/GLUtils.h>	// Include GLUtils for checkGLError
 #include <iostream>
 
-Texture::Texture(int width, int height, int nrChannels, const GLubyte* data) : Object(__FUNCTION__) {
+Texture::Texture(int width, int height, int nrChannels, const GLubyte* data, const std::string filePath) : Object(__FUNCTION__) {
+	m_filePath = filePath;
 	//stbi_set_flip_vertically_on_load(false);
 	// Create texture
 	glGenTextures(1, &m_textureId);
@@ -55,4 +56,8 @@ Texture::~Texture() {
 
 GLuint Texture::getTextureId() const {
 	return m_textureId;
+}
+
+std::string Texture::getFilePath() const {
+	return m_filePath;
 }

@@ -25,7 +25,7 @@ Texture* TextureLoading::loadTexture(const std::string& path) {
 	GLubyte* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
 
 	if (data) {
-		Texture* texture = new Texture(width, height, nrChannels, data);
+		Texture* texture = new Texture(width, height, nrChannels, data, path);
 		stbi_image_free(data);  // Free image data after creating the texture
 		return texture;
 	}
@@ -174,7 +174,7 @@ std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(const std::
 	return materialsMap;
 }
 
-Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::vector<Material*>& loadedMaterials) {
+Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::vector<Material*>& loadedMaterials, const std::string path) {
 	//TODO 1: add data containers for vertices and indices
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -212,6 +212,7 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	// Create the Mesh object with the vertices, indices, and preloaded material
 	Mesh* newMesh = new Mesh(vertices, indices);
 	newMesh->setMaterial(meshMaterial);
+	newMesh->setModelPath(path);
 
 	// Push back all the model's vertex amounts
 	vertexAmount.push_back(vertices.size());
@@ -236,13 +237,13 @@ void setNameBack(Mesh* meshRef, const std::string& name) {
 	else { printf("Error: Mesh reference is null\n"); }
 }
 
-void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::vector<Material*>& loadedMaterials) {
+void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::vector<Material*>& loadedMaterials, const std::string path) {
 	// process each mesh located at the current node
 	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
 		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
 		// the node object only contains indices to index the actual objects in the scene.
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes->push_back(processMesh(mesh, scene, loadedMaterials)); // Pass scene here
+		meshes->push_back(processMesh(mesh, scene, loadedMaterials, path)); // Pass scene here
 
 		setNameBack(meshes->back(), node->mName.C_Str());
 
@@ -253,7 +254,7 @@ void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const
 
 	// after we've processed all of the meshes (if any) we then recursively process each of the children nodes
 	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		processNode(meshes, node->mChildren[i], scene, loadedMaterials);
+		processNode(meshes, node->mChildren[i], scene, loadedMaterials, path);
 	}
 }
 
@@ -270,7 +271,7 @@ std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std
 	}
 
 	// Process Assimp's root node recursively
-	processNode(&meshes, scene->mRootNode, scene, loadedMaterials);
+	processNode(&meshes, scene->mRootNode, scene, loadedMaterials, path);
 
 	// Set the name for each mesh
 	int i = 0;
@@ -294,6 +295,20 @@ std::vector<std::string> TextureLoading::FileSystem(std::string& path)
 
 	return filenames;
 
+}
+
+Texture* TextureLoading::findTexture(GLuint textureID) {
+	for (int i = 0; i < m_trackedTextures.size(); i++) {
+		if (m_trackedTextures[i]->getTextureId() == textureID)
+			return m_trackedTextures[i];
+	}
+
+	return m_trackedTextures[0];
+
+	/*auto iterator = std::find(m_trackedTextures.begin(), m_trackedTextures.end(), int(textureID));
+	
+	int index = distance(m_trackedTextures.begin(), iterator);
+	return m_trackedTextures[index];*/
 }
 
 // Added & to pass a reference, silly dinky me...

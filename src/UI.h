@@ -92,6 +92,9 @@ private:
 	Shader* m_backImage;
 
 	std::vector<Mesh*> m_meshes; // Mesh reference
+	//std::vector<MaterialPaths> m_pathNames
+	//std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes, std::string hdriPath
+
 	TextureLoading* m_texLoading;
 	HDRI* m_HDRI;
 	GBuffer* m_GBuffer;

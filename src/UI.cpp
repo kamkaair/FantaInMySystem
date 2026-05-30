@@ -157,48 +157,43 @@ void UI::ImGuiDraw()
 			ImGui::End();*/
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
-				// TODO: Serialize data 
-				//ImGui::InputText();
-				// Preset light positions, colors and light strength
+				// Light positions, colors and light strength
 				std::vector<FileLights> fileLights;
-				fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
-				fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
-				fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
+				for (int i = 0; i < pointLightPos.size(); i++) {
+					fileLights.push_back(FileLights{ pointLightPos[i], pointLightColor[i], pointLightStrength[i] });
+				}
 
 				std::vector<MaterialPaths> materialPath;
-				materialPath.push_back(MaterialPaths{ std::string("/textures/checkerboard.png"),
-					std::string("/textures/checkerboard.png"),
-					std::string("/textures/checkerboard.png"),
-					std::string("/textures/checkerboardNormal.png") });
+				// For the materials
+				for (auto mat : m_texLoading->getMaterials()) {
+					std::vector<Texture*> foundTexs;
+					for (auto texID : mat->getTextures()) {		
+						foundTexs.push_back(m_texLoading->findTexture(texID));
+					}
+					
+					for (auto tex : foundTexs) {
+						std::cout << tex->getFilePath() << std::endl;
+					}
+					materialPath.push_back(MaterialPaths{ foundTexs[0]->getFilePath(),
+					foundTexs[1]->getFilePath(),
+					foundTexs[2]->getFilePath(),
+					foundTexs[3]->getFilePath() });
+				}
 
-				materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
-					std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
-					std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
-					std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
-
-				materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
-					std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
-					std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
-					std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
-
+				// And all the meshes
 				std::vector<FileMeshes> fileMeshes;
-				fileMeshes.push_back(FileMeshes{ std::string("/models/plane.obj"),
-					std::string("Plane"),
-					glm::vec3(0.0f, -1.0f, 0.0f),
-					glm::vec3(6.0f),
-					glm::vec3(0.0f), 0 });
+				int texIndex = 0;
+				for (auto mesh : m_meshes) {
+					
+					fileMeshes.push_back(FileMeshes{ 
+						mesh->getModelPath(),
+						mesh->getDisplayName(),
 
-				fileMeshes.push_back(FileMeshes{ std::string("/models/MP18Low.obj"),
-					std::string("MP18"),
-					glm::vec3(0.0f, 1.0f, 0.0f),
-					glm::vec3(1.0f),
-					glm::vec3(0.0f), 1 });
-
-				fileMeshes.push_back(FileMeshes{ std::string("/models/barrel.obj"),
-					std::string("Barrel"),
-					glm::vec3(0.0f, 2.0f, 0.0f),
-					glm::vec3(1.0f),
-					glm::vec3(0.0f), 2 });
+						mesh->getPosition(),
+						mesh->getScaling(),
+						mesh->getRotation(), texIndex });
+					texIndex++;
+				}
 
 				// Create and serialize an object
 				SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
