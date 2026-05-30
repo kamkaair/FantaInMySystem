@@ -1,5 +1,6 @@
 #include "UI.h"
 #include "ssao.h"
+#include "savefile.h"
 
 #include <iostream>
 #include <fstream>
@@ -132,7 +133,93 @@ void UI::ImGuiDraw()
 	//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGuiAlpha);
 	ImGuiStyleSetup();
-	ImGui::Begin("Control Window", 0, disableInteraction()); // Make a new window
+	ImGui::Begin("Control Window", 0, disableInteraction() | ImGuiWindowFlags_MenuBar); // Make a new window
+
+	if (ImGui::BeginMenuBar()) {
+		if (ImGui::BeginMenu("File")) {
+			static char saveName[128] = ""; // Input field for material name
+
+			if (ImGui::BeginMenu("Open")) {				
+				std::vector<std::string> hdrFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/Saves/"));
+				for (auto files : hdrFiles) {
+					if (ImGui::MenuItem(files.c_str())) {
+						std::cout << "Opened" + files + "\n";
+						// TODO: Load function using the file name
+					}
+				}
+				ImGui::EndMenu();
+			}
+
+			ImGui::Separator();
+
+		    /*bool show_dialog = true;
+			ImGui::Begin("Dialogx1", &show_dialog, ImGuiWindowFlags_NoCollapse);
+			ImGui::End();*/
+			if (ImGui::MenuItem("Save")) {
+				std::cout << "Saved" << std::endl;
+				// TODO: Serialize data 
+				//ImGui::InputText();
+				// Preset light positions, colors and light strength
+				std::vector<FileLights> fileLights;
+				fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
+				fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
+				fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
+
+				std::vector<MaterialPaths> materialPath;
+				materialPath.push_back(MaterialPaths{ std::string("/textures/checkerboard.png"),
+					std::string("/textures/checkerboard.png"),
+					std::string("/textures/checkerboard.png"),
+					std::string("/textures/checkerboardNormal.png") });
+
+				materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
+					std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
+					std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
+					std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
+
+				materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
+					std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
+					std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
+					std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
+
+				std::vector<FileMeshes> fileMeshes;
+				fileMeshes.push_back(FileMeshes{ std::string("/models/plane.obj"),
+					std::string("Plane"),
+					glm::vec3(0.0f, -1.0f, 0.0f),
+					glm::vec3(6.0f),
+					glm::vec3(0.0f), 0 });
+
+				fileMeshes.push_back(FileMeshes{ std::string("/models/MP18Low.obj"),
+					std::string("MP18"),
+					glm::vec3(0.0f, 1.0f, 0.0f),
+					glm::vec3(1.0f),
+					glm::vec3(0.0f), 1 });
+
+				fileMeshes.push_back(FileMeshes{ std::string("/models/barrel.obj"),
+					std::string("Barrel"),
+					glm::vec3(0.0f, 2.0f, 0.0f),
+					glm::vec3(1.0f),
+					glm::vec3(0.0f), 2 });
+
+				// Create and serialize an object
+				SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
+				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
+			}
+			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
+		
+			ImGui::EndMenu();
+		}
+		ImGui::EndMenuBar();
+	}
+
+	/*if (ImGui::BeginMainMenuBar()) {
+		if (ImGui::BeginMenu("File")) {
+			ImGui::MenuItem("Open");
+			ImGui::MenuItem("Save");
+			ImGui::MenuItem("Save As");
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}*/
 
 	ImGui::Text("Press 'E' to lock/unlock mouse from UI. Feel free to try out different settings!");
 	ImGui::Text("Press 'H' to hide the UI window! Toggle 'V' for camera orbit/freecam");

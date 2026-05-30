@@ -57,6 +57,7 @@ public:
 		m_BackgroundShader->setUniform("environmentMap", 0);
 
 		// Create perspective-projection camera
+		const int fov = 40.0f;
 		m_camera = new Camera(fov, 640/480, 0.1f, 100.0f);
 
 		// Input class
@@ -109,65 +110,32 @@ public:
 		// Create and serialize an object
 		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
 		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
-		
-		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/data.bin");
-
-		// Test the  deserialized object
-		std::cout << "Deserialized Object:\n";
-		/*for (auto lightData : restored.getLightData()) {
-			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
-			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
-			std::cout << "Strength: " << lightData.strength << std::endl;
-			std::cout << std::endl;
-		}
-		for (auto mat : restored.getPathNames()) {
-			std::cout << "Color: " << mat.colorPath << std::endl;
-			std::cout << "Metal: " << mat.metallicPath << std::endl;
-			std::cout << "Rough: " << mat.roughnessPath << std::endl;
-			std::cout << "Normal: " << mat.normalPath << std::endl;
-		}*/
-		for (auto mesh : restored.getFileMeshes()) {
-			std::cout << "Path: " << mesh.modelPath << std::endl;
-			std::cout << "Name: " << mesh.modelName << std::endl;
-			std::cout << "Pos: " << glm::to_string(mesh.pos) << std::endl;
-			std::cout << "Scale: " << glm::to_string(mesh.scaling) << std::endl;
-			std::cout << "Rotate: " << glm::to_string(mesh.rotation) << std::endl;
-			std::cout << "TexID: " << mesh.textureID << std::endl;
-			std::cout << std::endl;
-		}
-		std::cout << "HDRI path: " << restored.getHdriPath() << std::endl;
-		std::cout << std::endl;
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
-		// Load and push back textures/materials
+		// Load the texture for an icon
+		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
+		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
+
+		/*// Load and push back textures/materials
 		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
 		//const int presetMode = 2;
 		//m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
 		m_texLoading->MaterialsPushback(restored.getPathNames());
 		
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
-		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), fileMeshes); // Preset modes from 0 - 3
+		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
 		m_uiDraw->updateMeshFiles();
-
-		// Load the texture for an icon
-		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
-		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
-
-
-		// stbi_set_flip_vertically_on_load(true);
-		// Load the texture for the background texture
-		Texture* backgroundImage = m_texLoading->loadTexture((std::string(ASSET_DIR) + "/textures/checkerboard.png").c_str());
-		m_HDRI->setBackgroundTexture(backgroundImage);
 
 		// Load the HDR texture and create all the HDRI maps
 		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
 
 		// Set up lights and color
-		initializeLights(fileLights);
-		//initializeLightsOld();
+		initializeLights(restored.getLightData());
+		//initializeLightsOld();*/
+
+		setupScene();
 
 		// Alpha blending
 		glEnable(GL_BLEND);
@@ -200,8 +168,7 @@ public:
 		utils::deleteObject(m_camera);
 
 		//Delete all textures
-		for (Texture* texture : m_textures)
-		{
+		for (Texture* texture : m_textures) {
 			delete texture;
 		}
 		m_textures.clear();
@@ -210,6 +177,58 @@ public:
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
 		ImGui::DestroyContext();
+	}
+
+	void setupScene() {
+		// Deserialize the object
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/data.bin");
+
+		// Test the  deserialized object
+		std::cout << "Deserialized Object:\n";
+		/*for (auto lightData : restored.getLightData()) {
+			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
+			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
+			std::cout << "Strength: " << lightData.strength << std::endl;
+			std::cout << std::endl;
+		}
+		for (auto mat : restored.getPathNames()) {
+			std::cout << "Color: " << mat.colorPath << std::endl;
+			std::cout << "Metal: " << mat.metallicPath << std::endl;
+			std::cout << "Rough: " << mat.roughnessPath << std::endl;
+			std::cout << "Normal: " << mat.normalPath << std::endl;
+		}*/
+		for (auto mesh : restored.getFileMeshes()) {
+			std::cout << "Path: " << mesh.modelPath << std::endl;
+			std::cout << "Name: " << mesh.modelName << std::endl;
+			std::cout << "Pos: " << glm::to_string(mesh.pos) << std::endl;
+			std::cout << "Scale: " << glm::to_string(mesh.scaling) << std::endl;
+			std::cout << "Rotate: " << glm::to_string(mesh.rotation) << std::endl;
+			std::cout << "TexID: " << mesh.textureID << std::endl;
+			std::cout << std::endl;
+		}
+		std::cout << "HDRI path: " << restored.getHdriPath() << std::endl;
+		std::cout << std::endl;
+
+		m_texLoading->MaterialsPushback(restored.getPathNames());
+
+		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
+		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
+		m_uiDraw->updateMeshFiles();
+
+		// Load the texture for an icon
+		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
+		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
+
+		// stbi_set_flip_vertically_on_load(true);
+		// Load the texture for the background texture
+		Texture* backgroundImage = m_texLoading->loadTexture((std::string(ASSET_DIR) + "/textures/checkerboard.png").c_str());
+		m_HDRI->setBackgroundTexture(backgroundImage);
+
+		// Load the HDR texture and create all the HDRI maps
+		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
+
+		// Set up lights and color
+		initializeLights(restored.getLightData());
 	}
 
 	void bindShaders() {
@@ -495,10 +514,6 @@ private:
 	Icon*						m_iconClass;
 	SSAO*						m_ssaoClass;
 	SaveFile*					m_saveFile;
-
-	GLuint						skyboxVAO = 0, skyboxVBO = 0, skyboxEBO = 0;
-
-	float fov = 40.0f;
 
 	std::vector<Texture*>		m_textures;		// Vector of texture pointers
 };
