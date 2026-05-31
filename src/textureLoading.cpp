@@ -22,15 +22,17 @@ TextureLoading::~TextureLoading() {
 
 Texture* TextureLoading::loadTexture(const std::string& path) {
 	int width, height, nrChannels;
-	GLubyte* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+	GLubyte* data = stbi_load((ASSET_DIR + path).c_str(), &width, &height, &nrChannels, 0);
 
 	if (data) {
-		Texture* texture = new Texture(width, height, nrChannels, data, path);
+		Texture* texture = new Texture(width, height, nrChannels, data);
+		texture->setFilePathShort(path);
+		texture->setFilePath(ASSET_DIR + path);
 		stbi_image_free(data);  // Free image data after creating the texture
 		return texture;
 	}
 	else {
-		printf("Error loading texture file \"%s\"\n", path.c_str());
+		printf("Error loading texture file \"%s\"\n", (ASSET_DIR + path).c_str());
 		return nullptr;
 	}
 }
@@ -165,10 +167,10 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
 	for (int i = 0; i < materialList.size(); i++) {
 		materialsMap[i] = checkAndAddMaterial(loadTextureSet(
-			(ASSET_DIR + materialList[i].colorPath),
-			(ASSET_DIR + materialList[i].metallicPath),
-			(ASSET_DIR + materialList[i].roughnessPath),
-			(ASSET_DIR + materialList[i].normalPath)
+			(materialList[i].colorPath),
+			(materialList[i].metallicPath),
+			(materialList[i].roughnessPath),
+			(materialList[i].normalPath)
 		), materialList[i].materialName);
 	}
 
@@ -213,6 +215,7 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	// Create the Mesh object with the vertices, indices, and preloaded material
 	Mesh* newMesh = new Mesh(vertices, indices);
 	newMesh->setMaterial(meshMaterial);
+	newMesh->setModelPath(ASSET_DIR + path);
 	newMesh->setModelPath(path);
 	std::cout << "Path to model: " << path << std::endl;
 
@@ -265,10 +268,10 @@ std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std
 
 	//read file with Assimp
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+	const aiScene* scene = importer.ReadFile((ASSET_DIR + path), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 	//Check for errors
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-		printf("Error loading model file \"%s\": \"%s\" ", path.c_str(), importer.GetErrorString());
+		printf("Error loading model file \"%s\": \"%s\" ", (ASSET_DIR + path).c_str(), importer.GetErrorString());
 		return meshes;
 	}
 
@@ -403,7 +406,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 void TextureLoading::loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes) {
 	for (int i = 0; i < fileMeshes.size(); i++) {
 		//auto newMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), m_materials, "Plane");
-		auto newMesh = loadMeshes((std::string(ASSET_DIR) + fileMeshes[i].modelPath), m_materials, fileMeshes[i].modelName);
+		auto newMesh = loadMeshes((fileMeshes[i].modelPath), m_materials, fileMeshes[i].modelName);
 		for (size_t j = 0; j < newMesh.size(); ++j) {
 			meshes.push_back(newMesh[j]);
 

@@ -187,14 +187,15 @@ void UI::ImGuiDraw()
 						for (auto maps : mesh->getMaterial()->getTextures()) {
 							foundTexs.push_back(m_texLoading->findTexture(maps));
 						}
-						for (auto tex : foundTexs)
-							std::cout << tex->getFilePath() << std::endl;
+						for (auto tex : foundTexs) {
+							std::cout << "Short path: " << tex->getFilePathShort() << std::endl;
+						}					
 
 						materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
-						foundTexs[0]->getFilePath(),
-						foundTexs[1]->getFilePath(),
-						foundTexs[2]->getFilePath(),
-						foundTexs[3]->getFilePath() });
+						foundTexs[0]->getFilePathShort(),
+						foundTexs[1]->getFilePathShort(),
+						foundTexs[2]->getFilePathShort(),
+						foundTexs[3]->getFilePathShort() });
 					}				
 
 					fileMeshes.push_back(FileMeshes{ 
@@ -404,7 +405,7 @@ void UI::ImGuiDraw()
 				if (ImGui::Button("Add new mesh"))
 				{
 					// Load the selected mesh
-					std::string selectedItem = (std::string(ASSET_DIR) + "/models/" + meshFiles[currentItem]);
+					std::string selectedItem = ("/models/" + meshFiles[currentItem]);
 					auto newMeshes = m_texLoading->loadMeshes(selectedItem, m_texLoading->getMaterials(), meshFiles[currentItem]);
 
 					// Add the new mesh to the std::vector
@@ -785,10 +786,10 @@ void UI::ImGuiDraw()
 						normalMapName = materialFiles[currentItem[3]];
 
 					Material* newMaterial = m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
-						ASSET_DIR + std::string("/textures/" + materialFiles[currentItem[0]]), // Diffuse
-						ASSET_DIR + std::string("/textures/" + materialFiles[currentItem[1]]), // Metallic
-						ASSET_DIR + std::string("/textures/" + materialFiles[currentItem[2]]), // Roughness
-						ASSET_DIR + std::string("/textures/" + normalMapName) // Normal
+						std::string("/textures/" + materialFiles[currentItem[0]]), // Diffuse
+						std::string("/textures/" + materialFiles[currentItem[1]]), // Metallic
+						std::string("/textures/" + materialFiles[currentItem[2]]), // Roughness
+						std::string("/textures/" + normalMapName) // Normal
 					), materialName);
 
 					// Set material properties for the struct

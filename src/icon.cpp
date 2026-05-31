@@ -98,6 +98,8 @@ void Icon::visualizeFocus(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* 
 
 void Icon::loadIconTexture(const char* path) {
 	// Load the texture for an icon
-	Texture* iconTexture = m_texLoading->loadTexture((std::string(ASSET_DIR) + path).c_str());
+	Texture* iconTexture = m_texLoading->loadTexture(path);
+	iconTexture->setFilePath(path);
+	iconTexture->setFilePathShort(ASSET_DIR + std::string(path));
 	m_iconTexture.push_back(iconTexture);
 }

@@ -67,7 +67,7 @@ public:
 		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
 
 		// Preset light positions, colors and light strength
-		std::vector<FileLights> fileLights;
+		/*std::vector<FileLights> fileLights;
 		fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
 		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
@@ -112,7 +112,7 @@ public:
 
 		// Create and serialize an object
 		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
-		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
+		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");*/
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -208,7 +208,7 @@ public:
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
-		Texture* backgroundImage = m_texLoading->loadTexture((std::string(ASSET_DIR) + "/textures/checkerboard.png").c_str());
+		Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
 		m_HDRI->setBackgroundTexture(backgroundImage);
 
 		// Load the HDR texture and create all the HDRI maps

@@ -35,10 +35,12 @@ public:
 	void setDisplayName(const std::string name);
 	void setBackgroundName(const std::string name);
 	void setModelPath(const std::string inPath);
+	void setModelPathShort(const std::string inPath);
 
 	std::string getDisplayName() const;
 	std::string getBackgroundName() const;
 	std::string getModelPath() const;
+	std::string getModelPathShort() const;
 	Material* getMaterial();
 
 private:
@@ -50,4 +52,5 @@ private:
 	std::string m_meshDisplayName;
 	std::string m_meshBackgroundName;
 	std::string m_modelPath;
+	std::string m_modelPathShort;
 };

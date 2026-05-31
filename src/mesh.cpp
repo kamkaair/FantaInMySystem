@@ -34,37 +34,16 @@ Mesh::Mesh(const std::vector< Vertex >& vertices, const std::vector< unsigned in
 	glBindVertexArray(0);
 }
 
-void Mesh::setMaterial(Material* material) {
-	m_material = material;
-}
-
-Material* Mesh::getMaterial() {
-	return m_material;
-}
-
-void Mesh::setDisplayName(const std::string name) {
-	m_meshDisplayName = name;
-}
-
-std::string Mesh::getDisplayName() const {
-	return m_meshDisplayName;
-}
-
-void Mesh::setBackgroundName(const std::string name) {
-	m_meshBackgroundName = name;
-}
-
-std::string Mesh::getBackgroundName() const {
-	return m_meshBackgroundName;
-}
-
-void Mesh::setModelPath(std::string inPath) {
-	m_modelPath = inPath;
-}
-
-std::string Mesh::getModelPath() const {
-	return m_modelPath;
-}
+void Mesh::setMaterial(Material* material) {m_material = material;}
+Material* Mesh::getMaterial() {return m_material;}
+void Mesh::setDisplayName(const std::string name) {m_meshDisplayName = name;}
+std::string Mesh::getDisplayName() const {return m_meshDisplayName;}
+void Mesh::setBackgroundName(const std::string name) {m_meshBackgroundName = name;}
+std::string Mesh::getBackgroundName() const {return m_meshBackgroundName;}
+void Mesh::setModelPath(std::string inPath) {m_modelPath = inPath;}
+void Mesh::setModelPathShort(std::string inPath) { m_modelPathShort = inPath; }
+std::string Mesh::getModelPath() const {return m_modelPath;}
+std::string Mesh::getModelPathShort() const { return m_modelPathShort; }
 
 void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 {
