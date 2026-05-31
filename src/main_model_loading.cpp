@@ -121,8 +121,16 @@ public:
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
 
+		// Default
+		m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboardNormal.png")
+		), "Default Material");
+
 		// Load the scene from a file
-		setupScene();
+		//setupScene();
 
 		// Alpha blending
 		glEnable(GL_BLEND);
@@ -200,14 +208,11 @@ public:
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
-		m_uiDraw->updateMeshFiles();
-
-		// Load the texture for an icon
-		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
-		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
+		//m_uiDraw->updateMeshFiles();
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
+		// TODO: serialize background image path
 		Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
 		m_HDRI->setBackgroundTexture(backgroundImage);
 

@@ -17,7 +17,9 @@ UI::UI(Shader* backImage,
 	m_GBuffer(gbuffer),
 	m_SSAO(ssao),
 	ImGuiAlpha(0.3f), 
-	Object(__FUNCTION__) {}
+	Object(__FUNCTION__) {
+	updateMeshFiles();
+}
 
 utils::utils fpsCounter;
 
@@ -384,7 +386,6 @@ void UI::ImGuiDraw()
 				ImGui::Text("File path: ../opengl-graphicsengine/assets/models");
 
 				static int currentItem = 0;
-
 				// Create a combo box with available mesh files
 				if (ImGui::BeginCombo("Available models", meshFileNames[currentItem]))
 				{
@@ -401,9 +402,13 @@ void UI::ImGuiDraw()
 
 					ImGui::EndCombo();
 				}
+
+				if (ImGui::Button("Update model folder")) {
+					updateMeshFiles();
+				}
+
 				// Load selected HDR file and generate the maps for them
-				if (ImGui::Button("Add new mesh"))
-				{
+				if (ImGui::Button("Add new mesh")) {
 					// Load the selected mesh
 					std::string selectedItem = ("/models/" + meshFiles[currentItem]);
 					auto newMeshes = m_texLoading->loadMeshes(selectedItem, m_texLoading->getMaterials(), meshFiles[currentItem]);
