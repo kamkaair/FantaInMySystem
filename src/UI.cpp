@@ -124,8 +124,6 @@ void UI::ImGuiStyleSetup()
 	style.ChildRounding = 4;
 }
 
-
-
 void UI::ImGuiDraw()
 {
 	ImGui_ImplOpenGL3_NewFrame();
@@ -145,8 +143,48 @@ void UI::ImGuiDraw()
 				std::vector<std::string> hdrFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/Saves/"));
 				for (auto files : hdrFiles) {
 					if (ImGui::MenuItem(files.c_str())) {
-						std::cout << "Opened" + files + "\n";
-						// TODO: Load function using the file name
+						std::cout << "Opened " + files + "\n";
+						// TODO: REFACTOR
+						// Meshes and materials
+						m_meshes.clear();
+						m_texLoading->getMaterials().clear();
+
+						m_HDRI->cleanUpHDRI();
+						//m_HDRI->cleanBackgroundTexture();
+
+						// Point lights
+						pointLightPos.clear();
+						pointLightColor.clear();
+						pointLightStrength.clear();
+
+						// Deserialize the object
+						SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/" + files);
+
+						m_texLoading->MaterialsPushback(restored.getPathNames());
+						m_texLoading->loadMeshes(m_meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
+
+						//Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
+						//m_HDRI->setBackgroundTexture(backgroundImage);
+
+						// Load the HDR texture and create all the HDRI maps
+						m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
+
+						// Set up lights and color
+						for (const FileLights light : restored.getLightData()) {
+							pointLightPos.push_back(light.pos);
+							pointLightColor.push_back(light.color);
+							pointLightStrength.push_back(light.strength);
+						}
+
+						if (m_texLoading->getMaterials().empty()) {
+							m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+								std::string("/textures/checkerboard.png"),
+								std::string("/textures/checkerboard.png"),
+								std::string("/textures/checkerboard.png"),
+								std::string("/textures/checkerboardNormal.png")
+							), "Default Material");
+							std::cout << "Material empty, creating Default Material" << std::endl;
+						}
 					}
 				}
 				ImGui::EndMenu();
@@ -286,7 +324,6 @@ void UI::ImGuiDraw()
 			// Reset options for transformations
 			if (ImGui::TreeNode("RESETS"))
 			{
-
 				if (ImGui::Button("Reset all the transforms"))
 					for (auto meshes : m_meshes) {
 						meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));

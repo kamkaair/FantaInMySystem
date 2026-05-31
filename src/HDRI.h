@@ -11,6 +11,7 @@
 #include "mesh.h"
 #include "texture.h"
 #include "shader.h"
+#include "savefileStructs.h"
 
 class HDRI : public kgfw::Object
 {
@@ -36,7 +37,6 @@ public:
 	GLuint getBRDF(GLuint BRDF);
 	GLuint getCubemapTexture() { return m_cubemapTexture; }
 	Texture* getBackgroundTexture() { return m_backgroundTexture; }
-
 
 private:
 	GLuint	captureFBO = 0, captureRBO = 0;

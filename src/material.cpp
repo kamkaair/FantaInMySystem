@@ -12,14 +12,6 @@ Material::~Material() {
     m_texturesC.clear();
 }
 
-const std::vector<GLuint>& Material::getTextures() const {
-    return m_texturesC;
-}
-
-const std::string& Material::getName() const {
-    return m_name;
-}
-
-int Material::getMaterialIndex() const {
-    return m_materialIndex;
-}
+const std::vector<GLuint>& Material::getTextures() const { return m_texturesC; }
+const std::string& Material::getName() const { return m_name; }
+int Material::getMaterialIndex() const { return m_materialIndex; }

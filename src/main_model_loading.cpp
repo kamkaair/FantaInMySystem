@@ -120,17 +120,19 @@ public:
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
-
-		// Default
-		m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboardNormal.png")
-		), "Default Material");
-
+		
 		// Load the scene from a file
-		//setupScene();
+		setupScene();
+
+		// Default material
+		if (m_texLoading->getMaterials().empty()) {
+			m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboardNormal.png")
+			), "Default Material");
+		}
 
 		// Alpha blending
 		glEnable(GL_BLEND);
@@ -392,8 +394,7 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void initializeLights(std::vector<FileLights> fileLights)
-	{
+	void initializeLights(std::vector<FileLights> fileLights) {
 		for (int i = 0; i < fileLights.size(); i++) {
 			m_uiDraw->getPointLightPos().push_back(fileLights[i].pos);
 			m_uiDraw->getPointLightColor().push_back(fileLights[i].color);
