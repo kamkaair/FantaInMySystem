@@ -8,7 +8,7 @@
 class Material {
 public:
     //Material(const std::vector<GLuint>& textures);
-    Material(const std::vector<GLuint>& textures, const std::string& name);  // Updated constructor
+    Material(const std::vector<GLuint>& textures, const std::string& name, const int materialIndex);  // Updated constructor
 
     ~Material();
 
@@ -22,8 +22,10 @@ public:
 
     const std::vector<GLuint>& getTextures() const;
     const std::string& getName() const;
+    int getMaterialIndex() const;
 
 private:
     std::vector<GLuint> m_texturesC;
     std::string m_name;
+    int m_materialIndex;
 };

@@ -42,6 +42,7 @@ public:
 
 private:
 	std::vector<Material*>		m_materials;
+	int m_materialIndex = 0;
 	std::unordered_map<int, Material*> materialsMap;
 	std::vector<Texture*>		m_trackedTextures;
 	std::vector<int>			vertexAmount;

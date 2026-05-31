@@ -42,6 +42,7 @@ inline void writeStringVector(std::ofstream& file, const std::vector<MaterialPat
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
 	for (int i = 0; i < inVec.size(); i++) {
+		writeString(file, inVec[i].materialName);
 		writeString(file, inVec[i].colorPath);
 		writeString(file, inVec[i].metallicPath);
 		writeString(file, inVec[i].roughnessPath);
@@ -56,6 +57,7 @@ inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& in
 	std::cout << "Vector size: " << inVec.size() << std::endl;
 
 	for (int i = 0; i < inVec.size(); i++) {
+		readString(file, inVec[i].materialName);
 		readString(file, inVec[i].colorPath);
 		readString(file, inVec[i].metallicPath);
 		readString(file, inVec[i].roughnessPath);

@@ -70,12 +70,13 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 	const std::vector<Texture*>& textures = textureData.second;
 
 	if (!textureIds.empty()) {
-		m_materials.push_back(new Material(textureIds, materialName));  // Add the material to the list, last three are diffuse, metallic and roughness
+		m_materials.push_back(new Material(textureIds, materialName, m_materialIndex));  // Add the material to the list, last three are diffuse, metallic and roughness
 
 		// Track the textures for later cleanup
 		for (Texture* tex : textures) {
 			m_trackedTextures.push_back(tex);
 		}
+		m_materialIndex++;
 
 		std::cout << "Loaded material: " << materialName << std::endl;
 	}
@@ -168,7 +169,7 @@ std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(const std::
 			(ASSET_DIR + materialList[i].metallicPath),
 			(ASSET_DIR + materialList[i].roughnessPath),
 			(ASSET_DIR + materialList[i].normalPath)
-		), "Material"+i);
+		), materialList[i].materialName);
 	}
 
 	return materialsMap;
@@ -213,6 +214,7 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	Mesh* newMesh = new Mesh(vertices, indices);
 	newMesh->setMaterial(meshMaterial);
 	newMesh->setModelPath(path);
+	std::cout << "Path to model: " << path << std::endl;
 
 	// Push back all the model's vertex amounts
 	vertexAmount.push_back(vertices.size());

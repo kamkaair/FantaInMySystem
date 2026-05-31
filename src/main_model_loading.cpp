@@ -66,24 +66,27 @@ public:
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
 
-		/*// Preset light positions, colors and light strength
+		// Preset light positions, colors and light strength
 		std::vector<FileLights> fileLights;
 		fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
 		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
 		std::vector<MaterialPaths> materialPath;
-		materialPath.push_back(MaterialPaths{ std::string("/textures/checkerboard.png"),
+		materialPath.push_back(MaterialPaths{ std::string("Checkerboard"),
+			std::string("/textures/checkerboard.png"),
 			std::string("/textures/checkerboard.png"),
 			std::string("/textures/checkerboard.png"),
 			std::string("/textures/checkerboardNormal.png") });
 
-		materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
+		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
 			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
 			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
 			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
 
-		materialPath.push_back(MaterialPaths{ std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
+		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
 			std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
 			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
 			std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
@@ -109,7 +112,7 @@ public:
 
 		// Create and serialize an object
 		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
-		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");*/
+		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -118,23 +121,7 @@ public:
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
 
-		/*// Load and push back textures/materials
-		// I recommend loading materials and meshes before loading a HDRTexture. Both stbi_set_flip_vertically_on_load(true) and even after setting it to (false) seem to screw up UV-maps
-		//const int presetMode = 2;
-		//m_texLoading->loadMaterials(presetMode); // Preset modes from 0 - 3
-		m_texLoading->MaterialsPushback(restored.getPathNames());
-		
-		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
-		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
-		m_uiDraw->updateMeshFiles();
-
-		// Load the HDR texture and create all the HDRI maps
-		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
-
-		// Set up lights and color
-		initializeLights(restored.getLightData());
-		//initializeLightsOld();*/
-
+		// Load the scene from a file
 		setupScene();
 
 		// Alpha blending
@@ -181,7 +168,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Yiper.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/data.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";

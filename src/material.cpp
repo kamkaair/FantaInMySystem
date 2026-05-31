@@ -2,8 +2,8 @@
 
 //Material::Material(const std::vector<GLuint>& textures) : m_texturesC(textures) {}
 
-Material::Material(const std::vector<GLuint>& textures, const std::string& name) : m_texturesC(textures), m_name(name) {}
-
+Material::Material(const std::vector<GLuint>& textures, const std::string& name, const int materialIndex) 
+    : m_texturesC(textures), m_name(name), m_materialIndex(materialIndex) {}
 
 Material::~Material() {
     for (GLuint textureId : m_texturesC) {
@@ -18,4 +18,8 @@ const std::vector<GLuint>& Material::getTextures() const {
 
 const std::string& Material::getName() const {
     return m_name;
+}
+
+int Material::getMaterialIndex() const {
+    return m_materialIndex;
 }

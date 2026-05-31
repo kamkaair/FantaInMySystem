@@ -10,7 +10,7 @@ struct FileLights {
 };
 
 struct MaterialPaths {
-	//std::string materialName;
+	std::string materialName;
 	std::string colorPath;
 	std::string metallicPath;
 	std::string roughnessPath;

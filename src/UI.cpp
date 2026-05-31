@@ -163,36 +163,49 @@ void UI::ImGuiDraw()
 					fileLights.push_back(FileLights{ pointLightPos[i], pointLightColor[i], pointLightStrength[i] });
 				}
 
+				// And all the meshes and materials
 				std::vector<MaterialPaths> materialPath;
-				// For the materials
-				for (auto mat : m_texLoading->getMaterials()) {
-					std::vector<Texture*> foundTexs;
-					for (auto texID : mat->getTextures()) {		
-						foundTexs.push_back(m_texLoading->findTexture(texID));
-					}
-					
-					for (auto tex : foundTexs) {
-						std::cout << tex->getFilePath() << std::endl;
-					}
-					materialPath.push_back(MaterialPaths{ foundTexs[0]->getFilePath(),
-					foundTexs[1]->getFilePath(),
-					foundTexs[2]->getFilePath(),
-					foundTexs[3]->getFilePath() });
-				}
-
-				// And all the meshes
+				std::vector<Material*> checkMaterials;
 				std::vector<FileMeshes> fileMeshes;
 				int texIndex = 0;
 				for (auto mesh : m_meshes) {
-					
+					bool seen = false;
+					for (auto earlierMat : checkMaterials) { // Silly dinky way of detecting, whether the material is already in use
+						for (int i = 0; i < mesh->getMaterial()->getTextures().size(); i++) {
+							if (mesh->getMaterial()->getTextures()[i] == earlierMat->getTextures()[i]) {
+								std::cout << "Detected earlier material!!" << std::endl;
+								seen = true;
+								break;
+							}
+						}
+					}
+
+					if (!seen) {
+						std::vector<Texture*> foundTexs;
+						checkMaterials.push_back(mesh->getMaterial());
+
+						for (auto maps : mesh->getMaterial()->getTextures()) {
+							foundTexs.push_back(m_texLoading->findTexture(maps));
+						}
+						for (auto tex : foundTexs)
+							std::cout << tex->getFilePath() << std::endl;
+
+						materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
+						foundTexs[0]->getFilePath(),
+						foundTexs[1]->getFilePath(),
+						foundTexs[2]->getFilePath(),
+						foundTexs[3]->getFilePath() });
+					}				
+
 					fileMeshes.push_back(FileMeshes{ 
 						mesh->getModelPath(),
 						mesh->getDisplayName(),
 
 						mesh->getPosition(),
 						mesh->getScaling(),
-						mesh->getRotation(), texIndex });
+						mesh->getRotation(), mesh->getMaterial()->getMaterialIndex() });
 					texIndex++;
+					std::cout << "Material ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
 				}
 
 				// Create and serialize an object
