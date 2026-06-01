@@ -7,11 +7,11 @@
 
 TextureLoading::TextureLoading() : Object(__FUNCTION__) {}
 
-TextureLoading::~TextureLoading() {
-	for (Texture* tex : m_trackedTextures) {
+void TextureLoading::cleanupMaterials() {
+	for (Texture* tex : m_textures) {
 		delete tex;
 	}
-	m_trackedTextures.clear();
+	m_textures.clear();
 
 	// Clean up all the materials
 	for (Material* mat : m_materials) {
@@ -20,19 +20,27 @@ TextureLoading::~TextureLoading() {
 	m_materials.clear();
 }
 
-Texture* TextureLoading::loadTexture(const std::string& path) {
+TextureLoading::~TextureLoading() {
+	cleanupMaterials();
+}
+
+Texture* TextureLoading::loadTexture(const std::string& path, bool flipTexture) {
 	int width, height, nrChannels;
+	stbi_set_flip_vertically_on_load(flipTexture);
 	GLubyte* data = stbi_load((ASSET_DIR + path).c_str(), &width, &height, &nrChannels, 0);
+	stbi_set_flip_vertically_on_load(false);
 
 	if (data) {
 		Texture* texture = new Texture(width, height, nrChannels, data);
 		texture->setFilePathShort(path);
 		texture->setFilePath(ASSET_DIR + path);
 		stbi_image_free(data);  // Free image data after creating the texture
+
 		return texture;
 	}
 	else {
 		printf("Error loading texture file \"%s\"\n", (ASSET_DIR + path).c_str());
+
 		return nullptr;
 	}
 }
@@ -76,7 +84,7 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 
 		// Track the textures for later cleanup
 		for (Texture* tex : textures) {
-			m_trackedTextures.push_back(tex);
+			m_textures.push_back(tex);
 		}
 		m_materialIndex++;
 
@@ -177,7 +185,7 @@ std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(const std::
 	return materialsMap;
 }
 
-Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::vector<Material*>& loadedMaterials, const std::string path) {
+Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {
 	//TODO 1: add data containers for vertices and indices
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
@@ -208,8 +216,8 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 
 	// Assign the preloaded material by index
 	Material* meshMaterial = nullptr;
-	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < loadedMaterials.size()) {
-		meshMaterial = loadedMaterials[mesh->mMaterialIndex];
+	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_materials.size()) {
+		meshMaterial = m_materials[mesh->mMaterialIndex];
 	}
 
 	// Create the Mesh object with the vertices, indices, and preloaded material
@@ -242,13 +250,13 @@ void setNameBack(Mesh* meshRef, const std::string& name) {
 	else { printf("Error: Mesh reference is null\n"); }
 }
 
-void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::vector<Material*>& loadedMaterials, const std::string path) {
+void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path) {
 	// process each mesh located at the current node
 	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
 		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
 		// the node object only contains indices to index the actual objects in the scene.
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes->push_back(processMesh(mesh, scene, loadedMaterials, path)); // Pass scene here
+		meshes->push_back(processMesh(mesh, scene, path)); // Pass scene here
 
 		setNameBack(meshes->back(), node->mName.C_Str());
 
@@ -259,11 +267,11 @@ void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const
 
 	// after we've processed all of the meshes (if any) we then recursively process each of the children nodes
 	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		processNode(meshes, node->mChildren[i], scene, loadedMaterials, path);
+		processNode(meshes, node->mChildren[i], scene, path);
 	}
 }
 
-std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std::vector<Material*>& loadedMaterials, const std::string& meshName) {
+std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std::string& meshName) {
 	std::vector<Mesh*> meshes; // Create the container that will be returned by this function
 
 	//read file with Assimp
@@ -276,7 +284,7 @@ std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std
 	}
 
 	// Process Assimp's root node recursively
-	processNode(&meshes, scene->mRootNode, scene, loadedMaterials, path);
+	processNode(&meshes, scene->mRootNode, scene, path);
 
 	// Set the name for each mesh
 	int i = 0;
@@ -303,23 +311,23 @@ std::vector<std::string> TextureLoading::FileSystem(std::string& path)
 }
 
 Texture* TextureLoading::findTexture(GLuint textureID) {
-	for (int i = 0; i < m_trackedTextures.size(); i++) {
-		if (m_trackedTextures[i]->getTextureId() == textureID)
-			return m_trackedTextures[i];
+	for (int i = 0; i < m_textures.size(); i++) {
+		if (m_textures[i]->getTextureId() == textureID)
+			return m_textures[i];
 	}
 
-	return m_trackedTextures[0];
+	return m_textures[0];
 
-	/*auto iterator = std::find(m_trackedTextures.begin(), m_trackedTextures.end(), int(textureID));
+	/*auto iterator = std::find(m_textures.begin(), m_textures.end(), int(textureID));
 	
-	int index = distance(m_trackedTextures.begin(), iterator);
-	return m_trackedTextures[index];*/
+	int index = distance(m_textures.begin(), iterator);
+	return m_textures[index];*/
 }
 
 // Added & to pass a reference, silly dinky me...
 void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 
-	auto PlaneMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), m_materials, "Plane");
+	auto PlaneMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), "Plane");
 	for (size_t i = 0; i < PlaneMesh.size(); ++i) {
 		meshes.push_back(PlaneMesh[i]);
 
@@ -331,7 +339,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 	}
 
 	if (presetMode >= 1) {
-		auto MP18Mesh = loadMeshes((std::string(ASSET_DIR) + "/models/MP18Low.obj"), m_materials, "MP18");
+		auto MP18Mesh = loadMeshes((std::string(ASSET_DIR) + "/models/MP18Low.obj"), "MP18");
 		for (size_t i = 0; i < MP18Mesh.size(); ++i) {
 			meshes.push_back(MP18Mesh[i]);
 
@@ -344,7 +352,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 	}
 
 	if (presetMode >= 2) {
-		auto BarrelMesh = loadMeshes((std::string(ASSET_DIR) + "/models/barrel.obj"), m_materials, "Barrel");
+		auto BarrelMesh = loadMeshes((std::string(ASSET_DIR) + "/models/barrel.obj"), "Barrel");
 		for (size_t i = 0; i < BarrelMesh.size(); ++i) {
 			meshes.push_back(BarrelMesh[i]);
 
@@ -357,7 +365,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 	}
 
 	if (presetMode >= 3) {
-		auto OrnamentKnifeMesh = loadMeshes((std::string(ASSET_DIR) + "/models/OrnamentKnife/1.0OrnamentKnife.obj"), m_materials, "OrnamentKnife");
+		auto OrnamentKnifeMesh = loadMeshes((std::string(ASSET_DIR) + "/models/OrnamentKnife/1.0OrnamentKnife.obj"), "OrnamentKnife");
 		for (size_t i = 0; i < OrnamentKnifeMesh.size(); ++i) {
 			meshes.push_back(OrnamentKnifeMesh[i]);
 			// Set unique transformations for each object (grip, blade, ornaments)
@@ -406,7 +414,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 void TextureLoading::loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes) {
 	for (int i = 0; i < fileMeshes.size(); i++) {
 		//auto newMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), m_materials, "Plane");
-		auto newMesh = loadMeshes((fileMeshes[i].modelPath), m_materials, fileMeshes[i].modelName);
+		auto newMesh = loadMeshes((fileMeshes[i].modelPath), fileMeshes[i].modelName);
 		for (size_t j = 0; j < newMesh.size(); ++j) {
 			meshes.push_back(newMesh[j]);
 

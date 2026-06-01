@@ -23,12 +23,17 @@ UI::UI(Shader* backImage,
 
 utils::utils fpsCounter;
 
-UI::~UI() {
+// TODO: Make a scene component for meshes, lights and such. UI shouldn't hold the meshes
+void UI::cleanupMeshes() {
 	// Clean up all the meshes
 	for (size_t i = 0; i < m_meshes.size(); i++) {
 		delete m_meshes[i];
 	}
 	m_meshes.clear();
+}
+
+UI::~UI() {
+	cleanupMeshes();
 }
 
 void displayMatList(int item, static int currentItem[], std::vector<const char*> materialFileNames) {
@@ -146,8 +151,8 @@ void UI::ImGuiDraw()
 						std::cout << "Opened " + files + "\n";
 						// TODO: REFACTOR
 						// Meshes and materials
-						m_meshes.clear();
-						m_texLoading->getMaterials().clear();
+						cleanupMeshes();
+						m_texLoading->cleanupMaterials();
 
 						m_HDRI->cleanUpHDRI();
 						//m_HDRI->cleanBackgroundTexture();
@@ -250,7 +255,7 @@ void UI::ImGuiDraw()
 				}
 
 				// Create and serialize an object
-				SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
+				SaveFile original(fileLights, materialPath, fileMeshes, m_HDRI->getHDRI_Path());
 				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
@@ -448,7 +453,7 @@ void UI::ImGuiDraw()
 				if (ImGui::Button("Add new mesh")) {
 					// Load the selected mesh
 					std::string selectedItem = ("/models/" + meshFiles[currentItem]);
-					auto newMeshes = m_texLoading->loadMeshes(selectedItem, m_texLoading->getMaterials(), meshFiles[currentItem]);
+					auto newMeshes = m_texLoading->loadMeshes(selectedItem, meshFiles[currentItem]);
 
 					// Add the new mesh to the std::vector
 					for (auto& mesh : newMeshes)
@@ -674,7 +679,7 @@ void UI::ImGuiDraw()
 						// Clean up background texture
 						m_HDRI->cleanBackgroundTexture();
 						std::string selectedItem = "/backgrounds/" + backgroundFiles[currentBackground];
-						Texture* newBackground = m_texLoading->loadTexture(std::string(ASSET_DIR) + selectedItem.c_str()); // Crash happens here!!! Error loading texture
+						Texture* newBackground = m_texLoading->loadTexture(selectedItem.c_str(), true);
 						m_HDRI->setBackgroundTexture(newBackground);
 					}
 				}

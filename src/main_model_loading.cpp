@@ -164,12 +164,6 @@ public:
 		// Delete Camera
 		utils::deleteObject(m_camera);
 
-		//Delete all textures
-		for (Texture* texture : m_textures) {
-			delete texture;
-		}
-		m_textures.clear();
-
 		//Destroy ImGui
 		ImGui_ImplOpenGL3_Shutdown();
 		ImGui_ImplGlfw_Shutdown();
@@ -178,7 +172,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/data.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/biber2.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
@@ -270,11 +264,6 @@ public:
 		glEnable(GL_DEPTH_TEST);
 
 		if (!m_uiDraw->getMeshes().empty()) {
-			std::vector<GLuint> textureIds;
-			for (Texture* texture : m_textures) {
-				textureIds.push_back(texture->getTextureId());
-			}
-
 			// Forward rendering
 			for (Mesh* mesh : m_uiDraw->getMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
@@ -507,8 +496,6 @@ private:
 	Icon*						m_iconClass;
 	SSAO*						m_ssaoClass;
 	SaveFile*					m_saveFile;
-
-	std::vector<Texture*>		m_textures;		// Vector of texture pointers
 };
 
 // Global pointer to the application

@@ -37,6 +37,7 @@ public:
 	GLuint getBRDF(GLuint BRDF);
 	GLuint getCubemapTexture() { return m_cubemapTexture; }
 	Texture* getBackgroundTexture() { return m_backgroundTexture; }
+	std::string getHDRI_Path() { return m_HDRI_Path; }
 
 private:
 	GLuint	captureFBO = 0, captureRBO = 0;
@@ -52,6 +53,8 @@ private:
 	Shader* m_brdf = 0;
 
 	Mesh* m_meshRender = 0;
+
+	std::string m_HDRI_Path;
 
 	// Load the cubemap projection and views for the 6 directions
 	glm::mat4 captureProjection = glm::perspective(glm::radians(90.0f), 1.0f, 0.1f, 10.0f);

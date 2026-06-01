@@ -18,19 +18,21 @@ public:
 	TextureLoading();
 	~TextureLoading();
 
+	void cleanupMaterials();
+
 	std::unordered_map<int, Material*> getMaterialMap() {
 		return materialsMap;
 	}
 
-	Texture* loadTexture(const std::string& path);
+	Texture* loadTexture(const std::string& path, bool flipTexture = false);
 	Material* checkAndAddMaterial(const std::pair<std::vector<GLuint>, std::vector<Texture*>>& textureData, const std::string& materialName);
 	std::unordered_map<int, Material*> loadMaterials(int presetMode);
 	std::unordered_map<int, Material*> MaterialsPushback(const std::vector<MaterialPaths>& materialList);
 	std::pair<std::vector<GLuint>, std::vector<Texture*>> loadTextureSet(const std::string& baseColorPath, const std::string& metallicMapPath, const std::string& roughnessMapPath, const std::string& normalMapPath);
 	
-	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::vector<Material*>& loadedMaterials, const std::string path);
-	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::vector<Material*>& loadedMaterials, const std::string path);
-	std::vector<Mesh*> loadMeshes(const std::string& path, const std::vector<Material*>& loadedMaterials, const std::string& meshName);
+	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::string path);
+	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
+	std::vector<Mesh*> loadMeshes(const std::string& path, const std::string& meshName);
 	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
 	void loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes);
 	std::vector<std::string> FileSystem(std::string& path);
@@ -38,12 +40,12 @@ public:
 
 	std::vector<Material*>& getMaterials() { return m_materials; }
 	std::vector<int> getVertices() { return vertexAmount; }
-	std::vector<Texture*> getTrackedTextures() { return m_trackedTextures; }
+	std::vector<Texture*> getTrackedTextures() { return m_textures; }
 
 private:
 	std::vector<Material*>		m_materials;
 	int m_materialIndex = 0;
 	std::unordered_map<int, Material*> materialsMap;
-	std::vector<Texture*>		m_trackedTextures;
+	std::vector<Texture*>		m_textures;
 	std::vector<int>			vertexAmount;
 };

@@ -113,14 +113,14 @@ public:
 		}
 		
 		//file.write(reinterpret_cast<char*>(&m_pos), sizeof(m_pos));
-		std::cout << " Vector: " << sizeof(m_lightData) << std::endl;
+		//std::cout << " Vector: " << sizeof(m_lightData) << std::endl;
 
 		// Write lightdata
 		writeVector(file, m_lightData);
 
 		// Write MaterialPaths
-		std::cout << "Path names sizeof: " << sizeof(m_pathNames) << " pathnames.size(): " << m_pathNames.size() << std::endl;
-		std::cout << "Pathname[0] sizeof: " << sizeof(m_pathNames[0]) << " Sizeof color: " << sizeof(m_pathNames[0].colorPath) << " - " << sizeof(m_pathNames[0].roughnessPath) << std::endl;
+		//std::cout << "Path names sizeof: " << sizeof(m_pathNames) << " pathnames.size(): " << m_pathNames.size() << std::endl;
+		//std::cout << "Pathname[0] sizeof: " << sizeof(m_pathNames[0]) << " Sizeof color: " << sizeof(m_pathNames[0].colorPath) << " - " << sizeof(m_pathNames[0].roughnessPath) << std::endl;
 		writeStringVector(file, m_pathNames);
 
 		// Write FileMeshes
@@ -130,7 +130,7 @@ public:
 		writeString(file, m_hdriPath);
 
 		std::cout << std::endl;
-		std::cout << "Object serialized successfully." << std::endl;
+		std::cout << filename << " - Object serialized successfully." << std::endl;
 		file.close();
 	}
 
@@ -156,7 +156,7 @@ public:
 		std::string hdri;
 		readString(file, hdri);
 
-		std::cout << "Object deserialized successfully." << std::endl;
+		std::cout << filename << " - Object deserialized successfully." << std::endl;
 		file.close();
 		return SaveFile(lights, materialPaths, fileMesh, hdri);
 	}

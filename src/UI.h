@@ -44,6 +44,7 @@ public:
 		GBuffer* gbuffer,
 		SSAO* ssao);
 	~UI();
+	void cleanupMeshes();
 
 	void ImGuiStyleSetup();
 	void ImGuiDraw();

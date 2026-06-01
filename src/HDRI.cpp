@@ -252,6 +252,8 @@ GLuint HDRI::createBRDF()
 
 void HDRI::ProcessHDRI(const char* hdr)
 {
+	m_HDRI_Path = hdr;
+
 	// Reverse blending settings
 	glDisable(GL_BLEND);
 	glBlendFunc(GL_ONE, GL_ZERO); // Optional: Reset to default blend function
@@ -288,10 +290,15 @@ void HDRI::ProcessHDRI(const char* hdr)
 	// Enable alpha blending once again
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	stbi_set_flip_vertically_on_load(false);
 }
 
 void HDRI::cleanUpHDRI()
 {
+	// Empty path
+	m_HDRI_Path = "";
+
 	// Delete the old HDR texture/maps
 	if (m_texture != 0) { glDeleteTextures(1, &m_texture); m_texture = 0; }
 
