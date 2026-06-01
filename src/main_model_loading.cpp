@@ -66,54 +66,6 @@ public:
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
 
-		// Preset light positions, colors and light strength
-		/*std::vector<FileLights> fileLights;
-		fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
-		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
-		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
-
-		std::vector<MaterialPaths> materialPath;
-		materialPath.push_back(MaterialPaths{ std::string("Checkerboard"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboardNormal.png") });
-
-		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
-
-		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
-
-		std::vector<FileMeshes> fileMeshes;
-		fileMeshes.push_back(FileMeshes{ std::string("/models/plane.obj"),
-			std::string("Plane"),
-			glm::vec3(0.0f, -1.0f, 0.0f),
-			glm::vec3(6.0f),
-			glm::vec3(0.0f), 0 });
-
-		fileMeshes.push_back(FileMeshes{ std::string("/models/MP18Low.obj"),
-			std::string("MP18"),
-			glm::vec3(0.0f, 1.0f, 0.0f),
-			glm::vec3(1.0f),
-			glm::vec3(0.0f), 1 });
-
-		fileMeshes.push_back(FileMeshes{ std::string("/models/barrel.obj"),
-			std::string("Barrel"),
-			glm::vec3(0.0f, 2.0f, 0.0f),
-			glm::vec3(1.0f),
-			glm::vec3(0.0f), 2 });
-
-		// Create and serialize an object
-		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
-		original.serialize(std::string(ASSET_DIR) + "/Saves/data.bin");*/
-
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
@@ -122,6 +74,7 @@ public:
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
 		
 		// Load the scene from a file
+		setupDefaultSave();
 		setupScene();
 
 		// Default material
@@ -172,7 +125,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/biber2.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
@@ -204,7 +157,6 @@ public:
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
-		//m_uiDraw->updateMeshFiles();
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -217,6 +169,56 @@ public:
 
 		// Set up lights and color
 		initializeLights(restored.getLightData());
+	}
+
+	void setupDefaultSave() {
+		// Preset light positions, colors and light strength
+		std::vector<FileLights> fileLights;
+		fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
+		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
+		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
+
+		std::vector<MaterialPaths> materialPath;
+		materialPath.push_back(MaterialPaths{ std::string("Checkerboard"),
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboard.png"),
+			std::string("/textures/checkerboardNormal.png") });
+
+		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
+
+		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
+
+		std::vector<FileMeshes> fileMeshes;
+		fileMeshes.push_back(FileMeshes{ std::string("/models/plane.obj"),
+			std::string("Plane"),
+			glm::vec3(0.0f, -1.0f, 0.0f),
+			glm::vec3(6.0f),
+			glm::vec3(0.0f), 0 });
+
+		fileMeshes.push_back(FileMeshes{ std::string("/models/MP18Low.obj"),
+			std::string("MP18"),
+			glm::vec3(0.0f, 1.0f, 0.0f),
+			glm::vec3(1.0f),
+			glm::vec3(0.0f), 1 });
+
+		fileMeshes.push_back(FileMeshes{ std::string("/models/barrel.obj"),
+			std::string("Barrel"),
+			glm::vec3(0.0f, 2.0f, 0.0f),
+			glm::vec3(1.0f),
+			glm::vec3(0.0f), 2 });
+
+		// Create and serialize an object
+		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
+		original.serialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 	}
 
 	void bindShaders() {
