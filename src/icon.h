@@ -4,6 +4,7 @@
 
 #include "inputs.h"
 #include "camera.h"
+#include "savefileStructs.h"
 
 class Mesh;
 class Shader;
@@ -15,7 +16,7 @@ public:
 	Icon(Mesh* mesh, TextureLoading* texLoading, UI* uiDraw, Inputs* inputs, Camera* camera);
 	~Icon();
 
-	void renderIcons(Shader* m_icon, float iconSize, std::vector<glm::vec3> targetPos, int amount, int texIndex);
+	void renderIcons(Shader* m_icon, float iconSize, std::vector<FileLights> targetPos, int texIndex);
 	void renderIcons(Shader* m_icon, float iconSize, glm::vec3 targetPos, int texIndex);
 	void visualizeFocus(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* input, Camera* m_camera);
 	void loadIconTexture(const char* path);

@@ -13,6 +13,7 @@
 #include "textureLoading.h"
 #include "HDRI.h"
 #include "GBuffer.h"
+#include "scene.h"
 
 #include <vector>
 #include <stb_image.h>
@@ -42,9 +43,9 @@ public:
 		TextureLoading* texLoad,
 		HDRI* hdri,
 		GBuffer* gbuffer,
-		SSAO* ssao);
+		SSAO* ssao,
+		Scene* scene);
 	~UI();
-	void cleanupMeshes();
 
 	void ImGuiStyleSetup();
 	void ImGuiDraw();
@@ -70,10 +71,10 @@ public:
 	void shaderBind() { m_GBuffer->getCurrentShader()->bind(); }
 
 	// Add '&' to get the REFERENCE!!!
-	std::vector<Mesh*>& getMeshes() { return m_meshes; }
+	/*std::vector<Mesh*>& getMeshes() { return m_meshes; }
 	std::vector<glm::vec3>& getPointLightPos() { return pointLightPos; }
 	std::vector<glm::vec3>& getPointLightColor() { return pointLightColor; }
-	std::vector<float>& getPointLightStrength() { return pointLightStrength; }
+	std::vector<float>& getPointLightStrength() { return pointLightStrength; }*/
 
 	void updateMeshFiles() { 
 		meshFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/models/"));
@@ -92,7 +93,7 @@ private:
 
 	Shader* m_backImage;
 
-	std::vector<Mesh*> m_meshes; // Mesh reference
+	//std::vector<Mesh*> m_meshes; // Mesh reference
 	//std::vector<MaterialPaths> m_pathNames
 	//std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes, std::string hdriPath
 
@@ -100,10 +101,11 @@ private:
 	HDRI* m_HDRI;
 	GBuffer* m_GBuffer;
 	SSAO* m_SSAO;
+	Scene* m_scene;
 
-	std::vector<glm::vec3> pointLightPos; // Reference to point light positions
+	/*std::vector<glm::vec3> pointLightPos; // Reference to point light positions
 	std::vector<glm::vec3> pointLightColor; // Reference to point light colors
-	std::vector<float> pointLightStrength;
+	std::vector<float> pointLightStrength;*/
 	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
 	// Meshes

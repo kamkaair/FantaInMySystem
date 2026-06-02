@@ -10,6 +10,7 @@
 #include "icon.h"
 #include "ssao.h"
 #include "savefile.h"
+#include "scene.h"
 
 // Include STB-image library
 #define STB_IMAGE_IMPLEMENTATION
@@ -41,17 +42,40 @@ public:
 		// Creates GBuffer
 		m_GBuffer = new GBuffer(width, height);
 
-		// texloading function class
-		m_texLoading = new TextureLoading();
-
 		// Loads and computes all the HDRI maps
 		m_HDRI = new HDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
 		// Screen Spaced Ambient Occlusion initialization
 		m_ssaoClass = new SSAO(m_GBuffer, width, height);
 
+		// texloading function class
+		m_texLoading = new TextureLoading();
+
+		// Enable seamless cubemaps
+		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+
+		// Load the scene from a file
+		setupDefaultSave();
+		m_scene = setupScene();
+
+		// Default material
+		if (m_texLoading->getMaterials().empty()) {
+			m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboardNormal.png")
+			), "Default Material");
+		}
+
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass);
+		m_uiDraw = new UI(m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass, m_scene);
+
+		//std::cout << m_scene->
+
+		for (int i = 0; i < m_scene->getMeshes().size(); i++) {
+			std::cout << "New mesh names: " << m_scene->getMeshes()[i]->getDisplayName() << std::endl;
+		}
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -66,26 +90,9 @@ public:
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
 
-		// Enable seamless cubemaps
-		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
-		
-		// Load the scene from a file
-		setupDefaultSave();
-		setupScene();
-
-		// Default material
-		if (m_texLoading->getMaterials().empty()) {
-			m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboardNormal.png")
-			), "Default Material");
-		}
 
 		// Alpha blending
 		glEnable(GL_BLEND);
@@ -113,6 +120,7 @@ public:
 		utils::deleteObject(m_GBuffer);
 		utils::deleteObject(m_iconClass);
 		utils::deleteObject(m_ssaoClass);
+		utils::deleteObject(m_scene);
 
 		// Delete Camera
 		utils::deleteObject(m_camera);
@@ -123,12 +131,31 @@ public:
 		ImGui::DestroyContext();
 	}
 
-	void setupScene() {
+	Scene* setupScene() {
 		// Deserialize the object
 		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
+
+		std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
+
+		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
+		std::vector<Mesh*> meshes;
+		m_texLoading->loadMeshes(meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
+
+		// stbi_set_flip_vertically_on_load(true);
+		// Load the texture for the background texture
+		// TODO: serialize background image path
+		Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
+		m_HDRI->setBackgroundTexture(backgroundImage);
+
+		// Load the HDR texture and create all the HDRI maps
+		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
+
+		// Set up lights and color
+		//initializeLights(restored.getLightData());
+
 		/*for (auto lightData : restored.getLightData()) {
 			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
 			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
@@ -141,7 +168,7 @@ public:
 			std::cout << "Rough: " << mat.roughnessPath << std::endl;
 			std::cout << "Normal: " << mat.normalPath << std::endl;
 		}*/
-		for (auto mesh : restored.getFileMeshes()) {
+		/*for (auto mesh : restored.getFileMeshes()) {
 			std::cout << "Path: " << mesh.modelPath << std::endl;
 			std::cout << "Name: " << mesh.modelName << std::endl;
 			std::cout << "Pos: " << glm::to_string(mesh.pos) << std::endl;
@@ -151,24 +178,20 @@ public:
 			std::cout << std::endl;
 		}
 		std::cout << "HDRI path: " << restored.getHdriPath() << std::endl;
-		std::cout << std::endl;
+		std::cout << std::endl;*/
 
-		m_texLoading->MaterialsPushback(restored.getPathNames());
+		for (auto mesh : meshes) {
+			std::cout << "Name: " << mesh->getDisplayName() << std::endl;
+			std::cout << "Pos: " << glm::to_string(mesh->getPosition()) << std::endl;
+			std::cout << "NOT EMPTY " << glm::to_string(mesh->getScaling()) << std::endl;
+			std::cout << std::endl;
+		}
 
-		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
-		m_texLoading->loadMeshes(m_uiDraw->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
-
-		// stbi_set_flip_vertically_on_load(true);
-		// Load the texture for the background texture
-		// TODO: serialize background image path
-		Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
-		m_HDRI->setBackgroundTexture(backgroundImage);
-
-		// Load the HDR texture and create all the HDRI maps
-		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
-
-		// Set up lights and color
-		initializeLights(restored.getLightData());
+		for (auto mat : materials) {
+			std::cout << "Material Name: " << mat->getName() << std::endl;
+		}
+		
+		return new Scene(meshes, restored.getLightData(), materials);
 	}
 
 	void setupDefaultSave() {
@@ -265,18 +288,17 @@ public:
 		}
 		glEnable(GL_DEPTH_TEST);
 
-		if (!m_uiDraw->getMeshes().empty()) {
+		if (!m_scene->getMeshes().empty()) {
 			// Forward rendering
-			for (Mesh* mesh : m_uiDraw->getMeshes()) {
+			for (Mesh* mesh : m_scene->getMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_uiDraw->getPointLightPos(), 
-					m_uiDraw->getPointLightColor(), m_uiDraw->getPointLightStrength());
+				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
 		}
 
 		if (!g_input->getImGuiVisibility()) {
 			//renderIcons(); // Render all the point lamp icons
-			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
+			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
 			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
@@ -298,7 +320,7 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Render meshes
-		for (Mesh* mesh : m_uiDraw->getMeshes()) {
+		for (Mesh* mesh : m_scene->getMeshes()) {
 			mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
 		}
 
@@ -320,7 +342,7 @@ public:
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
-			m_iconClass->renderIcons(m_icon, 25.0f, m_uiDraw->getPointLightPos(), m_uiDraw->getPointLightPos().size(), 0);
+			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
 			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw();
 		}
@@ -354,25 +376,24 @@ public:
 		m_GBuffer->getLightPass()->setUniform("ssao", 7);
 
 		// Set light uniforms + view
-		for (int i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
-			glm::vec3 lightPosWorld = m_uiDraw->getPointLightPos()[i];
+		for (int i = 0; i < m_scene->getLights().size(); i++) {
+			glm::vec3 lightPosWorld = m_scene->getLights()[i].pos;
 			glm::vec3 lightPosView = glm::vec3(m_camera->getViewMatrix() * glm::vec4(lightPosWorld, 1.0f));
 
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].position", lightPosView);
 
-			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].color",
-				m_uiDraw->getPointLightColor()[i]);
+			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].color", m_scene->getLights()[i].color);
 
 			// Set attenuation factors for the point light
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
-			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_uiDraw->getPointLightStrength()[i]);
+			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_scene->getLights()[i].strength);
 		}
 
 		//std::cout << glm::to_string(m_camera->getLookAt()) << std::endl;
 
-		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_uiDraw->getPointLightPos().size());
+		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_scene->getLights().size());
 		if (m_uiDraw->getLightOrientation())
 			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 		//m_GBuffer->getLightPass()->setUniform("view", m_camera->getViewMatrix());
@@ -385,15 +406,15 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	void initializeLights(std::vector<FileLights> fileLights) {
+	void initializeLights(std::vector<FileLights>& fileLights) {
 		for (int i = 0; i < fileLights.size(); i++) {
-			m_uiDraw->getPointLightPos().push_back(fileLights[i].pos);
-			m_uiDraw->getPointLightColor().push_back(fileLights[i].color);
-			m_uiDraw->getPointLightStrength().push_back(fileLights[i].strength);
+			//m_uiDraw->getPointLightPos().push_back(fileLights[i].pos);
+			//m_uiDraw->getPointLightColor().push_back(fileLights[i].color);
+			//m_uiDraw->getPointLightStrength().push_back(fileLights[i].strength);
 		}
 	}
 
-	void initializeLightsOld()
+	/*void initializeLightsOld()
 	{
 		// Preset light positions, colors and light strength
 		m_uiDraw->getPointLightPos().push_back(glm::vec3(-2.72f, 1.20f, 3.68f));
@@ -407,7 +428,7 @@ public:
 		m_uiDraw->getPointLightStrength().push_back(0.0f);
 		m_uiDraw->getPointLightStrength().push_back(0.0f);
 		m_uiDraw->getPointLightStrength().push_back(0.0f);
-	}
+	}*/
 
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));
@@ -452,18 +473,18 @@ public:
 		//Mesh rotation
 		if (m_uiDraw->boolMeshRotation()) {
 			if (!m_uiDraw->boolDoOnce()) {
-				for (auto meshes : m_uiDraw->getMeshes()) { // Set rotation to 0.0f once
+				for (auto meshes : m_scene->getMeshes()) { // Set rotation to 0.0f once
 					meshes->setRotationX(0.0f), meshes->setRotationY(0.0f), meshes->setRotationZ(0.0f);
 				}
 				m_uiDraw->toggleDoOnce();
 			}
-			for (auto meshes : m_uiDraw->getMeshes()) { // Rotation loop
+			for (auto meshes : m_scene->getMeshes()) { // Rotation loop
 				meshes->setRotationX(meshes->getRotationX() + deltaTime);
 			}
 		}
 		else if (!m_uiDraw->boolMeshRotation() && m_uiDraw->boolDoOnce())
 		{
-			for (auto meshes : m_uiDraw->getMeshes()) { // Set rotation to 0.0f, when enabling rotation
+			for (auto meshes : m_scene->getMeshes()) { // Set rotation to 0.0f, when enabling rotation
 				meshes->setRotationX(0.0f), meshes->setRotationY(0.0f), meshes->setRotationZ(0.0f);
 			}
 			m_uiDraw->toggleDoOnce();
@@ -498,6 +519,7 @@ private:
 	Icon*						m_iconClass;
 	SSAO*						m_ssaoClass;
 	SaveFile*					m_saveFile;
+	Scene*						m_scene;
 };
 
 // Global pointer to the application

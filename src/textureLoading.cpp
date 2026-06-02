@@ -172,17 +172,18 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 	return materialsMap;
 }
 
-std::unordered_map<int, Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
+std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
+	std::vector<Material*> matVec;
 	for (int i = 0; i < materialList.size(); i++) {
-		materialsMap[i] = checkAndAddMaterial(loadTextureSet(
+		matVec.push_back(checkAndAddMaterial(loadTextureSet(
 			(materialList[i].colorPath),
 			(materialList[i].metallicPath),
 			(materialList[i].roughnessPath),
 			(materialList[i].normalPath)
-		), materialList[i].materialName);
+		), materialList[i].materialName));
 	}
 
-	return materialsMap;
+	return matVec;
 }
 
 Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {

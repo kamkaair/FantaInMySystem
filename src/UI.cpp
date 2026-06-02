@@ -10,12 +10,14 @@ UI::UI(Shader* backImage,
 	TextureLoading* texLoad,
 	HDRI* hdri,
 	GBuffer* gbuffer,
-	SSAO* ssao)
+	SSAO* ssao,
+	Scene* scene)
 	: m_backImage(backImage),
 	m_texLoading(texLoad),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
 	m_SSAO(ssao),
+	m_scene(scene),
 	ImGuiAlpha(0.3f), 
 	Object(__FUNCTION__) {
 	updateMeshFiles();
@@ -23,18 +25,7 @@ UI::UI(Shader* backImage,
 
 utils::utils fpsCounter;
 
-// TODO: Make a scene component for meshes, lights and such. UI shouldn't hold the meshes
-void UI::cleanupMeshes() {
-	// Clean up all the meshes
-	for (size_t i = 0; i < m_meshes.size(); i++) {
-		delete m_meshes[i];
-	}
-	m_meshes.clear();
-}
-
-UI::~UI() {
-	cleanupMeshes();
-}
+UI::~UI() {}
 
 void displayMatList(int item, static int currentItem[], std::vector<const char*> materialFileNames) {
 	for (size_t i = 0; i < materialFileNames.size(); i++) {
@@ -149,24 +140,18 @@ void UI::ImGuiDraw()
 				for (auto files : hdrFiles) {
 					if (ImGui::MenuItem(files.c_str())) {
 						std::cout << "Opened " + files + "\n";
-						// TODO: REFACTOR
-						// Meshes and materials
-						cleanupMeshes();
-						m_texLoading->cleanupMaterials();
 
+						// Clean up the whole scene
+						m_scene->cleanupScene();
+						//m_texLoading->cleanupMaterials();
 						m_HDRI->cleanUpHDRI();
 						//m_HDRI->cleanBackgroundTexture();
-
-						// Point lights
-						pointLightPos.clear();
-						pointLightColor.clear();
-						pointLightStrength.clear();
 
 						// Deserialize the object
 						SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/" + files);
 
 						m_texLoading->MaterialsPushback(restored.getPathNames());
-						m_texLoading->loadMeshes(m_meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
+						m_texLoading->loadMeshes(m_scene->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
 
 						//Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
 						//m_HDRI->setBackgroundTexture(backgroundImage);
@@ -175,13 +160,14 @@ void UI::ImGuiDraw()
 						m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
 
 						// Set up lights and color
-						for (const FileLights light : restored.getLightData()) {
+						m_scene->getLights() = restored.getLightData();
+						/*for (const FileLights light : restored.getLightData()) {
 							pointLightPos.push_back(light.pos);
 							pointLightColor.push_back(light.color);
 							pointLightStrength.push_back(light.strength);
-						}
+						}*/
 
-						if (m_texLoading->getMaterials().empty()) {
+						if (m_scene->getMaterials().empty()) {
 							m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
 								std::string("/textures/checkerboard.png"),
 								std::string("/textures/checkerboard.png"),
@@ -203,17 +189,13 @@ void UI::ImGuiDraw()
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
 				// Light positions, colors and light strength
-				std::vector<FileLights> fileLights;
-				for (int i = 0; i < pointLightPos.size(); i++) {
-					fileLights.push_back(FileLights{ pointLightPos[i], pointLightColor[i], pointLightStrength[i] });
-				}
 
 				// And all the meshes and materials
 				std::vector<MaterialPaths> materialPath;
 				std::vector<Material*> checkMaterials;
 				std::vector<FileMeshes> fileMeshes;
 				int texIndex = 0;
-				for (auto mesh : m_meshes) {
+				for (auto mesh : m_scene->getMeshes()) {
 					bool seen = false;
 					for (auto earlierMat : checkMaterials) { // Silly dinky way of detecting, whether the material is already in use
 						for (int i = 0; i < mesh->getMaterial()->getTextures().size(); i++) {
@@ -255,7 +237,7 @@ void UI::ImGuiDraw()
 				}
 
 				// Create and serialize an object
-				SaveFile original(fileLights, materialPath, fileMeshes, m_HDRI->getHDRI_Path());
+				SaveFile original(m_scene->getLights(), materialPath, fileMeshes, m_HDRI->getHDRI_Path());
 				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
@@ -330,18 +312,18 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("RESETS"))
 			{
 				if (ImGui::Button("Reset all the transforms"))
-					for (auto meshes : m_meshes) {
+					for (auto meshes : m_scene->getMeshes()) {
 						meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 						meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
 					}
 
 				if (ImGui::Button("Reset rotation"))
-					for (auto meshes : m_meshes) {
+					for (auto meshes : m_scene->getMeshes()) {
 						meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 					}
 
 				if (ImGui::Button("Reset scale"))
-					for (auto meshes : m_meshes) {
+					for (auto meshes : m_scene->getMeshes()) {
 						meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
 					}
 
@@ -353,12 +335,12 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("TRANSFORM/MATERIAL MESHES"))
 			{
 				ImGui::Text("Below is all the meshes and their transforms");
-				for (size_t i = 0; i < m_meshes.size(); i++)
+				for (size_t i = 0; i < m_scene->getMeshes().size(); i++)
 				{
-					Mesh* meshes = m_meshes[i];
-					if (ImGui::TreeNode(("Mesh " + m_meshes[i]->getDisplayName()).c_str()))
+					Mesh* meshes = m_scene->getMeshes()[i];
+					if (ImGui::TreeNode(("Mesh " + m_scene->getMeshes()[i]->getDisplayName()).c_str()))
 					{
-						ImGui::Text(m_meshes[i]->getBackgroundName().c_str());
+						ImGui::Text(m_scene->getMeshes()[i]->getBackgroundName().c_str());
 						ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
 						glm::vec3 pos = meshes->getPosition();
@@ -458,17 +440,17 @@ void UI::ImGuiDraw()
 					// Add the new mesh to the std::vector
 					for (auto& mesh : newMeshes)
 					{
-						m_meshes.push_back(mesh);
-						m_meshes.back()->setMaterial(m_texLoading->getMaterials()[0]);
+						m_scene->getMeshes().push_back(mesh);
+						m_scene->getMeshes().back()->setMaterial(m_texLoading->getMaterials()[0]);
 					}
 				}
 
 				// For selecting and removing meshes
 				if (ImGui::TreeNode("Loaded Meshes"))
 				{
-					for (size_t i = 0; i < m_meshes.size(); i++)
+					for (size_t i = 0; i < m_scene->getMeshes().size(); i++)
 					{
-						ImGui::Text("Mesh %s", m_meshes[i]->getDisplayName().c_str());
+						ImGui::Text("Mesh %s", m_scene->getMeshes()[i]->getDisplayName().c_str());
 						ImGui::Text("Vertex count: %d", m_texLoading->getVertices()[i]);
 						//ImGui::Text("Vertex count: " + std::to_string(m_texLoading->getVertices()[i]).c_str());
 
@@ -476,8 +458,8 @@ void UI::ImGuiDraw()
 						if (ImGui::Button(("Remove##" + std::to_string(i)).c_str()))
 						{
 							// Remove mesh from vector and cleanup
-							delete m_meshes[i];  // Clean up memory if necessary
-							m_meshes.erase(m_meshes.begin() + i);
+							delete m_scene->getMeshes()[i];  // Clean up memory if necessary
+							m_scene->getMeshes().erase(m_scene->getMeshes().begin() + i);
 							
 							//delete m_texLoading->getVertices()[i];
 							//m_texLoading->getVertices().erase(m_texLoading->getVertices().begin() + i); // Erase the vertex amount
@@ -499,15 +481,13 @@ void UI::ImGuiDraw()
 		{
 			if (ImGui::TreeNode("LAMPS"))
 			{
-				ImGui::Text("Amount of existing lamps: %zu", pointLightPos.size());
+				ImGui::Text("Amount of existing lamps: %zu", m_scene->getLights().size());
 
 				// Point light addition
-				if (ImGui::Button("Add new point light") && pointLightPos.size() < 12) {
-					pointLightPos.push_back(glm::vec3(0.0, 0.0, 2.0));
-					pointLightColor.push_back(glm::vec3(1.0f, 0.5f, 0.31f));
-					pointLightStrength.push_back(5.0f);
+				if (ImGui::Button("Add new point light") && m_scene->getLights().size() < 12) {
+					m_scene->getLights().push_back(FileLights{ glm::vec3(0.0, 0.0, 2.0), glm::vec3(1.0f, 0.5f, 0.31f), 5.0f });
 				}
-				else if (pointLightPos.size() == 12) {
+				else if (m_scene->getLights().size() == 12) {
 					ImGui::Text("Maximum amount of lamps reached!!!");
 				}
 
@@ -515,18 +495,17 @@ void UI::ImGuiDraw()
 
 				if (ImGui::TreeNode("POINT LAMPS"))
 				{
-					for (size_t i = 0; i < pointLightPos.size(); i++)
+					for (size_t i = 0; i < m_scene->getLights().size(); i++)
 					{
 						ImGui::PushID(static_cast<int>(i));	// Each control to be unique
 						ImGui::Text("Point Light %zu", i);
 
-						ImGui::DragFloat3("Position", glm::value_ptr(pointLightPos[i]), 0.1f);
-						ImGui::ColorEdit3("Color", glm::value_ptr(pointLightColor[i]));
-						ImGui::InputFloat("Strength", &pointLightStrength[i]);
+						ImGui::DragFloat3("Position", glm::value_ptr(m_scene->getLights()[i].pos), 0.1f);
+						ImGui::ColorEdit3("Color", glm::value_ptr(m_scene->getLights()[i].color));
+						ImGui::InputFloat("Strength", &m_scene->getLights()[i].strength);
 
 						if (ImGui::Button("Erase point light")) {
-							pointLightPos.erase(pointLightPos.begin() + i);
-							pointLightColor.erase(pointLightColor.begin() + i);
+							m_scene->getLights().erase(m_scene->getLights().begin() + i);
 						}
 						ImGui::Separator();
 						ImGui::PopID();

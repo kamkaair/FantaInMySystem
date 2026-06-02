@@ -34,11 +34,11 @@ glm::mat4 Icon::processIconMatrix(glm::vec3 targetPos, float iconSize) {
 	return modelMatrix;
 }
 
-void Icon::renderIcons(Shader* m_icon, float iconSize, std::vector<glm::vec3> targetPos, int amount, int texIndex)
+void Icon::renderIcons(Shader* m_icon, float iconSize, std::vector<FileLights> targetPos, int texIndex)
 {
-	for (size_t i = 0; i < m_uiDraw->getPointLightPos().size(); i++) {
+	for (size_t i = 0; i < targetPos.size(); i++) {
 
-		glm::mat4 modelMatrix = processIconMatrix(targetPos[i], iconSize);
+		glm::mat4 modelMatrix = processIconMatrix(targetPos[i].pos, iconSize);
 
 		m_icon->bind();
 		m_icon->setUniform("projection", m_camera->getProjectionMatrix());

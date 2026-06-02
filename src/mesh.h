@@ -4,6 +4,7 @@
 
 #include "material.h"
 #include "camera.h"
+#include "savefileStructs.h"
 
 #include <glad/gl.h>		// Include glad
 #include <glm/glm.hpp>      // Include glm
@@ -28,7 +29,7 @@ public:
 	~Mesh();
 	//const std::vector<glm::vec3> 
 	void RenderGBuffer(Shader* shader, Camera* m_camera) const;
-	void Render(Shader* shader, Camera* m_camera, const std::vector<glm::vec3> LightP, const std::vector<glm::vec3> LightColor, std::vector<float> LightStrength) const;
+	void Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights) const;
 	void renderCube();
 	void renderQuad();
 	void setMaterial(Material* material);

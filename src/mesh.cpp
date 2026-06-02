@@ -102,8 +102,7 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 	}
 }
 
-void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<glm::vec3> LightP, const std::vector<glm::vec3> LightColor, std::vector<float> LightStrength) const
-{
+void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights) const {
 	// Bind the shader
 	shader->bind();
 
@@ -115,20 +114,20 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<glm::vec3>
 	shader->setUniform("M", getModelMatrix());
 
 	// Point light properties // ADD LightP.size()!!!!!!
-	for (int i = 0; i < LightP.size(); i++) {
+	for (int i = 0; i < lights.size(); i++) {
 		// Set the point light position
-		shader->setUniform("pointLights[" + std::to_string(i) + "].position", LightP[i]);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].position", lights[i].pos);
 
 		// Set the point light color
-		shader->setUniform("pointLights[" + std::to_string(i) + "].color", LightColor[i]);
+		shader->setUniform("pointLights[" + std::to_string(i) + "].color", lights[i].color);
 
 		// Set attenuation factors for the point light
 		shader->setUniform("pointLights[" + std::to_string(i) + "].constant", 1.0f);   // Constant attenuation
 		shader->setUniform("pointLights[" + std::to_string(i) + "].linear", 0.09f);    // Linear attenuation
 		shader->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f); // Quadratic attenuation
-		shader->setUniform("pointLights[" + std::to_string(i) + "].strength", LightStrength[i]); // Quadratic attenuation
+		shader->setUniform("pointLights[" + std::to_string(i) + "].strength", lights[i].strength); // Quadratic attenuation
 	}
-	int lightAmount = LightP.size();
+	int lightAmount = lights.size();
 	shader->setUniform("NUM_POINT_LIGHTS", lightAmount);
 
 	shader->setUniform("viewPos", m_camera->getPosition().x, m_camera->getPosition().y, m_camera->getPosition().z);
