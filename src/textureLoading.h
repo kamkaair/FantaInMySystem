@@ -5,6 +5,7 @@
 #include <unordered_map>
 #include "texture.h"
 #include "mesh.h"
+#include "scene.h"
 #include "savefileStructs.h"
 
 #include <assimp/Importer.hpp>
@@ -18,7 +19,7 @@ public:
 	TextureLoading();
 	~TextureLoading();
 
-	void cleanupMaterials();
+	void cleanupTextures();
 
 	std::unordered_map<int, Material*> getMaterialMap() {
 		return materialsMap;
@@ -35,17 +36,20 @@ public:
 	std::vector<Mesh*> loadMeshes(const std::string& path, const std::string& meshName);
 	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
 	void loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes);
+
 	std::vector<std::string> FileSystem(std::string& path);
 	Texture* findTexture(GLuint textureID);
 
-	std::vector<Material*>& getMaterials() { return m_materials; }
 	std::vector<int> getVertices() { return vertexAmount; }
 	std::vector<Texture*> getTrackedTextures() { return m_textures; }
 
+	void setCurrentScene(Scene* scene) { m_scene = scene; }
+
 private:
-	std::vector<Material*>		m_materials;
 	int m_materialIndex = 0;
 	std::unordered_map<int, Material*> materialsMap;
 	std::vector<Texture*>		m_textures;
 	std::vector<int>			vertexAmount;
+
+	Scene* m_scene;
 };

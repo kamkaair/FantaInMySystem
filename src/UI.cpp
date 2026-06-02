@@ -143,7 +143,7 @@ void UI::ImGuiDraw()
 
 						// Clean up the whole scene
 						m_scene->cleanupScene();
-						//m_texLoading->cleanupMaterials();
+						m_texLoading->cleanupTextures();
 						m_HDRI->cleanUpHDRI();
 						//m_HDRI->cleanBackgroundTexture();
 
@@ -382,12 +382,12 @@ void UI::ImGuiDraw()
 
 						if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
 						{
-							for (size_t i = 0; i < m_texLoading->getMaterials().size(); i++)
+							for (size_t i = 0; i < m_scene->getMaterials().size(); i++)
 							{
-								bool isSelected = (m_texLoading->getMaterials()[i] == currentMat);
-								if (ImGui::Selectable(m_texLoading->getMaterials()[i]->getName().c_str(), isSelected))
+								bool isSelected = (m_scene->getMaterials()[i] == currentMat);
+								if (ImGui::Selectable(m_scene->getMaterials()[i]->getName().c_str(), isSelected))
 								{
-									meshes->setMaterial(m_texLoading->getMaterials()[i]);  // Set the selected material to the mesh
+									meshes->setMaterial(m_scene->getMaterials()[i]);  // Set the selected material to the mesh
 								}
 								if (isSelected)
 									ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
@@ -441,7 +441,7 @@ void UI::ImGuiDraw()
 					for (auto& mesh : newMeshes)
 					{
 						m_scene->getMeshes().push_back(mesh);
-						m_scene->getMeshes().back()->setMaterial(m_texLoading->getMaterials()[0]);
+						m_scene->getMeshes().back()->setMaterial(m_scene->getMaterials()[0]);
 					}
 				}
 

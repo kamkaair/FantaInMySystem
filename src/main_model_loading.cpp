@@ -48,34 +48,24 @@ public:
 		// Screen Spaced Ambient Occlusion initialization
 		m_ssaoClass = new SSAO(m_GBuffer, width, height);
 
-		// texloading function class
-		m_texLoading = new TextureLoading();
-
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
+		// texloading function class
+		m_texLoading = new TextureLoading();
+
+		// Create a new scene
+		m_scene = new Scene();
+
 		// Load the scene from a file
 		setupDefaultSave();
-		m_scene = setupScene();
 
-		// Default material
-		if (m_texLoading->getMaterials().empty()) {
-			m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboardNormal.png")
-			), "Default Material");
-		}
+		// Set the current scene
+		m_texLoading->setCurrentScene(m_scene);
+		setupScene();
 
 		// the UI class, contains ImGui and such
 		m_uiDraw = new UI(m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass, m_scene);
-
-		//std::cout << m_scene->
-
-		for (int i = 0; i < m_scene->getMeshes().size(); i++) {
-			std::cout << "New mesh names: " << m_scene->getMeshes()[i]->getDisplayName() << std::endl;
-		}
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -93,6 +83,16 @@ public:
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
+
+		// Default material
+		if (m_scene->getMaterials().empty()) {
+			m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboard.png"),
+				std::string("/textures/checkerboardNormal.png")
+			), "Default Material");
+		}
 
 		// Alpha blending
 		glEnable(GL_BLEND);
@@ -131,7 +131,7 @@ public:
 		ImGui::DestroyContext();
 	}
 
-	Scene* setupScene() {
+	void setupScene() {
 		// Deserialize the object
 		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 
@@ -139,10 +139,12 @@ public:
 		std::cout << "Deserialized Object:\n";
 
 		std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
+		m_scene->getMaterials() = materials;
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		std::vector<Mesh*> meshes;
 		m_texLoading->loadMeshes(meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
+		m_scene->getMeshes() = meshes;
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -155,6 +157,7 @@ public:
 
 		// Set up lights and color
 		//initializeLights(restored.getLightData());
+		m_scene->getLights() = restored.getLightData();
 
 		/*for (auto lightData : restored.getLightData()) {
 			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
@@ -190,8 +193,6 @@ public:
 		for (auto mat : materials) {
 			std::cout << "Material Name: " << mat->getName() << std::endl;
 		}
-		
-		return new Scene(meshes, restored.getLightData(), materials);
 	}
 
 	void setupDefaultSave() {

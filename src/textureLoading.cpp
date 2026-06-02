@@ -7,21 +7,15 @@
 
 TextureLoading::TextureLoading() : Object(__FUNCTION__) {}
 
-void TextureLoading::cleanupMaterials() {
+void TextureLoading::cleanupTextures() {
 	for (Texture* tex : m_textures) {
 		delete tex;
 	}
 	m_textures.clear();
-
-	// Clean up all the materials
-	for (Material* mat : m_materials) {
-		delete mat;
-	}
-	m_materials.clear();
 }
 
 TextureLoading::~TextureLoading() {
-	cleanupMaterials();
+	cleanupTextures();
 }
 
 Texture* TextureLoading::loadTexture(const std::string& path, bool flipTexture) {
@@ -79,8 +73,10 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 	const std::vector<GLuint>& textureIds = textureData.first;
 	const std::vector<Texture*>& textures = textureData.second;
 
+	std::cout << "The evergrowing blank: " << m_scene << std::endl;
+
 	if (!textureIds.empty()) {
-		m_materials.push_back(new Material(textureIds, materialName, m_materialIndex));  // Add the material to the list, last three are diffuse, metallic and roughness
+		m_scene->getMaterials().push_back(new Material(textureIds, materialName, m_materialIndex));  // Add the material to the list, last three are diffuse, metallic and roughness
 
 		// Track the textures for later cleanup
 		for (Texture* tex : textures) {
@@ -94,7 +90,7 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 		std::cout << "Error loading material: " << materialName << std::endl;
 	}
 
-	return m_materials.back();  // Return the last added material
+	return m_scene->getMaterials().back();  // Return the last added material
 }
 
 std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode) {
@@ -217,8 +213,8 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 
 	// Assign the preloaded material by index
 	Material* meshMaterial = nullptr;
-	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_materials.size()) {
-		meshMaterial = m_materials[mesh->mMaterialIndex];
+	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size()) {
+		meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
 	}
 
 	// Create the Mesh object with the vertices, indices, and preloaded material
@@ -334,7 +330,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 
 		if (i == 0) {  // Reflectivity test plane
 			meshes.back()->setScaling(glm::vec3(6.0f));
-			meshes.back()->setMaterial(m_materials[0]);
+			meshes.back()->setMaterial(m_scene->getMaterials()[0]);
 			meshes.back()->setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
 		}
 	}
@@ -346,7 +342,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 
 			if (i == 0) {  // MP18 -Gun model
 				meshes.back()->setScaling(glm::vec3(1.0f));
-				meshes.back()->setMaterial(m_materials[1]);
+				meshes.back()->setMaterial(m_scene->getMaterials()[1]);
 				meshes.back()->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
 			}
 		}
@@ -359,7 +355,7 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 
 			if (i == 0) {  // Barrel
 				meshes.back()->setScaling(glm::vec3(1.0f));
-				meshes.back()->setMaterial(m_materials[2]);
+				meshes.back()->setMaterial(m_scene->getMaterials()[2]);
 				meshes.back()->setPosition(glm::vec3(0.0f, 2.0f, 0.0f));
 			}
 		}
@@ -372,23 +368,23 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 			// Set unique transformations for each object (grip, blade, ornaments)
 			switch (i) {
 			case 0: // Blade
-				meshes.back()->setMaterial(m_materials[3]);
+				meshes.back()->setMaterial(m_scene->getMaterials()[3]);
 				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 			case 1: // Screws - not the actual texture, uses the blade's texture
-				meshes.back()->setMaterial(m_materials[0]);
+				meshes.back()->setMaterial(m_scene->getMaterials()[0]);
 				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 			case 2: // Ornaments
-				meshes.back()->setMaterial(m_materials[5]);
+				meshes.back()->setMaterial(m_scene->getMaterials()[5]);
 				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 			case 3: // Grip
-				meshes.back()->setMaterial(m_materials[4]);
+				meshes.back()->setMaterial(m_scene->getMaterials()[4]);
 				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 			case 4: // Holder
-				meshes.back()->setMaterial(m_materials[6]);
+				meshes.back()->setMaterial(m_scene->getMaterials()[6]);
 				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 				break;
 			default:
@@ -422,7 +418,7 @@ void TextureLoading::loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMesh
 			meshes.back()->setPosition(fileMeshes[i].pos);
 			meshes.back()->setRotation(fileMeshes[i].rotation);
 			meshes.back()->setScaling(fileMeshes[i].scaling);
-			meshes.back()->setMaterial(m_materials[fileMeshes[i].textureID]);			
+			meshes.back()->setMaterial(m_scene->getMaterials()[fileMeshes[i].textureID]);
 		}
 	}
 	std::cout << "Amount of meshes in the scene: " << meshes.size() << std::endl;
