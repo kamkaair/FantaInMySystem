@@ -145,28 +145,32 @@ void UI::ImGuiDraw()
 						m_scene->cleanupScene();
 						m_texLoading->cleanupTextures();
 						m_HDRI->cleanUpHDRI();
-						//m_HDRI->cleanBackgroundTexture();
+						m_HDRI->cleanBackgroundTexture();
 
 						// Deserialize the object
 						SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/" + files);
 
-						m_texLoading->MaterialsPushback(restored.getPathNames());
-						m_texLoading->loadMeshes(m_scene->getMeshes(), restored.getFileMeshes()); // Preset modes from 0 - 3
+						std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
+						m_scene->getMaterials() = materials;
 
-						//Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
-						//m_HDRI->setBackgroundTexture(backgroundImage);
+						std::vector<Mesh*> meshes;
+						m_texLoading->loadMeshes(meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
+						m_scene->getMeshes() = meshes;
+
+						std::cout << "Background tex load: " << restored.getBackgroundTexPath() << std::endl;
+
+						Texture* backgroundImage = m_texLoading->loadTexture(restored.getBackgroundTexPath());
+						m_HDRI->setBackgroundTexture(backgroundImage);
 
 						// Load the HDR texture and create all the HDRI maps
 						m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
 
 						// Set up lights and color
 						m_scene->getLights() = restored.getLightData();
-						/*for (const FileLights light : restored.getLightData()) {
-							pointLightPos.push_back(light.pos);
-							pointLightColor.push_back(light.color);
-							pointLightStrength.push_back(light.strength);
-						}*/
 
+						m_scene->constructScene(meshes, materials, restored.getLightData());
+
+						// Just in case, if no materials were added
 						if (m_scene->getMaterials().empty()) {
 							m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
 								std::string("/textures/checkerboard.png"),
@@ -235,9 +239,10 @@ void UI::ImGuiDraw()
 					texIndex++;
 					std::cout << "Material ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
 				}
-
+				
 				// Create and serialize an object
-				SaveFile original(m_scene->getLights(), materialPath, fileMeshes, m_HDRI->getHDRI_Path());
+				std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePathShort() << std::endl;
+				SaveFile original(m_scene->getLights(), materialPath, fileMeshes, m_HDRI->getBackgroundTexture()->getFilePathShort(), m_HDRI->getHDRI_Path());
 				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));

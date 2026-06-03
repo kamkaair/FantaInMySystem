@@ -102,8 +102,8 @@ class SaveFile {
 public:
 	/*SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
 		m_pos(pos), m_color(color), m_strength(strength) {}*/
-	SaveFile(std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes, std::string hdriPath) 
-		: m_lightData(lightData), m_pathNames(pathNames), m_fileMeshes(fileMeshes), m_hdriPath(hdriPath) {}
+	SaveFile(std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes, std::string backgroundTextPath, std::string hdriPath) 
+		: m_lightData(lightData), m_pathNames(pathNames), m_fileMeshes(fileMeshes), m_backgroundTexPath(backgroundTextPath), m_hdriPath(hdriPath) {}
 
 	void serialize(const std::string& filename) {
 		std::ofstream file(filename, std::ios::binary);
@@ -126,6 +126,9 @@ public:
 		// Write FileMeshes
 		writeFileMeshes(file, m_fileMeshes);
 
+		// Write backgroundTex
+		writeString(file, m_backgroundTexPath);
+
 		// Write HDRI
 		writeString(file, m_hdriPath);
 
@@ -139,7 +142,7 @@ public:
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.is_open()) {
 			std::cerr << "Error: Failed to open file for reading." << std::endl;
-			return SaveFile(std::vector<FileLights>(0), std::vector<MaterialPaths>(), std::vector<FileMeshes>(), "");
+			return SaveFile(std::vector<FileLights>(0), std::vector<MaterialPaths>(), std::vector<FileMeshes>(), "", "");
 		}
 
 		// Read lights
@@ -153,23 +156,28 @@ public:
 		std::vector<FileMeshes> fileMesh;
 		readFileMeshes(file, fileMesh);
 
+		std::string backgroundTex;
+		readString(file, backgroundTex);
+
 		std::string hdri;
 		readString(file, hdri);
 
 		std::cout << filename << " - Object deserialized successfully." << std::endl;
 		file.close();
-		return SaveFile(lights, materialPaths, fileMesh, hdri);
+		return SaveFile(lights, materialPaths, fileMesh, backgroundTex, hdri);
 	}
 
 	std::vector<FileLights> getLightData() const { return m_lightData; }
 	std::vector<MaterialPaths> getPathNames() const { return m_pathNames; }
 	std::vector<FileMeshes> getFileMeshes() const { return m_fileMeshes; }
+	std::string getBackgroundTexPath() const { return m_backgroundTexPath; }
 	std::string getHdriPath() const { return m_hdriPath; }
 
 private:
 	std::vector<FileLights> m_lightData;
 	std::vector<MaterialPaths> m_pathNames;
 	std::vector<FileMeshes> m_fileMeshes;
+	std::string m_backgroundTexPath;
 	std::string m_hdriPath;
 };
 

@@ -58,7 +58,7 @@ public:
 		m_scene = new Scene();
 
 		// Load the scene from a file
-		setupDefaultSave();
+		//setupDefaultSave();
 
 		// Set the current scene
 		m_texLoading->setCurrentScene(m_scene);
@@ -133,7 +133,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Back2.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
@@ -149,7 +149,7 @@ public:
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
 		// TODO: serialize background image path
-		Texture* backgroundImage = m_texLoading->loadTexture("/textures/checkerboard.png");
+		Texture* backgroundImage = m_texLoading->loadTexture(restored.getBackgroundTexPath());
 		m_HDRI->setBackgroundTexture(backgroundImage);
 
 		// Load the HDR texture and create all the HDRI maps
@@ -181,22 +181,23 @@ public:
 			std::cout << std::endl;
 		}
 		std::cout << "HDRI path: " << restored.getHdriPath() << std::endl;
-		std::cout << std::endl;*/
+		std::cout << std::endl;
 
 		for (auto mesh : meshes) {
 			std::cout << "Name: " << mesh->getDisplayName() << std::endl;
 			std::cout << "Pos: " << glm::to_string(mesh->getPosition()) << std::endl;
-			std::cout << "NOT EMPTY " << glm::to_string(mesh->getScaling()) << std::endl;
 			std::cout << std::endl;
 		}
 
 		for (auto mat : materials) {
 			std::cout << "Material Name: " << mat->getName() << std::endl;
-		}
+		}*/
 	}
 
 	void setupDefaultSave() {
 		// Preset light positions, colors and light strength
+		const std::string backgroundTex = "/textures/checkerboard.png", hdriPath = "/HDRI/newport_loft.hdr";
+
 		std::vector<FileLights> fileLights;
 		fileLights.push_back(FileLights{ glm::vec3(-2.72f, 1.20f, 3.68f), glm::vec3(0.07f, 0.18f, 1.00f), 4.0f });
 		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
@@ -241,7 +242,7 @@ public:
 			glm::vec3(0.0f), 2 });
 
 		// Create and serialize an object
-		SaveFile original(fileLights, materialPath, fileMeshes, "/HDRI/newport_loft.hdr");
+		SaveFile original(fileLights, materialPath, fileMeshes, backgroundTex, hdriPath);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 	}
 

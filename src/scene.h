@@ -32,8 +32,6 @@ public:
 	std::vector<Material*>& getMaterials() { return m_materials; }
 	std::vector<FileLights>& getLights() {return m_lights;}
 
-	
-
 private:
 	std::vector<Mesh*> m_meshes;
 	std::vector<FileLights> m_lights;

@@ -12,6 +12,7 @@ void TextureLoading::cleanupTextures() {
 		delete tex;
 	}
 	m_textures.clear();
+	m_materialIndex = 0;
 }
 
 TextureLoading::~TextureLoading() {
@@ -73,8 +74,6 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 	const std::vector<GLuint>& textureIds = textureData.first;
 	const std::vector<Texture*>& textures = textureData.second;
 
-	std::cout << "The evergrowing blank: " << m_scene << std::endl;
-
 	if (!textureIds.empty()) {
 		m_scene->getMaterials().push_back(new Material(textureIds, materialName, m_materialIndex));  // Add the material to the list, last three are diffuse, metallic and roughness
 
@@ -83,8 +82,6 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 			m_textures.push_back(tex);
 		}
 		m_materialIndex++;
-
-		std::cout << "Loaded material: " << materialName << std::endl;
 	}
 	else {
 		std::cout << "Error loading material: " << materialName << std::endl;
@@ -409,6 +406,9 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 
 // Added & to pass a reference, silly dinky me...
 void TextureLoading::loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes) {
+	for (auto mat : m_scene->getMaterials()) {
+		std::cout << "Mat index: " << mat->getMaterialIndex() << " - Mat name: " << mat->getName() << std::endl;
+	}
 	for (int i = 0; i < fileMeshes.size(); i++) {
 		//auto newMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), m_materials, "Plane");
 		auto newMesh = loadMeshes((fileMeshes[i].modelPath), fileMeshes[i].modelName);

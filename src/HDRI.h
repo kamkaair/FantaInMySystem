@@ -23,6 +23,7 @@ public:
 	GLuint createIrradianceMap(GLuint cubemap);
 	GLuint createPrefilterMap(GLuint cubemap);
 	GLuint createBRDF();
+
 	void ProcessHDRI(const char* hdr);
 	void cleanUpHDRI();
 	static GLuint loadHDRTexture(const char* path);
