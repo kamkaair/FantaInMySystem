@@ -41,7 +41,7 @@ inline void writeStringVector(std::ofstream& file, const std::vector<MaterialPat
 	size_t size = inVec.size();
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
-	for (int i = 0; i < inVec.size(); i++) {
+	for (size_t i = 0; i < inVec.size(); i++) {
 		writeString(file, inVec[i].materialName);
 		writeString(file, inVec[i].colorPath);
 		writeString(file, inVec[i].metallicPath);
@@ -56,7 +56,7 @@ inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& in
 	inVec.resize(size);
 	std::cout << "Vector size: " << inVec.size() << std::endl;
 
-	for (int i = 0; i < inVec.size(); i++) {
+	for (size_t i = 0; i < inVec.size(); i++) {
 		readString(file, inVec[i].materialName);
 		readString(file, inVec[i].colorPath);
 		readString(file, inVec[i].metallicPath);
@@ -65,11 +65,59 @@ inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& in
 	}
 }
 
+inline void writeMaterialVector(std::ofstream& file, const std::vector<MaterialPaths>& inVec) {
+	size_t size = inVec.size();
+	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
+
+	for (size_t i = 0; i < inVec.size(); i++) {
+		writeString(file, inVec[i].materialName);
+
+		writeString(file, inVec[i].colorPath);
+		file.write(reinterpret_cast<const char*>(&inVec[i].useDiffuseTexture), sizeof(inVec[i].useDiffuseTexture));
+		file.write(reinterpret_cast<const char*>(&inVec[i].diffuseColor), sizeof(inVec[i].diffuseColor));
+
+		writeString(file, inVec[i].metallicPath);
+		file.write(reinterpret_cast<const char*>(&inVec[i].useMetallicTexture), sizeof(inVec[i].useMetallicTexture));
+		file.write(reinterpret_cast<const char*>(&inVec[i].metallic), sizeof(inVec[i].metallic));
+
+		writeString(file, inVec[i].roughnessPath);
+		file.write(reinterpret_cast<const char*>(&inVec[i].useRoughnessTexture), sizeof(inVec[i].useRoughnessTexture));
+		file.write(reinterpret_cast<const char*>(&inVec[i].roughness), sizeof(inVec[i].roughness));
+
+		writeString(file, inVec[i].normalPath);
+	}
+}
+
+inline void readMaterialVector(std::ifstream& file, std::vector<MaterialPaths>& inVec) {
+	size_t size;
+	file.read(reinterpret_cast<char*>(&size), sizeof(size));
+	inVec.resize(size);
+	std::cout << "Vector size: " << inVec.size() << std::endl;
+
+	for (size_t i = 0; i < inVec.size(); i++) {
+		readString(file, inVec[i].materialName);
+
+		readString(file, inVec[i].colorPath);
+		file.read(reinterpret_cast<char*>(&inVec[i].useDiffuseTexture), sizeof(inVec[i].useDiffuseTexture));
+		file.read(reinterpret_cast<char*>(&inVec[i].diffuseColor), sizeof(inVec[i].diffuseColor));
+
+		readString(file, inVec[i].metallicPath);
+		file.read(reinterpret_cast<char*>(&inVec[i].useMetallicTexture), sizeof(inVec[i].useMetallicTexture));
+		file.read(reinterpret_cast<char*>(&inVec[i].metallic), sizeof(inVec[i].metallic));
+
+		readString(file, inVec[i].roughnessPath);
+		file.read(reinterpret_cast<char*>(&inVec[i].useRoughnessTexture), sizeof(inVec[i].useRoughnessTexture));
+		file.read(reinterpret_cast<char*>(&inVec[i].roughness), sizeof(inVec[i].roughness));
+
+		readString(file, inVec[i].normalPath);
+	}
+}
+
 inline void writeFileMeshes(std::ofstream& file, std::vector<FileMeshes>& inVec) {
 	size_t size = inVec.size();
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
-	for (int i = 0; i < inVec.size(); i++) {
+	for (size_t i = 0; i < inVec.size(); i++) {
 		writeString(file, inVec[i].modelPath);
 		writeString(file, inVec[i].modelName);
 
@@ -86,7 +134,7 @@ inline void readFileMeshes(std::ifstream& file, std::vector<FileMeshes>& inVec) 
 	file.read(reinterpret_cast<char*>(&size), sizeof(size));
 	inVec.resize(size);
 
-	for (int i = 0; i < inVec.size(); i++) {
+	for (size_t i = 0; i < inVec.size(); i++) {
 		readString(file, inVec[i].modelPath);
 		readString(file, inVec[i].modelName);
 
@@ -121,7 +169,8 @@ public:
 		// Write MaterialPaths
 		//std::cout << "Path names sizeof: " << sizeof(m_pathNames) << " pathnames.size(): " << m_pathNames.size() << std::endl;
 		//std::cout << "Pathname[0] sizeof: " << sizeof(m_pathNames[0]) << " Sizeof color: " << sizeof(m_pathNames[0].colorPath) << " - " << sizeof(m_pathNames[0].roughnessPath) << std::endl;
-		writeStringVector(file, m_pathNames);
+		//writeStringVector(file, m_pathNames);
+		writeMaterialVector(file, m_pathNames);
 
 		// Write FileMeshes
 		writeFileMeshes(file, m_fileMeshes);
@@ -151,7 +200,8 @@ public:
 
 		// Read MaterialPaths strings
 		std::vector<MaterialPaths> materialPaths;
-		readStringVector(file, materialPaths);
+		//readStringVector(file, materialPaths);
+		readMaterialVector(file, materialPaths);
 
 		std::vector<FileMeshes> fileMesh;
 		readFileMeshes(file, fileMesh);

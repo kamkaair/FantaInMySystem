@@ -11,9 +11,19 @@ struct FileLights {
 
 struct MaterialPaths {
 	std::string materialName;
+
 	std::string colorPath;
+	bool useDiffuseTexture = true;
+	glm::vec3 diffuseColor = glm::vec3(0.0f);
+
 	std::string metallicPath;
+	bool useMetallicTexture = true;
+	float metallic = 0.0f;
+
 	std::string roughnessPath;
+	bool useRoughnessTexture = true;
+	float roughness = 0.0f;
+
 	std::string normalPath;
 };
 

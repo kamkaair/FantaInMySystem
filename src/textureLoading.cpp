@@ -165,15 +165,71 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 	return materialsMap;
 }
 
+// TODO: Clean this up, make it more tidy and nice
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
 	std::vector<Material*> matVec;
 	for (int i = 0; i < materialList.size(); i++) {
-		matVec.push_back(checkAndAddMaterial(loadTextureSet(
+		/*Material* newMat = checkAndAddMaterial(loadTextureSet(
 			(materialList[i].colorPath),
 			(materialList[i].metallicPath),
 			(materialList[i].roughnessPath),
 			(materialList[i].normalPath)
-		), materialList[i].materialName));
+		), materialList[i].materialName);*/
+
+		std::vector<GLuint> textureIDs;
+
+		// Load each texture and check for errors
+		if (materialList[i].useDiffuseTexture) {
+			Texture* baseColor = loadTexture(materialList[i].colorPath.c_str());
+			textureIDs.push_back(baseColor->getTextureId());
+			m_textures.push_back(baseColor);
+		}
+		else {
+			textureIDs.push_back(GLuint(0));
+		}
+
+		if (materialList[i].useMetallicTexture) {
+			Texture* metallicMap = loadTexture(materialList[i].metallicPath.c_str());
+			textureIDs.push_back(metallicMap->getTextureId());
+			m_textures.push_back(metallicMap);
+		}
+		else {
+			textureIDs.push_back(GLuint(0));
+		}
+
+		if (materialList[i].useRoughnessTexture) {
+			Texture* roughnessMap = loadTexture(materialList[i].roughnessPath.c_str());
+			textureIDs.push_back(roughnessMap->getTextureId());
+			m_textures.push_back(roughnessMap);
+		}
+		else {
+			textureIDs.push_back(GLuint(0));
+		}
+
+		Texture* normalMap = loadTexture(materialList[i].normalPath.c_str());
+		textureIDs.push_back(normalMap->getTextureId());
+		m_textures.push_back(normalMap);
+
+		Material* newMat = new Material(textureIDs, materialList[i].materialName, m_materialIndex);
+		m_scene->getMaterials().push_back(newMat);  // Add the material to the list, last three are diffuse, metallic and roughness
+		m_materialIndex++;
+
+		newMat->diffuseColor = materialList[i].diffuseColor;
+		newMat->metallic = materialList[i].metallic;
+		newMat->roughness = materialList[i].roughness;
+
+		newMat->useDiffuseTexture = materialList[i].useDiffuseTexture;
+		newMat->useMetallicTexture = materialList[i].useMetallicTexture;
+		newMat->useRoughnessTexture = materialList[i].useRoughnessTexture;
+
+		matVec.push_back(newMat);
+
+		/*matVec.push_back(checkAndAddMaterial(loadTextureSet(
+			(materialList[i].colorPath),
+			(materialList[i].metallicPath),
+			(materialList[i].roughnessPath),
+			(materialList[i].normalPath)
+		), materialList[i].materialName));*/
 	}
 
 	return matVec;

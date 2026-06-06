@@ -58,7 +58,7 @@ public:
 		m_scene = new Scene();
 
 		// Load the scene from a file
-		//setupDefaultSave();
+		setupDefaultSave();
 
 		// Set the current scene
 		m_texLoading->setCurrentScene(m_scene);
@@ -72,7 +72,7 @@ public:
 
 		// Create perspective-projection camera
 		const int fov = 40.0f;
-		m_camera = new Camera(fov, 640/480, 0.1f, 100.0f);
+		m_camera = new Camera(fov, width/height, 0.1f, 100.0f);
 
 		// Input class
 		g_input = new Inputs(m_uiDraw, m_camera);
@@ -133,7 +133,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Back2.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
@@ -158,40 +158,6 @@ public:
 		// Set up lights and color
 		//initializeLights(restored.getLightData());
 		m_scene->getLights() = restored.getLightData();
-
-		/*for (auto lightData : restored.getLightData()) {
-			std::cout << "Position: " << glm::to_string(lightData.pos) << std::endl;
-			std::cout << "Color: " << glm::to_string(lightData.color) << std::endl;
-			std::cout << "Strength: " << lightData.strength << std::endl;
-			std::cout << std::endl;
-		}
-		for (auto mat : restored.getPathNames()) {
-			std::cout << "Color: " << mat.colorPath << std::endl;
-			std::cout << "Metal: " << mat.metallicPath << std::endl;
-			std::cout << "Rough: " << mat.roughnessPath << std::endl;
-			std::cout << "Normal: " << mat.normalPath << std::endl;
-		}*/
-		/*for (auto mesh : restored.getFileMeshes()) {
-			std::cout << "Path: " << mesh.modelPath << std::endl;
-			std::cout << "Name: " << mesh.modelName << std::endl;
-			std::cout << "Pos: " << glm::to_string(mesh.pos) << std::endl;
-			std::cout << "Scale: " << glm::to_string(mesh.scaling) << std::endl;
-			std::cout << "Rotate: " << glm::to_string(mesh.rotation) << std::endl;
-			std::cout << "TexID: " << mesh.textureID << std::endl;
-			std::cout << std::endl;
-		}
-		std::cout << "HDRI path: " << restored.getHdriPath() << std::endl;
-		std::cout << std::endl;
-
-		for (auto mesh : meshes) {
-			std::cout << "Name: " << mesh->getDisplayName() << std::endl;
-			std::cout << "Pos: " << glm::to_string(mesh->getPosition()) << std::endl;
-			std::cout << std::endl;
-		}
-
-		for (auto mat : materials) {
-			std::cout << "Material Name: " << mat->getName() << std::endl;
-		}*/
 	}
 
 	void setupDefaultSave() {
@@ -204,22 +170,28 @@ public:
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
 		std::vector<MaterialPaths> materialPath;
-		materialPath.push_back(MaterialPaths{ std::string("Checkerboard"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboardNormal.png") });
+		/*materialPath.push_back(MaterialPaths{std::string("Checkerboard"),
+			std::string("/textures/checkerboard.png"), true, glm::vec3(0),
+			std::string("/textures/checkerboard.png"), true, 0.0f,
+			std::string("/textures/checkerboard.png"), true, 0.0f,
+			std::string("/textures/checkerboardNormal.png") });*/
+
+		materialPath.push_back(MaterialPaths{ std::string("Reflective"),
+			std::string(""), false, glm::vec3(1.0f, 0.0f, 0.0f),
+			std::string(""), false, 1.0f,
+			std::string(""), false, 0.2f,
+			std::string("/textures/EmptyNormal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"), true, glm::vec3(0),
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"), true, 0.0f,
+			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"), true, 0.0f,
 			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"), true, glm::vec3(0),
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"), true, 0.0f,
+			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"), true, 0.0f,
 			std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
 
 		std::vector<FileMeshes> fileMeshes;

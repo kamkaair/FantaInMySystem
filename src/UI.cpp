@@ -221,11 +221,11 @@ void UI::ImGuiDraw()
 						for (auto tex : foundTexs) {
 							std::cout << "Short path: " << tex->getFilePathShort() << std::endl;
 						}					
-
+						
 						materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
-						foundTexs[0]->getFilePathShort(),
-						foundTexs[1]->getFilePathShort(),
-						foundTexs[2]->getFilePathShort(),
+						foundTexs[0]->getFilePathShort(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
+						foundTexs[1]->getFilePathShort(), mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
+						foundTexs[2]->getFilePathShort(), mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
 						foundTexs[3]->getFilePathShort() });
 					}				
 
