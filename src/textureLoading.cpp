@@ -181,14 +181,28 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 		// Decide to either use an image texture or use a value for the maps
 		for (auto& map : maps) {
 			if (map.second) {
-				Texture* textureMap = loadTexture(map.first.c_str());
-				textureIDs.push_back(textureMap->getTextureId());
-				m_textures.push_back(textureMap);
+				Texture* textureMap;
+				bool newMap = true;
+				
+				// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
+				for (auto tex : m_textures) {
+					if (tex->getFilePathShort() == map.first) {
+						textureMap = tex;
+						newMap = false;
+						break;
+					}	
+				}
+				if (newMap) {
+					textureMap = loadTexture(map.first.c_str());
+					m_textures.push_back(textureMap);
+				}			
+				textureIDs.push_back(textureMap->getTextureId());	
+				std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePathShort() << std::endl;
 			}
 			else {
 				textureIDs.push_back(GLuint(0));
 			}
-			std::cout << "Name: " << map.first << " - Bool: " << map.second << std::endl;
+			//std::cout << "Name: " << map.first << " - Bool: " << map.second << std::endl;
 		}
 
 		// Create a new material and push_back into the scene
