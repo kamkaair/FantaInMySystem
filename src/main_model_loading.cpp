@@ -131,35 +131,6 @@ public:
 		ImGui::DestroyContext();
 	}
 
-	void setupScene() {
-		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
-
-		// Test the  deserialized object
-		std::cout << "Deserialized Object:\n";
-
-		std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
-		m_scene->getMaterials() = materials;
-
-		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
-		std::vector<Mesh*> meshes;
-		m_texLoading->loadMeshes(meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
-		m_scene->getMeshes() = meshes;
-
-		// stbi_set_flip_vertically_on_load(true);
-		// Load the texture for the background texture
-		// TODO: serialize background image path
-		Texture* backgroundImage = m_texLoading->loadTexture(restored.getBackgroundTexPath());
-		m_HDRI->setBackgroundTexture(backgroundImage);
-
-		// Load the HDR texture and create all the HDRI maps
-		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
-
-		// Set up lights and color
-		//initializeLights(restored.getLightData());
-		m_scene->getLights() = restored.getLightData();
-	}
-
 	void setupDefaultSave() {
 		// Preset light positions, colors and light strength
 		const std::string backgroundTex = "/textures/checkerboard.png", hdriPath = "/HDRI/newport_loft.hdr";
@@ -169,18 +140,13 @@ public:
 		fileLights.push_back(FileLights{ glm::vec3(2.70, 1.50, 3.10), glm::vec3(0.77f, 0.11f, 0.91f), 2.0f });
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
-		std::vector<MaterialPaths> materialPath;
-		/*materialPath.push_back(MaterialPaths{std::string("Checkerboard"),
-			std::string("/textures/checkerboard.png"), true, glm::vec3(0),
-			std::string("/textures/checkerboard.png"), true, 0.0f,
-			std::string("/textures/checkerboard.png"), true, 0.0f,
-			std::string("/textures/checkerboardNormal.png") });*/
+		std::vector<MaterialPaths> materialPath; // Path, use map and value
 
-		materialPath.push_back(MaterialPaths{ std::string("Reflective"),
-			std::string(""), false, glm::vec3(1.0f, 0.0f, 0.0f),
-			std::string(""), false, 1.0f,
-			std::string(""), false, 0.2f,
-			std::string("/textures/EmptyNormal.png") });
+		materialPath.push_back(MaterialPaths{std::string("Checkerboard"),
+			std::string("/textures/checkerboard.png"), true, glm::vec3(0),	// Diffuse
+			std::string("/textures/checkerboard.png"), true, 0.0f,			// Metallic
+			std::string("/textures/checkerboard.png"), true, 0.0f,			// Roughness
+			std::string("/textures/checkerboardNormal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
 			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"), true, glm::vec3(0),
@@ -216,6 +182,35 @@ public:
 		// Create and serialize an object
 		SaveFile original(fileLights, materialPath, fileMeshes, backgroundTex, hdriPath);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
+	}
+
+	void setupScene() {
+		// Deserialize the object
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
+
+		// Test the  deserialized object
+		std::cout << "Deserialized Object:\n";
+
+		std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
+		m_scene->getMaterials() = materials;
+
+		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
+		std::vector<Mesh*> meshes;
+		m_texLoading->loadMeshes(meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
+		m_scene->getMeshes() = meshes;
+
+		// stbi_set_flip_vertically_on_load(true);
+		// Load the texture for the background texture
+		// TODO: serialize background image path
+		Texture* backgroundImage = m_texLoading->loadTexture(restored.getBackgroundTexPath());
+		m_HDRI->setBackgroundTexture(backgroundImage);
+
+		// Load the HDR texture and create all the HDRI maps
+		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
+
+		// Set up lights and color
+		//initializeLights(restored.getLightData());
+		m_scene->getLights() = restored.getLightData();
 	}
 
 	void bindShaders() {

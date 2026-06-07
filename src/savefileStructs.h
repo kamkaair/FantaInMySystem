@@ -9,20 +9,19 @@ struct FileLights {
 	float strength;
 };
 
+template <typename T> 
+struct MaterialParam {
+	std::string path;
+	bool useMap;
+	T value;
+};
+
 struct MaterialPaths {
 	std::string materialName;
 
-	std::string colorPath;
-	bool useDiffuseTexture = true;
-	glm::vec3 diffuseColor = glm::vec3(0.0f);
-
-	std::string metallicPath;
-	bool useMetallicTexture = true;
-	float metallic = 0.0f;
-
-	std::string roughnessPath;
-	bool useRoughnessTexture = true;
-	float roughness = 0.0f;
+	MaterialParam<glm::vec3> diffuse = { "", false, glm::vec3(0) };
+	MaterialParam<float> metallic = { "", false, 0.0f };
+	MaterialParam<float> roughness = { "", false, 0.0f };
 
 	std::string normalPath;
 };
