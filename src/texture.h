@@ -10,13 +10,10 @@ public:
 	~Texture();
 
 	void setFilePath(std::string inPath);
-	void setFilePathShort(std::string inPath);
 
 	GLuint getTextureId() const;
 	std::string getFilePath() const;
-	std::string getFilePathShort() const;
 private:
 	GLuint m_textureId;	// Texture id
 	std::string m_filePath;
-	std::string m_filePathShort;
 };

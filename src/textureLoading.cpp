@@ -27,8 +27,7 @@ Texture* TextureLoading::loadTexture(const std::string& path, bool flipTexture) 
 
 	if (data) {
 		Texture* texture = new Texture(width, height, nrChannels, data);
-		texture->setFilePathShort(path);
-		texture->setFilePath(ASSET_DIR + path);
+		texture->setFilePath(path);
 		stbi_image_free(data);  // Free image data after creating the texture
 
 		return texture;
@@ -186,7 +185,7 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 				
 				// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
 				for (auto tex : m_textures) {
-					if (tex->getFilePathShort() == map.first) {
+					if (tex->getFilePath() == map.first) {
 						textureMap = tex;
 						newMap = false;
 						break;
@@ -197,7 +196,7 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 					m_textures.push_back(textureMap);
 				}			
 				textureIDs.push_back(textureMap->getTextureId());	
-				std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePathShort() << std::endl;
+				std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePath() << std::endl;
 			}
 			else {
 				textureIDs.push_back(GLuint(0));
@@ -225,14 +224,12 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 }
 
 Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {
-	//TODO 1: add data containers for vertices and indices
 	std::vector<Vertex> vertices;
 	std::vector<unsigned int> indices;
 
 	// Load vertex data
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 		Vertex vertex; //temporable container for the data of each loop
-		//TODO 2: load data from the Assimp mesh to our containers
 		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 		vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
 
@@ -262,9 +259,6 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	// Create the Mesh object with the vertices, indices, and preloaded material
 	Mesh* newMesh = new Mesh(vertices, indices);
 	newMesh->setMaterial(meshMaterial);
-	newMesh->setModelPath(ASSET_DIR + path);
-	newMesh->setModelPath(path);
-	std::cout << "Path to model: " << path << std::endl;
 
 	// Push back all the model's vertex amounts
 	vertexAmount.push_back(vertices.size());
@@ -295,13 +289,8 @@ void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const
 		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
 		// the node object only contains indices to index the actual objects in the scene.
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes->push_back(processMesh(mesh, scene, path)); // Pass scene here
-
-		setNameBack(meshes->back(), node->mName.C_Str());
-
-		// Use (*var)[i] to deference the pointer!!
-		//setName((*meshes)[i], node->mName.C_Str());
-		//std::cout << node->mName.C_Str() << std::endl;
+		meshes->push_back(processMesh(mesh, scene, path));	
+		setNameBack(meshes->back(), node->mName.C_Str());	
 	}
 
 	// after we've processed all of the meshes (if any) we then recursively process each of the children nodes
@@ -315,7 +304,8 @@ std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std
 
 	//read file with Assimp
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile((ASSET_DIR + path), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+	const aiScene* scene = importer.ReadFile((ASSET_DIR + path), aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace | aiProcess_OptimizeMeshes ); // Take a look at these, if they bring any trouble
+
 	//Check for errors
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
 		printf("Error loading model file \"%s\": \"%s\" ", (ASSET_DIR + path).c_str(), importer.GetErrorString());
@@ -326,12 +316,8 @@ std::vector<Mesh*> TextureLoading::loadMeshes(const std::string& path, const std
 	processNode(&meshes, scene->mRootNode, scene, path);
 
 	// Set the name for each mesh
-	int i = 0;
-	//std::string lastly = meshName + i;
-	for (auto& mesh : meshes) {
-		setName(mesh, meshName + " " + std::to_string(i));
-		i++;
-	}
+	for (int i = 0; i < meshes.size(); i++)
+		setName(meshes[i], meshName + " " + std::to_string(i));
 
 	return meshes;
 }
@@ -346,7 +332,6 @@ std::vector<std::string> TextureLoading::FileSystem(std::string& path)
 	}
 
 	return filenames;
-
 }
 
 Texture* TextureLoading::findTexture(GLuint textureID) {
@@ -449,14 +434,14 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 	return;
 }*/
 
-// Added & to pass a reference, silly dinky me...
-void TextureLoading::loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes) {
+void TextureLoading::loadMeshes(std::vector<Model*>& model, std::vector<FileMeshes> fileMeshes) {
 	for (auto mat : m_scene->getMaterials()) {
 		std::cout << "Mat index: " << mat->getMaterialIndex() << " - Mat name: " << mat->getName() << std::endl;
 	}
-	for (int i = 0; i < fileMeshes.size(); i++) {
-		//auto newMesh = loadMeshes((std::string(ASSET_DIR) + "/models/plane.obj"), m_materials, "Plane");
+	for (size_t i = 0; i < fileMeshes.size(); i++) {
 		auto newMesh = loadMeshes((fileMeshes[i].modelPath), fileMeshes[i].modelName);
+		std::vector<Mesh*> meshes;
+
 		for (size_t j = 0; j < newMesh.size(); ++j) {
 			meshes.push_back(newMesh[j]);
 
@@ -465,6 +450,7 @@ void TextureLoading::loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMesh
 			meshes.back()->setScaling(fileMeshes[i].scaling);
 			meshes.back()->setMaterial(m_scene->getMaterials()[fileMeshes[i].textureID]);
 		}
+		model.push_back(new Model(fileMeshes[i].modelPath, meshes));
 	}
-	std::cout << "Amount of meshes in the scene: " << meshes.size() << std::endl;
+	std::cout << "Amount of main meshes in the scene: " << model.size() << std::endl;
 }

@@ -55,6 +55,4 @@ Texture::~Texture() {
 
 GLuint Texture::getTextureId() const { return m_textureId; }
 std::string Texture::getFilePath() const { return m_filePath; }
-std::string Texture::getFilePathShort() const { return m_filePathShort; }
 void Texture::setFilePath(std::string inPath) { m_filePath = inPath; }
-void Texture::setFilePathShort(std::string inPath) { m_filePathShort = inPath; }

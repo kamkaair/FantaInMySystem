@@ -1,5 +1,5 @@
 #include "camera.h"			// Include Camera-class.
-#include "mesh.h"
+#include "models.h"
 #include "material.h"
 #include "utils.h"			// Utility functions, has 
 #include "UI.h"
@@ -195,9 +195,11 @@ public:
 		m_scene->getMaterials() = materials;
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
-		std::vector<Mesh*> meshes;
-		m_texLoading->loadMeshes(meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
-		m_scene->getMeshes() = meshes;
+		std::vector<Model*> models;
+
+		//std::pair< std::vector<Mesh*>, std::vector<Mesh*> > meshes;
+		m_texLoading->loadMeshes(models, restored.getFileMeshes()); // Preset modes from 0 - 3
+		m_scene->getModels() = models;
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -257,12 +259,14 @@ public:
 		}
 		glEnable(GL_DEPTH_TEST);
 
-		if (!m_scene->getMeshes().empty()) {
+		if (!m_scene->getModels().empty()) {
 			// Forward rendering
-			for (Mesh* mesh : m_scene->getMeshes()) {
-				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
-			}
+			for (Model* models : m_scene->getModels()) {
+				for (Mesh* mesh : models->getMeshes()) {
+					m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
+					mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
+				}
+			}	
 		}
 
 		if (!g_input->getImGuiVisibility()) {
@@ -289,8 +293,10 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Render meshes
-		for (Mesh* mesh : m_scene->getMeshes()) {
-			mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
+		for (Model* models : m_scene->getModels()) {
+			for (Mesh* mesh : models->getMeshes()) {
+				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
+			}
 		}
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -442,19 +448,25 @@ public:
 		//Mesh rotation
 		if (m_uiDraw->boolMeshRotation()) {
 			if (!m_uiDraw->boolDoOnce()) {
-				for (auto meshes : m_scene->getMeshes()) { // Set rotation to 0.0f once
-					meshes->setRotationX(0.0f), meshes->setRotationY(0.0f), meshes->setRotationZ(0.0f);
-				}
+				for (auto models : m_scene->getModels()) {
+					for (auto meshes : models->getMeshes()) { // Set rotation to 0.0f once
+						meshes->setRotationX(0.0f), meshes->setRotationY(0.0f), meshes->setRotationZ(0.0f);
+					}			
+				}	
 				m_uiDraw->toggleDoOnce();
 			}
-			for (auto meshes : m_scene->getMeshes()) { // Rotation loop
-				meshes->setRotationX(meshes->getRotationX() + deltaTime);
+			for (auto models : m_scene->getModels()) {
+				for (auto meshes : models->getMeshes()) { // Rotation loop
+					meshes->setRotationX(meshes->getRotationX() + deltaTime);
+				}
 			}
 		}
 		else if (!m_uiDraw->boolMeshRotation() && m_uiDraw->boolDoOnce())
 		{
-			for (auto meshes : m_scene->getMeshes()) { // Set rotation to 0.0f, when enabling rotation
-				meshes->setRotationX(0.0f), meshes->setRotationY(0.0f), meshes->setRotationZ(0.0f);
+			for (auto models : m_scene->getModels()) {
+				for (auto meshes : models->getMeshes()) { // Set rotation to 0.0f, when enabling rotation
+					meshes->setRotationX(0.0f), meshes->setRotationY(0.0f), meshes->setRotationZ(0.0f);
+				}
 			}
 			m_uiDraw->toggleDoOnce();
 		}

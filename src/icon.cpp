@@ -100,6 +100,5 @@ void Icon::loadIconTexture(const char* path) {
 	// Load the texture for an icon
 	Texture* iconTexture = m_texLoading->loadTexture(path);
 	iconTexture->setFilePath(path);
-	iconTexture->setFilePathShort(ASSET_DIR + std::string(path));
 	m_iconTexture.push_back(iconTexture);
 }

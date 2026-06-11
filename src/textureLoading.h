@@ -4,7 +4,7 @@
 #include "material.h"
 #include <unordered_map>
 #include "texture.h"
-#include "mesh.h"
+#include "models.h"
 #include "scene.h"
 #include "savefileStructs.h"
 
@@ -35,7 +35,7 @@ public:
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
 	std::vector<Mesh*> loadMeshes(const std::string& path, const std::string& meshName);
 	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
-	void loadMeshes(std::vector<Mesh*>& meshes, std::vector<FileMeshes> fileMeshes);
+	void loadMeshes(std::vector<Model*>& model, std::vector<FileMeshes> fileMeshes);
 
 	std::vector<std::string> FileSystem(std::string& path);
 	Texture* findTexture(GLuint textureID);

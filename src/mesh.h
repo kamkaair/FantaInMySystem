@@ -23,8 +23,7 @@ struct Vertex {
 
 class Mesh : public GameObject {
 	
-public:
-	
+public:	
 	Mesh(const std::vector< Vertex >& vertices, const std::vector< unsigned int >& indices);
 	~Mesh();
 	//const std::vector<glm::vec3> 
@@ -35,13 +34,9 @@ public:
 	void setMaterial(Material* material);
 	void setDisplayName(const std::string name);
 	void setBackgroundName(const std::string name);
-	void setModelPath(const std::string inPath);
-	void setModelPathShort(const std::string inPath);
 
 	std::string getDisplayName() const;
 	std::string getBackgroundName() const;
-	std::string getModelPath() const;
-	std::string getModelPathShort() const;
 	Material* getMaterial();
 
 private:
@@ -52,6 +47,4 @@ private:
 	Material* m_material = 0;
 	std::string m_meshDisplayName;
 	std::string m_meshBackgroundName;
-	std::string m_modelPath;
-	std::string m_modelPathShort;
 };

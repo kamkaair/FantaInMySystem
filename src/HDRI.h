@@ -8,7 +8,7 @@
 
 #include <stb_image.h>
 #include "camera.h"
-#include "mesh.h"
+#include "models.h"
 #include "texture.h"
 #include "shader.h"
 #include "savefileStructs.h"

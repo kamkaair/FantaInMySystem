@@ -2,14 +2,15 @@
 #include "mesh.h"
 #include "material.h"
 #include "savefileStructs.h"
+#include "models.h"
 
 class Scene {
 public:
 	void cleanupScene() {
-		for (auto mesh : m_meshes) {
-			delete mesh;
+		for (auto model : m_models) {
+			delete model;
 		}
-		m_meshes.clear();
+		m_models.clear();
 
 		for (auto mat : m_materials) {
 			delete mat;
@@ -18,8 +19,8 @@ public:
 		m_lights.clear();
 	}
 
-	void constructScene(std::vector<Mesh*>& meshes, std::vector<Material*>& material, std::vector<FileLights>& lights) {
-		m_meshes = meshes;
+	void constructScene(std::vector<Model*>& meshes, std::vector<Material*>& material, std::vector<FileLights>& lights) {
+		m_models = meshes;
 		m_materials = material;
 		m_lights = lights;
 	}
@@ -28,12 +29,12 @@ public:
 		cleanupScene();
 	}
 
-	std::vector<Mesh*>& getMeshes() { return m_meshes; }
+	std::vector<Model*>& getModels() { return m_models; }
 	std::vector<Material*>& getMaterials() { return m_materials; }
 	std::vector<FileLights>& getLights() {return m_lights;}
 
 private:
-	std::vector<Mesh*> m_meshes;
+	std::vector<Model*> m_models;
 	std::vector<FileLights> m_lights;
 	std::vector<Material*> m_materials;
 };

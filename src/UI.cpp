@@ -153,9 +153,9 @@ void UI::ImGuiDraw()
 						std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
 						m_scene->getMaterials() = materials;
 
-						std::vector<Mesh*> meshes;
-						m_texLoading->loadMeshes(meshes, restored.getFileMeshes()); // Preset modes from 0 - 3
-						m_scene->getMeshes() = meshes;
+						std::vector<Model*> models;
+						m_texLoading->loadMeshes(models, restored.getFileMeshes()); // Preset modes from 0 - 3
+						m_scene->getModels() = models;
 
 						std::cout << "Background tex load: " << restored.getBackgroundTexPath() << std::endl;
 
@@ -168,7 +168,7 @@ void UI::ImGuiDraw()
 						// Set up lights and color
 						m_scene->getLights() = restored.getLightData();
 
-						m_scene->constructScene(meshes, materials, restored.getLightData());
+						m_scene->constructScene(models, materials, restored.getLightData());
 
 						// Just in case, if no materials were added
 						if (m_scene->getMaterials().empty()) {
@@ -199,51 +199,53 @@ void UI::ImGuiDraw()
 				std::vector<Material*> checkMaterials;
 				std::vector<FileMeshes> fileMeshes;
 				int texIndex = 0;
-				for (auto mesh : m_scene->getMeshes()) {
-					bool seen = false;
-					for (auto earlierMat : checkMaterials) { // Silly dinky way of detecting, whether the material is already in use
-						for (int i = 0; i < mesh->getMaterial()->getTextures().size(); i++) {
-							if (mesh->getMaterial()->getTextures()[i] == earlierMat->getTextures()[i]) {
-								std::cout << "Detected earlier material!!" << std::endl;
-								seen = true;
-								break;
+				for (auto model : m_scene->getModels()) {
+					for(auto mesh : model->getMeshes()) {
+						bool seen = false;
+						for (auto earlierMat : checkMaterials) { // Silly dinky way of detecting, whether the material is already in use
+							for (int i = 0; i < mesh->getMaterial()->getTextures().size(); i++) {
+								if (mesh->getMaterial()->getTextures()[i] == earlierMat->getTextures()[i]) {
+									std::cout << "Detected earlier material!!" << std::endl;
+									seen = true;
+									break;
+								}
 							}
 						}
-					}
 
-					if (!seen) {
-						std::vector<Texture*> foundTexs;
-						checkMaterials.push_back(mesh->getMaterial());
+						if (!seen) {
+							std::vector<Texture*> foundTexs;
+							checkMaterials.push_back(mesh->getMaterial());
 
-						for (auto maps : mesh->getMaterial()->getTextures()) {
-							foundTexs.push_back(m_texLoading->findTexture(maps));
-						}
-						for (auto tex : foundTexs) {
-							std::cout << "Short path: " << tex->getFilePathShort() << std::endl;
-						}					
+							for (auto maps : mesh->getMaterial()->getTextures()) {
+								foundTexs.push_back(m_texLoading->findTexture(maps));
+							}
+							for (auto tex : foundTexs) {
+								std::cout << "Short path: " << tex->getFilePath() << std::endl;
+							}					
 						
-						materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
-						foundTexs[0]->getFilePathShort(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
-						foundTexs[1]->getFilePathShort(), mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
-						foundTexs[2]->getFilePathShort(), mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
-						foundTexs[3]->getFilePathShort() });
-					}				
+							materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
+							foundTexs[0]->getFilePath(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
+							foundTexs[1]->getFilePath(), mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
+							foundTexs[2]->getFilePath(), mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
+							foundTexs[3]->getFilePath() });
+						}				
 
-					fileMeshes.push_back(FileMeshes{ 
-						mesh->getModelPath(),
-						mesh->getDisplayName(),
+						fileMeshes.push_back(FileMeshes{ 
+							model->getModelPath(),
+							mesh->getDisplayName(),
 
-						mesh->getPosition(),
-						mesh->getScaling(),
-						mesh->getRotation(), mesh->getMaterial()->getMaterialIndex() });
-					texIndex++;
-					std::cout << "Material ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
-				}
+							mesh->getPosition(),
+							mesh->getScaling(),
+							mesh->getRotation(), mesh->getMaterial()->getMaterialIndex() });
+						texIndex++;
+						std::cout << "Material ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
+					}
 				
-				// Create and serialize an object
-				std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePathShort() << std::endl;
-				SaveFile original(m_scene->getLights(), materialPath, fileMeshes, m_HDRI->getBackgroundTexture()->getFilePathShort(), m_HDRI->getHDRI_Path());
-				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
+					// Create and serialize an object
+					std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePath() << std::endl;
+					SaveFile original(m_scene->getLights(), materialPath, fileMeshes, m_HDRI->getBackgroundTexture()->getFilePath(), m_HDRI->getHDRI_Path());
+					original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
+				}
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
 		
@@ -317,19 +319,25 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("RESETS"))
 			{
 				if (ImGui::Button("Reset all the transforms"))
-					for (auto meshes : m_scene->getMeshes()) {
-						meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-						meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
-					}
+					for (auto models : m_scene->getModels()) {
+						for (auto meshes : models->getMeshes()) {
+							meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+							meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
+						}
+					}			
 
 				if (ImGui::Button("Reset rotation"))
-					for (auto meshes : m_scene->getMeshes()) {
-						meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+					for (auto models : m_scene->getModels()) {
+						for (auto meshes : models->getMeshes()) {
+							meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
+						}
 					}
 
 				if (ImGui::Button("Reset scale"))
-					for (auto meshes : m_scene->getMeshes()) {
-						meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
+					for (auto models : m_scene->getModels()) {
+						for (auto meshes : models->getMeshes()) {
+							meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
+						}
 					}
 
 				ImGui::TreePop();
@@ -340,69 +348,72 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("TRANSFORM/MATERIAL MESHES"))
 			{
 				ImGui::Text("Below is all the meshes and their transforms");
-				for (size_t i = 0; i < m_scene->getMeshes().size(); i++)
-				{
-					Mesh* meshes = m_scene->getMeshes()[i];
-					if (ImGui::TreeNode(("Mesh " + m_scene->getMeshes()[i]->getDisplayName()).c_str()))
+				for (auto model : m_scene->getModels()) {
+					for (size_t i = 0; i < model->getMeshes().size(); i++)
 					{
-						ImGui::Text(m_scene->getMeshes()[i]->getBackgroundName().c_str());
-						ImGui::Dummy(ImVec2(0.0f, 7.5f));
+						Mesh* meshes = model->getMeshes()[i];
+						if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName()).c_str()))
+						{
+							ImGui::Text(model->getMeshes()[i]->getBackgroundName().c_str());
+							ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
-						glm::vec3 pos = meshes->getPosition();
-						if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
-							meshes->setPosition(pos); // Update the position if the value changes
-						}
-
-						// Control for scale
-						ImGui::Checkbox("Scalelock", &scaleLock);
-						glm::vec3 scale = meshes->getScaling();
-						if (!scaleLock) {
-							// Set indiviudal XYZ scaling
-							if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.01f)) {
-								meshes->setScaling(scale);
+							glm::vec3 pos = meshes->getPosition();
+							if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
+								meshes->setPosition(pos); // Update the position if the value changes
 							}
-						}
-						else
-						{
-							// Set scaling uniformally
-							ImGui::Text(glm::to_string(scale).c_str());
-							if (ImGui::DragFloat("Scale", &totalScale, 0.01f))
-							{
-								float scaleSet = totalScale;
-								scale = originalScale * scaleSet;
-								meshes->setScaling(scale);
-							}
-						}
 
-						// Control for rotation
-						glm::vec3 rotation = meshes->getRotation();
-						if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 0.01f))
-						{
-							meshes->setRotation(rotation);
-						}
-
-						// Control for material
-						Material* currentMat = meshes->getMaterial();
-						const char* changeMat = currentMat ? currentMat->getName().c_str() : "None"; // get a const char
-
-						if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
-						{
-							for (size_t i = 0; i < m_scene->getMaterials().size(); i++)
-							{
-								bool isSelected = (m_scene->getMaterials()[i] == currentMat);
-								if (ImGui::Selectable(m_scene->getMaterials()[i]->getName().c_str(), isSelected))
-								{
-									meshes->setMaterial(m_scene->getMaterials()[i]);  // Set the selected material to the mesh
+							// Control for scale
+							ImGui::Checkbox("Scalelock", &scaleLock);
+							glm::vec3 scale = meshes->getScaling();
+							if (!scaleLock) {
+								// Set indiviudal XYZ scaling
+								if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.01f)) {
+									meshes->setScaling(scale);
 								}
-								if (isSelected)
-									ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
 							}
-							ImGui::EndCombo();
-						}
-						ImGui::TreePop();
-					}
+							else
+							{
+								// Set scaling uniformally
+								ImGui::Text(glm::to_string(scale).c_str());
+								if (ImGui::DragFloat("Scale", &totalScale, 0.01f))
+								{
+									float scaleSet = totalScale;
+									scale = originalScale * scaleSet;
+									meshes->setScaling(scale);
+								}
+							}
 
+							// Control for rotation
+							glm::vec3 rotation = meshes->getRotation();
+							if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 0.01f))
+							{
+								meshes->setRotation(rotation);
+							}
+
+							// Control for material
+							Material* currentMat = meshes->getMaterial();
+							const char* changeMat = currentMat ? currentMat->getName().c_str() : "None"; // get a const char
+
+							if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
+							{
+								for (size_t i = 0; i < m_scene->getMaterials().size(); i++)
+								{
+									bool isSelected = (m_scene->getMaterials()[i] == currentMat);
+									if (ImGui::Selectable(m_scene->getMaterials()[i]->getName().c_str(), isSelected))
+									{
+										meshes->setMaterial(m_scene->getMaterials()[i]);  // Set the selected material to the mesh
+									}
+									if (isSelected)
+										ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+								}
+								ImGui::EndCombo();
+							}
+							ImGui::TreePop();
+						}
+
+					}
 				}
+				
 				ImGui::TreePop();
 			}
 			ImGui::Separator();
@@ -440,36 +451,38 @@ void UI::ImGuiDraw()
 				if (ImGui::Button("Add new mesh")) {
 					// Load the selected mesh
 					std::string selectedItem = ("/models/" + meshFiles[currentItem]);
-					auto newMeshes = m_texLoading->loadMeshes(selectedItem, meshFiles[currentItem]);
+					std::vector<Mesh*> newMeshes = m_texLoading->loadMeshes(selectedItem, meshFiles[currentItem]);
+
+					m_scene->getModels().push_back(new Model(selectedItem, newMeshes));
 
 					// Add the new mesh to the std::vector
-					for (auto& mesh : newMeshes)
-					{
-						m_scene->getMeshes().push_back(mesh);
-						m_scene->getMeshes().back()->setMaterial(m_scene->getMaterials()[0]);
-					}
+					for (auto& mesh : newMeshes) {
+						mesh->setMaterial(m_scene->getMaterials()[0]);
+					}				
 				}
 
 				// For selecting and removing meshes
 				if (ImGui::TreeNode("Loaded Meshes"))
 				{
-					for (size_t i = 0; i < m_scene->getMeshes().size(); i++)
-					{
-						ImGui::Text("Mesh %s", m_scene->getMeshes()[i]->getDisplayName().c_str());
-						ImGui::Text("Vertex count: %d", m_texLoading->getVertices()[i]);
-						//ImGui::Text("Vertex count: " + std::to_string(m_texLoading->getVertices()[i]).c_str());
-
-						// Show Remove button next to each mesh
-						if (ImGui::Button(("Remove##" + std::to_string(i)).c_str()))
+					for (auto models : m_scene->getModels()) {
+						for (size_t i = 0; i < models->getMeshes().size(); i++)
 						{
-							// Remove mesh from vector and cleanup
-							delete m_scene->getMeshes()[i];  // Clean up memory if necessary
-							m_scene->getMeshes().erase(m_scene->getMeshes().begin() + i);
-							
-							//delete m_texLoading->getVertices()[i];
-							//m_texLoading->getVertices().erase(m_texLoading->getVertices().begin() + i); // Erase the vertex amount
+							ImGui::Text("Mesh %s", models->getMeshes()[i]->getDisplayName().c_str());
+							ImGui::Text("Vertex count: %d", m_texLoading->getVertices()[i]);
+							//ImGui::Text("Vertex count: " + std::to_string(m_texLoading->getVertices()[i]).c_str());
 
-							break;  // Exit loop since vector has changed
+							// Show Remove button next to each mesh
+							if (ImGui::Button(("Remove##" + std::to_string(i)).c_str()))
+							{
+								// Remove mesh from vector and cleanup
+								delete models->getMeshes()[i];  // Clean up memory if necessary
+								models->getMeshes().erase(models->getMeshes().begin() + i);
+
+								//delete m_texLoading->getVertices()[i];
+								//m_texLoading->getVertices().erase(m_texLoading->getVertices().begin() + i); // Erase the vertex amount
+
+								break;  // Exit loop since vector has changed
+							}
 						}
 					}
 					ImGui::TreePop();
