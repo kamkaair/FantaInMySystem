@@ -363,8 +363,8 @@ void UI::ImGuiDraw()
 						Mesh* meshes = model->getMeshes()[i];
 						if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName()).c_str()))
 						{
-							ImGui::Text(model->getMeshes()[i]->getBackgroundName().c_str());
-							ImGui::Dummy(ImVec2(0.0f, 7.5f));
+							//ImGui::Text(model->getMeshes()[i]->getDisplayName().c_str());
+							//ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
 							glm::vec3 pos = meshes->getPosition();
 							if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
@@ -460,14 +460,15 @@ void UI::ImGuiDraw()
 				if (ImGui::Button("Add new mesh")) {
 					// Load the selected mesh
 					std::string selectedItem = ("/models/" + meshFiles[currentItem]);
-					std::vector<Mesh*> newMeshes = m_texLoading->loadMeshes(selectedItem, meshFiles[currentItem]);
+					std::vector<Mesh*> newMeshes = m_texLoading->processMeshes(selectedItem);
 
 					m_scene->getModels().push_back(new Model(selectedItem, newMeshes));
 
 					// Add the new mesh to the std::vector
 					for (auto& mesh : newMeshes) {
 						mesh->setMaterial(m_scene->getMaterials()[0]);
-					}				
+					}
+
 				}
 
 				// For selecting and removing meshes

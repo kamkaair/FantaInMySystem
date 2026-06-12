@@ -36,10 +36,9 @@ Mesh::Mesh(const std::vector< Vertex >& vertices, const std::vector< unsigned in
 
 void Mesh::setMaterial(Material* material) {m_material = material;}
 Material* Mesh::getMaterial() {return m_material;}
-void Mesh::setDisplayName(const std::string name) {m_meshDisplayName = name;}
+
+void Mesh::setDisplayName(const std::string name) { m_meshDisplayName = name;}
 std::string Mesh::getDisplayName() const {return m_meshDisplayName;}
-void Mesh::setBackgroundName(const std::string name) {m_meshBackgroundName = name;}
-std::string Mesh::getBackgroundName() const {return m_meshBackgroundName;}
 
 void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 {

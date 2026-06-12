@@ -172,7 +172,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Knife.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
@@ -182,13 +182,8 @@ public:
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		std::vector<Model*> models;
-
 		m_texLoading->loadMeshes(models, restored.getFileMeshes());
 		m_scene->getModels() = models;
-
-		for (auto file : restored.getFileMeshes()) {
-			std::cout << file.modelPath << std::endl;
-		}
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture

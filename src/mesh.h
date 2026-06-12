@@ -33,10 +33,8 @@ public:
 	void renderQuad();
 	void setMaterial(Material* material);
 	void setDisplayName(const std::string name);
-	void setBackgroundName(const std::string name);
 
 	std::string getDisplayName() const;
-	std::string getBackgroundName() const;
 	Material* getMaterial();
 
 private:
@@ -46,5 +44,4 @@ private:
 	size_t m_indiceCount;
 	Material* m_material = 0;
 	std::string m_meshDisplayName;
-	std::string m_meshBackgroundName;
 };

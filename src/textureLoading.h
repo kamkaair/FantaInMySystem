@@ -33,7 +33,7 @@ public:
 	
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::string path);
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
-	std::vector<Mesh*> loadMeshes(const std::string& path, const std::string& meshName);
+	std::vector<Mesh*> processMeshes(const std::string& path);
 	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
 	void loadMeshes(std::vector<Model*>& model, std::vector<FileModels> fileModels);
 
