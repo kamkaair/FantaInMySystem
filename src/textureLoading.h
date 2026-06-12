@@ -35,7 +35,7 @@ public:
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
 	std::vector<Mesh*> loadMeshes(const std::string& path, const std::string& meshName);
 	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
-	void loadMeshes(std::vector<Model*>& model, std::vector<FileMeshes> fileMeshes);
+	void loadMeshes(std::vector<Model*>& model, std::vector<FileModels> fileModels);
 
 	std::vector<std::string> FileSystem(std::string& path);
 	Texture* findTexture(GLuint textureID);

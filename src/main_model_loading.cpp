@@ -160,33 +160,19 @@ public:
 			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"), true, 0.0f,
 			std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
 
-		std::vector<FileMeshes> fileMeshes;
-		fileMeshes.push_back(FileMeshes{ std::string("/models/plane.obj"),
-			std::string("Plane"),
-			glm::vec3(0.0f, -1.0f, 0.0f),
-			glm::vec3(6.0f),
-			glm::vec3(0.0f), 0 });
-
-		fileMeshes.push_back(FileMeshes{ std::string("/models/MP18Low.obj"),
-			std::string("MP18"),
-			glm::vec3(0.0f, 1.0f, 0.0f),
-			glm::vec3(1.0f),
-			glm::vec3(0.0f), 1 });
-
-		fileMeshes.push_back(FileMeshes{ std::string("/models/barrel.obj"),
-			std::string("Barrel"),
-			glm::vec3(0.0f, 2.0f, 0.0f),
-			glm::vec3(1.0f),
-			glm::vec3(0.0f), 2 });
+		std::vector<FileModels> fileModels;
+		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
+		fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 1}} });
+		fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
 
 		// Create and serialize an object
-		SaveFile original(fileLights, materialPath, fileMeshes, backgroundTex, hdriPath);
+		SaveFile original(fileLights, materialPath, fileModels, backgroundTex, hdriPath);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 	}
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Knife.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
@@ -197,9 +183,12 @@ public:
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		std::vector<Model*> models;
 
-		//std::pair< std::vector<Mesh*>, std::vector<Mesh*> > meshes;
-		m_texLoading->loadMeshes(models, restored.getFileMeshes()); // Preset modes from 0 - 3
+		m_texLoading->loadMeshes(models, restored.getFileMeshes());
 		m_scene->getModels() = models;
+
+		for (auto file : restored.getFileMeshes()) {
+			std::cout << file.modelPath << std::endl;
+		}
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture

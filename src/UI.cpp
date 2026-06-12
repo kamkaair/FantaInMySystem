@@ -42,6 +42,10 @@ ImGuiWindowFlags UI::disableInteraction() {
 	else { return flagWinEnabled; }
 }
 
+void checkDuplicateMaterial(bool seen) {
+
+}
+
 void UI::ImGuiStyleSetup()
 {
 	// Using the "Dracula Style" made by Trippasch in ImGui GitHub forum section (I've made few alterations to this color scheme)
@@ -197,9 +201,10 @@ void UI::ImGuiDraw()
 				// And all the meshes and materials
 				std::vector<MaterialPaths> materialPath;
 				std::vector<Material*> checkMaterials;
-				std::vector<FileMeshes> fileMeshes;
+				std::vector<FileModels> fileModels;
 				int texIndex = 0;
 				for (auto model : m_scene->getModels()) {
+					std::vector<FileMeshes> fileMeshes;
 					for(auto mesh : model->getMeshes()) {
 						bool seen = false;
 						for (auto earlierMat : checkMaterials) { // Silly dinky way of detecting, whether the material is already in use
@@ -219,10 +224,10 @@ void UI::ImGuiDraw()
 							for (auto maps : mesh->getMaterial()->getTextures()) {
 								foundTexs.push_back(m_texLoading->findTexture(maps));
 							}
-							for (auto tex : foundTexs) {
+							/*for (auto tex : foundTexs) {
 								std::cout << "Short path: " << tex->getFilePath() << std::endl;
-							}					
-						
+							}*/
+
 							materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
 							foundTexs[0]->getFilePath(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
 							foundTexs[1]->getFilePath(), mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
@@ -231,21 +236,25 @@ void UI::ImGuiDraw()
 						}				
 
 						fileMeshes.push_back(FileMeshes{ 
-							model->getModelPath(),
 							mesh->getDisplayName(),
-
 							mesh->getPosition(),
 							mesh->getScaling(),
 							mesh->getRotation(), mesh->getMaterial()->getMaterialIndex() });
 						texIndex++;
 						std::cout << "Material ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
 					}
-				
-					// Create and serialize an object
-					std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePath() << std::endl;
-					SaveFile original(m_scene->getLights(), materialPath, fileMeshes, m_HDRI->getBackgroundTexture()->getFilePath(), m_HDRI->getHDRI_Path());
-					original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
+					fileModels.push_back(FileModels{ model->getModelPath(), fileMeshes });
+					for (auto mesh : fileMeshes) {
+						std::cout << "Path: " << model->getModelPath() << " - Model Name: " << mesh.modelName << std::endl;
+					}
+					for(auto model : fileModels)
+						std::cout << "Model path: " << model.modelPath << std::endl;
 				}
+				// Create and serialize an object
+				std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePath() << std::endl;
+				SaveFile original(m_scene->getLights(), materialPath, fileModels, m_HDRI->getBackgroundTexture()->getFilePath(), m_HDRI->getHDRI_Path());
+				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
+				
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
 		

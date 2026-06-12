@@ -434,23 +434,23 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 	return;
 }*/
 
-void TextureLoading::loadMeshes(std::vector<Model*>& model, std::vector<FileMeshes> fileMeshes) {
-	for (auto mat : m_scene->getMaterials()) {
+void TextureLoading::loadMeshes(std::vector<Model*>& model, std::vector<FileModels> fileModels) {
+	/*for (auto mat : m_scene->getMaterials()) {
 		std::cout << "Mat index: " << mat->getMaterialIndex() << " - Mat name: " << mat->getName() << std::endl;
-	}
-	for (size_t i = 0; i < fileMeshes.size(); i++) {
-		auto newMesh = loadMeshes((fileMeshes[i].modelPath), fileMeshes[i].modelName);
+	}*/
+	for (size_t i = 0; i < fileModels.size(); i++) {
 		std::vector<Mesh*> meshes;
-
-		for (size_t j = 0; j < newMesh.size(); ++j) {
+		for (size_t j = 0; j < fileModels[i].meshes.size(); j++) {
+			auto newMesh = loadMeshes((fileModels[i].modelPath), fileModels[i].meshes[j].modelName);
 			meshes.push_back(newMesh[j]);
 
-			meshes.back()->setPosition(fileMeshes[i].pos);
-			meshes.back()->setRotation(fileMeshes[i].rotation);
-			meshes.back()->setScaling(fileMeshes[i].scaling);
-			meshes.back()->setMaterial(m_scene->getMaterials()[fileMeshes[i].textureID]);
+			meshes.back()->setPosition(fileModels[i].meshes[j].pos);
+			meshes.back()->setRotation(fileModels[i].meshes[j].rotation);
+			meshes.back()->setScaling(fileModels[i].meshes[j].scaling);
+			meshes.back()->setMaterial(m_scene->getMaterials()[fileModels[i].meshes[j].textureID]);
 		}
-		model.push_back(new Model(fileMeshes[i].modelPath, meshes));
+		model.push_back(new Model(fileModels[i].modelPath, meshes));
 	}
+
 	std::cout << "Amount of main meshes in the scene: " << model.size() << std::endl;
 }

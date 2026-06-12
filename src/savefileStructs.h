@@ -27,7 +27,6 @@ struct MaterialPaths {
 };
 
 struct FileMeshes {
-	std::string modelPath;
 	std::string modelName;
 
 	glm::vec3 pos = glm::vec3(0);
@@ -35,4 +34,9 @@ struct FileMeshes {
 	glm::vec3 rotation = glm::vec3(0);
 
 	int textureID = 0;
+};
+
+struct FileModels {
+	std::string modelPath;
+	std::vector<FileMeshes> meshes;
 };
