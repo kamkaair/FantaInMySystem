@@ -40,7 +40,6 @@ public:
 	std::vector<std::string> FileSystem(std::string& path);
 	Texture* findTexture(GLuint textureID);
 
-	std::vector<int> getVertices() { return vertexAmount; }
 	std::vector<Texture*> getTrackedTextures() { return m_textures; }
 
 	void setCurrentScene(Scene* scene) { m_scene = scene; }
@@ -49,7 +48,6 @@ private:
 	int m_materialIndex = 0;
 	std::unordered_map<int, Material*> materialsMap;
 	std::vector<Texture*>		m_textures;
-	std::vector<int>			vertexAmount;
 
 	Scene* m_scene;
 };

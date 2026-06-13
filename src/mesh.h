@@ -36,12 +36,16 @@ public:
 
 	std::string getDisplayName() const;
 	Material* getMaterial();
+	int& getVertices() { return m_vertexAmount; }
 
 private:
 	GLuint m_VAO = 0;
 	GLuint m_EBO;
 	GLuint m_VBO;
+
 	size_t m_indiceCount;
 	Material* m_material = 0;
+
 	std::string m_meshDisplayName;
+	int m_vertexAmount;
 };

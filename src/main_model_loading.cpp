@@ -172,13 +172,17 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/LampScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
 
 		std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
 		m_scene->getMaterials() = materials;
+
+		for (auto m : materials) {
+			std::cout << "Mat name: " << m->getName() << " Mat index:" << m->getMaterialIndex() << std::endl;
+		}
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		std::vector<Model*> models;
@@ -364,30 +368,6 @@ public:
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
-
-	void initializeLights(std::vector<FileLights>& fileLights) {
-		for (int i = 0; i < fileLights.size(); i++) {
-			//m_uiDraw->getPointLightPos().push_back(fileLights[i].pos);
-			//m_uiDraw->getPointLightColor().push_back(fileLights[i].color);
-			//m_uiDraw->getPointLightStrength().push_back(fileLights[i].strength);
-		}
-	}
-
-	/*void initializeLightsOld()
-	{
-		// Preset light positions, colors and light strength
-		m_uiDraw->getPointLightPos().push_back(glm::vec3(-2.72f, 1.20f, 3.68f));
-		m_uiDraw->getPointLightPos().push_back(glm::vec3(2.70, 1.50, 3.10));
-		m_uiDraw->getPointLightPos().push_back(glm::vec3(0.30f, 3.10f, -5.80f));
-
-		m_uiDraw->getPointLightColor().push_back(glm::vec3(0.07f, 0.18f, 1.00f));
-		m_uiDraw->getPointLightColor().push_back(glm::vec3(0.77f, 0.11f, 0.91f));
-		m_uiDraw->getPointLightColor().push_back(glm::vec3(0.10f, 0.89f, 0.5f));
-
-		m_uiDraw->getPointLightStrength().push_back(0.0f);
-		m_uiDraw->getPointLightStrength().push_back(0.0f);
-		m_uiDraw->getPointLightStrength().push_back(0.0f);
-	}*/
 
 	static void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
 		Application* app = static_cast<Application*>(glfwGetWindowUserPointer(window));

@@ -361,7 +361,7 @@ void UI::ImGuiDraw()
 					for (size_t i = 0; i < model->getMeshes().size(); i++)
 					{
 						Mesh* meshes = model->getMeshes()[i];
-						if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName()).c_str()))
+						if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName() + " " + std::to_string(i)).c_str())) // Added an index to the name to avoid duplicates
 						{
 							//ImGui::Text(model->getMeshes()[i]->getDisplayName().c_str());
 							//ImGui::Dummy(ImVec2(0.0f, 7.5f));
@@ -474,26 +474,24 @@ void UI::ImGuiDraw()
 				// For selecting and removing meshes
 				if (ImGui::TreeNode("Loaded Meshes"))
 				{
-					for (auto models : m_scene->getModels()) {
-						for (size_t i = 0; i < models->getMeshes().size(); i++)
-						{
-							ImGui::Text("Mesh %s", models->getMeshes()[i]->getDisplayName().c_str());
-							ImGui::Text("Vertex count: %d", m_texLoading->getVertices()[i]);
-							//ImGui::Text("Vertex count: " + std::to_string(m_texLoading->getVertices()[i]).c_str());
+					for (size_t i = 0; i < m_scene->getModels().size(); i++) {
+						ImGui::Text("Mesh %s", m_scene->getModels()[i]->getModelPath().c_str());
 
-							// Show Remove button next to each mesh
-							if (ImGui::Button(("Remove##" + std::to_string(i)).c_str()))
-							{
-								// Remove mesh from vector and cleanup
-								delete models->getMeshes()[i];  // Clean up memory if necessary
-								models->getMeshes().erase(models->getMeshes().begin() + i);
-
-								//delete m_texLoading->getVertices()[i];
-								//m_texLoading->getVertices().erase(m_texLoading->getVertices().begin() + i); // Erase the vertex amount
-
-								break;  // Exit loop since vector has changed
+						if (ImGui::TreeNode(("Child Meshes " + std::to_string(i)).c_str())) { // ("str" + str).c_str(), reminder because I'm a troglodyte
+							for (auto meshes : m_scene->getModels()[i]->getMeshes()) {
+								ImGui::Text("Mesh vertex count: %d", meshes->getVertices());
 							}
+							ImGui::TreePop();
 						}
+
+						if (ImGui::Button(("Remove##" + std::to_string(i)).c_str())) { // Prevent duplicated names (duplicated names have uniform actions for all iterations)
+							// Remove mesh from vector and cleanup
+							delete m_scene->getModels()[i];
+							m_scene->getModels().erase(m_scene->getModels().begin() + i);
+							break;
+						}
+
+						ImGui::Dummy(ImVec2(0.0f, 5.0f));
 					}
 					ImGui::TreePop();
 				}
