@@ -191,25 +191,24 @@ void UI::ImGuiDraw()
 
 			ImGui::Separator();
 
-		    /*bool show_dialog = true;
-			ImGui::Begin("Dialogx1", &show_dialog, ImGuiWindowFlags_NoCollapse);
-			ImGui::End();*/
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
 				// Light positions, colors and light strength
 
 				// And all the meshes and materials
-				std::vector<MaterialPaths> materialPath;
-				std::vector<Material*> checkMaterials;
+				std::vector<std::tuple<Material*, int>> checkedMaterials;
 				std::vector<FileModels> fileModels;
+				std::vector<MaterialPaths> materialPath;
+
 				int texIndex = 0;
 				for (auto model : m_scene->getModels()) {
 					std::vector<FileMeshes> fileMeshes;
 					for(auto mesh : model->getMeshes()) {
+
 						bool seen = false;
-						for (auto earlierMat : checkMaterials) { // Silly dinky way of detecting, whether the material is already in use
+						for (auto earlierMat : checkedMaterials) { // Silly dinky way of detecting, whether the material is already in use
 							for (int i = 0; i < mesh->getMaterial()->getTextures().size(); i++) {
-								if (mesh->getMaterial()->getTextures()[i] == earlierMat->getTextures()[i]) {
+								if (mesh->getMaterial()->getTextures()[i] == std::get<0>(earlierMat)->getTextures()[i]) {
 									std::cout << "Detected earlier material!!" << std::endl;
 									seen = true;
 									break;
@@ -219,20 +218,21 @@ void UI::ImGuiDraw()
 
 						if (!seen) {
 							std::vector<Texture*> foundTexs;
-							checkMaterials.push_back(mesh->getMaterial());
+							//checkMaterials.push_back(mesh->getMaterial());
+							checkedMaterials.push_back(std::make_tuple(mesh->getMaterial(), texIndex));
+							mesh->getMaterial()->getMaterialIndex() = texIndex;
 
 							for (auto maps : mesh->getMaterial()->getTextures()) {
 								foundTexs.push_back(m_texLoading->findTexture(maps));
 							}
-							/*for (auto tex : foundTexs) {
-								std::cout << "Short path: " << tex->getFilePath() << std::endl;
-							}*/
+							std::cout << "Mesh ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
 
 							materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
 							foundTexs[0]->getFilePath(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
 							foundTexs[1]->getFilePath(), mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
 							foundTexs[2]->getFilePath(), mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
 							foundTexs[3]->getFilePath() });
+							texIndex++;
 						}				
 
 						fileMeshes.push_back(FileMeshes{ 
@@ -240,18 +240,16 @@ void UI::ImGuiDraw()
 							mesh->getPosition(),
 							mesh->getScaling(),
 							mesh->getRotation(), mesh->getMaterial()->getMaterialIndex() });
-						texIndex++;
+						
 						std::cout << "Material ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
 					}
+
 					fileModels.push_back(FileModels{ model->getModelPath(), fileMeshes });
-					for (auto mesh : fileMeshes) {
-						std::cout << "Path: " << model->getModelPath() << " - Model Name: " << mesh.modelName << std::endl;
-					}
-					for(auto model : fileModels)
-						std::cout << "Model path: " << model.modelPath << std::endl;
-				}
-				// Create and serialize an object
+
+				}				
 				std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePath() << std::endl;
+
+				// Create and serialize an object
 				SaveFile original(m_scene->getLights(), materialPath, fileModels, m_HDRI->getBackgroundTexture()->getFilePath(), m_HDRI->getHDRI_Path());
 				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 				

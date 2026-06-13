@@ -22,7 +22,7 @@ public:
 
     const std::vector<GLuint>& getTextures() const;
     const std::string& getName() const;
-    int getMaterialIndex() const;
+    int& getMaterialIndex();
 
 private:
     std::vector<GLuint> m_texturesC;
