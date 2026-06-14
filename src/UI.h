@@ -19,8 +19,6 @@
 #include <stb_image.h>
 #include <initializer_list>
 
-#include <iostream>
-
 struct SettingsMaterial {
 	glm::vec3 diffuseColor = glm::vec3(1.0f);  // Default white color
 	float roughness = 0.5f;                    // Default roughness

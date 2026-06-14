@@ -194,7 +194,6 @@ void UI::ImGuiDraw()
 				// Light positions, colors and light strength
 
 				// And all the meshes and materials
-				std::vector<std::tuple<Material*, int>> checkedMaterials;
 				std::unordered_map<Material*, int> checkedMap;
 				std::vector<FileModels> fileModels;
 				std::vector<MaterialPaths> materialPath;
@@ -204,27 +203,10 @@ void UI::ImGuiDraw()
 					std::vector<FileMeshes> fileMeshes;
 					for(auto mesh : model->getMeshes()) {
 
-						bool seen = false;
-						for (auto earlierMat : checkedMaterials) { // Silly dinky way of detecting, whether the material is already in use
-							for (int i = 0; i < mesh->getMaterial()->getTextures().size(); i++) {
-								if (mesh->getMaterial()->getTextures()[i] == std::get<0>(earlierMat)->getTextures()[i]) {
-									std::cout << "Detected earlier material!!" << std::endl;
-									seen = true;
-									break;
-								}
-							}
-						}
-
-						/*auto it = checkedMap.find(mesh->getMaterial());
-
-						if (it == checkedMap.end()) {
-							std::cout << "We are inside" << std::endl;
-						}*/
-
-						if (!seen) {
+						auto it = checkedMap.find(mesh->getMaterial());					
+						if (it == checkedMap.end()) { // Check, whether the material already exists
 							std::vector<Texture*> foundTexs;
-							//checkMaterials.push_back(mesh->getMaterial());
-							checkedMaterials.push_back(std::make_tuple(mesh->getMaterial(), texIndex));
+							checkedMap.insert({ mesh->getMaterial(), texIndex });
 							mesh->getMaterial()->getMaterialIndex() = texIndex;
 
 							for (auto maps : mesh->getMaterial()->getTextures()) {
@@ -249,7 +231,6 @@ void UI::ImGuiDraw()
 					}
 
 					fileModels.push_back(FileModels{ model->getModelPath(), fileMeshes });
-
 				}				
 				std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePath() << std::endl;
 
