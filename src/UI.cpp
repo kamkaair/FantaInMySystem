@@ -348,69 +348,73 @@ void UI::ImGuiDraw()
 			{
 				ImGui::Text("Below is all the meshes and their transforms");
 				for (auto model : m_scene->getModels()) {
-					for (size_t i = 0; i < model->getMeshes().size(); i++)
-					{
-						Mesh* meshes = model->getMeshes()[i];
-						if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName() + " " + std::to_string(i)).c_str())) // Added an index to the name to avoid duplicates
+					if (ImGui::TreeNode(model->getModelPath().c_str())) {
+						for (size_t i = 0; i < model->getMeshes().size(); i++)
 						{
-							//ImGui::Text(model->getMeshes()[i]->getDisplayName().c_str());
-							//ImGui::Dummy(ImVec2(0.0f, 7.5f));
+							Mesh* meshes = model->getMeshes()[i];
+							if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName() + " " + std::to_string(i)).c_str())) // Added an index to the name to avoid duplicates
+							{
+								//ImGui::Text(model->getMeshes()[i]->getDisplayName().c_str());
+								//ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
-							glm::vec3 pos = meshes->getPosition();
-							if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
-								meshes->setPosition(pos); // Update the position if the value changes
-							}
-
-							// Control for scale
-							ImGui::Checkbox("Scalelock", &scaleLock);
-							glm::vec3 scale = meshes->getScaling();
-							if (!scaleLock) {
-								// Set indiviudal XYZ scaling
-								if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.01f)) {
-									meshes->setScaling(scale);
+								glm::vec3 pos = meshes->getPosition();
+								if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
+									meshes->setPosition(pos); // Update the position if the value changes
 								}
-							}
-							else
-							{
-								// Set scaling uniformally
-								ImGui::Text(glm::to_string(scale).c_str());
-								if (ImGui::DragFloat("Scale", &totalScale, 0.01f))
-								{
-									float scaleSet = totalScale;
-									scale = originalScale * scaleSet;
-									meshes->setScaling(scale);
-								}
-							}
 
-							// Control for rotation
-							glm::vec3 rotation = meshes->getRotation();
-							if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 0.01f))
-							{
-								meshes->setRotation(rotation);
-							}
-
-							// Control for material
-							Material* currentMat = meshes->getMaterial();
-							const char* changeMat = currentMat ? currentMat->getName().c_str() : "None"; // get a const char
-
-							if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
-							{
-								for (size_t i = 0; i < m_scene->getMaterials().size(); i++)
-								{
-									bool isSelected = (m_scene->getMaterials()[i] == currentMat);
-									if (ImGui::Selectable(m_scene->getMaterials()[i]->getName().c_str(), isSelected))
-									{
-										meshes->setMaterial(m_scene->getMaterials()[i]);  // Set the selected material to the mesh
+								// Control for scale
+								ImGui::Checkbox("Scalelock", &scaleLock);
+								glm::vec3 scale = meshes->getScaling();
+								if (!scaleLock) {
+									// Set indiviudal XYZ scaling
+									if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.01f)) {
+										meshes->setScaling(scale);
 									}
-									if (isSelected)
-										ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
 								}
-								ImGui::EndCombo();
-							}
-							ImGui::TreePop();
-						}
+								else
+								{
+									// Set scaling uniformally
+									ImGui::Text(glm::to_string(scale).c_str());
+									if (ImGui::DragFloat("Scale", &totalScale, 0.01f))
+									{
+										float scaleSet = totalScale;
+										scale = originalScale * scaleSet;
+										meshes->setScaling(scale);
+									}
+								}
 
+								// Control for rotation
+								glm::vec3 rotation = meshes->getRotation();
+								if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 0.01f))
+								{
+									meshes->setRotation(rotation);
+								}
+
+								// Control for material
+								Material* currentMat = meshes->getMaterial();
+								const char* changeMat = currentMat ? currentMat->getName().c_str() : "None"; // get a const char
+
+								if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
+								{
+									for (size_t i = 0; i < m_scene->getMaterials().size(); i++)
+									{
+										bool isSelected = (m_scene->getMaterials()[i] == currentMat);
+										if (ImGui::Selectable(m_scene->getMaterials()[i]->getName().c_str(), isSelected))
+										{
+											meshes->setMaterial(m_scene->getMaterials()[i]);  // Set the selected material to the mesh
+										}
+										if (isSelected)
+											ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+									}
+									ImGui::EndCombo();
+								}
+								ImGui::TreePop();
+							}
+
+						}
+						ImGui::TreePop();
 					}
+
 				}
 				
 				ImGui::TreePop();
