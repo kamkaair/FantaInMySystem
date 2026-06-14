@@ -19,6 +19,8 @@
 #include <stb_image.h>
 #include <initializer_list>
 
+#include <iostream>
+
 struct SettingsMaterial {
 	glm::vec3 diffuseColor = glm::vec3(1.0f);  // Default white color
 	float roughness = 0.5f;                    // Default roughness
@@ -70,18 +72,12 @@ public:
 	void shaderSet(const char* uniform, bool value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
 	void shaderBind() { m_GBuffer->getCurrentShader()->bind(); }
 
-	// Add '&' to get the REFERENCE!!!
-	/*std::vector<Mesh*>& getMeshes() { return m_meshes; }
-	std::vector<glm::vec3>& getPointLightPos() { return pointLightPos; }
-	std::vector<glm::vec3>& getPointLightColor() { return pointLightColor; }
-	std::vector<float>& getPointLightStrength() { return pointLightStrength; }*/
+	void updateFiles(std::vector<std::string>& fileNames, std::string location) {
+		if (!fileNames.empty())
+			fileNames.clear();
 
-	void updateMeshFiles() { 
-		meshFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/models/"));
-		for (const auto& file : meshFiles)
-		{
-			// file into c_str()
-			meshFileNames.push_back(file.c_str());
+		for (const auto& file : m_texLoading->FileSystem((std::string(ASSET_DIR) + "/" + location))) {
+			fileNames.push_back(file.c_str());
 		}
 	}
 
@@ -93,24 +89,14 @@ private:
 
 	Shader* m_backImage;
 
-	//std::vector<Mesh*> m_meshes; // Mesh reference
-	//std::vector<MaterialPaths> m_pathNames
-	//std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileMeshes> fileMeshes, std::string hdriPath
-
 	TextureLoading* m_texLoading;
 	HDRI* m_HDRI;
 	GBuffer* m_GBuffer;
 	SSAO* m_SSAO;
 	Scene* m_scene;
 
-	/*std::vector<glm::vec3> pointLightPos; // Reference to point light positions
-	std::vector<glm::vec3> pointLightColor; // Reference to point light colors
-	std::vector<float> pointLightStrength;*/
-	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
-
-	// Meshes
-	std::vector<std::string> meshFiles;
-	std::vector<const char*> meshFileNames;
+	// File names
+	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames;
 
 	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
 		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
@@ -118,6 +104,7 @@ private:
 	int backgroundMode = 0;
 	
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
+	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true;

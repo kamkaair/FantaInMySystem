@@ -430,11 +430,6 @@ void TextureLoading::loadMeshes(std::vector<Model*>& container, std::vector<File
 		std::vector<Mesh*> newMeshes = processMeshes(fileModels[i].modelPath);
 
 		for (size_t j = 0; j < newMeshes.size(); j++) {
-			if (j == 8)
-				std::cout << "P" << std::endl;
-
-			std::cout << "Load meshes index: " << j << " TexID: " 
-				<< fileModels[i].meshes[j].textureID << " " << std::endl;
 			newMeshes[j]->setPosition(fileModels[i].meshes[j].pos);
 			newMeshes[j]->setRotation(fileModels[i].meshes[j].rotation);
 			newMeshes[j]->setScaling(fileModels[i].meshes[j].scaling);

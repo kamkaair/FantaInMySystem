@@ -20,7 +20,10 @@ UI::UI(Shader* backImage,
 	m_scene(scene),
 	ImGuiAlpha(0.3f), 
 	Object(__FUNCTION__) {
-	updateMeshFiles();
+
+	updateFiles(meshFileNames, "models/");
+	updateFiles(m_saveFiles, "Saves/");
+	updateFiles(hdrFileNames, "HDRI/");
 }
 
 utils::utils fpsCounter;
@@ -40,10 +43,6 @@ void displayMatList(int item, static int currentItem[], std::vector<const char*>
 ImGuiWindowFlags UI::disableInteraction() {
 	if (windowDisabled) { return flagWinDisabled; }
 	else { return flagWinEnabled; }
-}
-
-void checkDuplicateMaterial(bool seen) {
-
 }
 
 void UI::ImGuiStyleSetup()
@@ -140,10 +139,9 @@ void UI::ImGuiDraw()
 			static char saveName[128] = ""; // Input field for material name
 
 			if (ImGui::BeginMenu("Open")) {				
-				std::vector<std::string> hdrFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/Saves/"));
-				for (auto files : hdrFiles) {
+				for (auto files : m_saveFiles) {
 					if (ImGui::MenuItem(files.c_str())) {
-						std::cout << "Opened " + files + "\n";
+						std::cout << "Opened " + std::string(files) + "\n";
 
 						// Clean up the whole scene
 						m_scene->cleanupScene();
@@ -197,6 +195,7 @@ void UI::ImGuiDraw()
 
 				// And all the meshes and materials
 				std::vector<std::tuple<Material*, int>> checkedMaterials;
+				std::unordered_map<Material*, int> checkedMap;
 				std::vector<FileModels> fileModels;
 				std::vector<MaterialPaths> materialPath;
 
@@ -216,6 +215,12 @@ void UI::ImGuiDraw()
 							}
 						}
 
+						/*auto it = checkedMap.find(mesh->getMaterial());
+
+						if (it == checkedMap.end()) {
+							std::cout << "We are inside" << std::endl;
+						}*/
+
 						if (!seen) {
 							std::vector<Texture*> foundTexs;
 							//checkMaterials.push_back(mesh->getMaterial());
@@ -225,7 +230,6 @@ void UI::ImGuiDraw()
 							for (auto maps : mesh->getMaterial()->getTextures()) {
 								foundTexs.push_back(m_texLoading->findTexture(maps));
 							}
-							std::cout << "Mesh ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
 
 							materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
 							foundTexs[0]->getFilePath(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
@@ -316,7 +320,14 @@ void UI::ImGuiDraw()
 		wireFrame ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 
-	//ImGui::Separator();
+	ImGui::Dummy(ImVec2(0.0f, 2.0f));
+	ImGui::Text("'Refetch Files' -button updates the available files found in the asset-folder");
+	if (ImGui::Button("Refetch Files")) {
+		updateFiles(meshFileNames, "models/");
+		updateFiles(m_saveFiles, "Saves/");
+		updateFiles(hdrFileNames, "HDRI/");
+	}
+	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 
 	if (ImGui::BeginTabBar("MyTabs"))
 	{
@@ -434,11 +445,11 @@ void UI::ImGuiDraw()
 
 				static int currentItem = 0;
 				// Create a combo box with available mesh files
-				if (ImGui::BeginCombo("Available models", meshFileNames[currentItem]))
+				if (ImGui::BeginCombo("Available models", meshFileNames[currentItem].c_str()))
 				{
 					for (size_t i = 0; i < meshFileNames.size(); i++) {
 						bool isSelected = (currentItem == i);
-						if (ImGui::Selectable(meshFileNames[i], isSelected))
+						if (ImGui::Selectable(meshFileNames[i].c_str(), isSelected))
 						{
 							//meshFileNames[i];
 							currentItem = i;
@@ -450,14 +461,10 @@ void UI::ImGuiDraw()
 					ImGui::EndCombo();
 				}
 
-				if (ImGui::Button("Update model folder")) {
-					updateMeshFiles();
-				}
-
 				// Load selected HDR file and generate the maps for them
 				if (ImGui::Button("Add new mesh")) {
 					// Load the selected mesh
-					std::string selectedItem = ("/models/" + meshFiles[currentItem]);
+					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
 					std::vector<Mesh*> newMeshes = m_texLoading->processMeshes(selectedItem);
 
 					m_scene->getModels().push_back(new Model(selectedItem, newMeshes));
@@ -545,25 +552,16 @@ void UI::ImGuiDraw()
 		{
 			if (ImGui::TreeNode("HDRI"))
 			{
-				std::vector<std::string> hdrFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/HDRI/"));
-
-				std::vector<const char*> hdrFileNames;
-				for (const auto& file : hdrFiles)
-				{
-					// file into c_str()
-					hdrFileNames.push_back(file.c_str());
-				}
-
 				static int currentItem = 0;
 
 				ImGui::Text("You can upload your own HDRI files!");
 				ImGui::Text("File path: ../opengl-graphicsengine/assets/HDRI");
-				//const char* allText = hdrFiles;
-				if (ImGui::BeginCombo("Available HDRIs", hdrFileNames[currentItem]))
+
+				if (ImGui::BeginCombo("Available HDRIs", hdrFileNames[currentItem].c_str()))
 				{
 					for (size_t i = 0; i < hdrFileNames.size(); i++) {
 						bool isSelected = (currentItem == i);
-						if (ImGui::Selectable(hdrFileNames[i], isSelected))
+						if (ImGui::Selectable(hdrFileNames[i].c_str(), isSelected))
 						{
 							hdrFileNames[i];
 							currentItem = i;
@@ -577,7 +575,7 @@ void UI::ImGuiDraw()
 				// Load selected HDR file and generate the maps for them
 				if (ImGui::Button("Set HDRI")) {
 					m_HDRI->cleanUpHDRI();
-					std::string selectedItem = "/HDRI/" + hdrFiles[currentItem];
+					std::string selectedItem = "/HDRI/" + std::string(hdrFileNames[currentItem]);
 					m_HDRI->ProcessHDRI(selectedItem.c_str());
 				}
 
