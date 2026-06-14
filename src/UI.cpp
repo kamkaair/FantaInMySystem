@@ -7,18 +7,18 @@
 #include <filesystem>
 
 UI::UI(Shader* backImage,
-	TextureLoading* texLoad,
 	HDRI* hdri,
 	GBuffer* gbuffer,
 	SSAO* ssao,
-	Scene* scene)
+	Scene* scene,
+	ResourceManager* resoManager)
 	: m_backImage(backImage),
-	m_texLoading(texLoad),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
 	m_SSAO(ssao),
 	m_scene(scene),
-	ImGuiAlpha(0.3f), 
+	m_resoManager(resoManager),
+	ImGuiAlpha(0.3f),
 	Object(__FUNCTION__) {
 
 	updateFiles(meshFileNames, "models/");

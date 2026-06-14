@@ -14,6 +14,7 @@
 #include "HDRI.h"
 #include "GBuffer.h"
 #include "scene.h"
+#include "resourceManager.h"
 
 #include <vector>
 #include <stb_image.h>
@@ -40,11 +41,11 @@ class UI : public kgfw::Object
 {
 public:
 	UI(Shader* backImage,
-		TextureLoading* texLoad,
 		HDRI* hdri,
 		GBuffer* gbuffer,
 		SSAO* ssao,
-		Scene* scene);
+		Scene* scene,
+		ResourceManager* resoManager);
 	~UI();
 
 	void ImGuiStyleSetup();
@@ -92,6 +93,7 @@ private:
 	GBuffer* m_GBuffer;
 	SSAO* m_SSAO;
 	Scene* m_scene;
+	ResourceManager* m_resoManager;
 
 	// File names
 	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames;

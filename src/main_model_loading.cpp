@@ -11,6 +11,7 @@
 #include "ssao.h"
 #include "savefile.h"
 #include "scene.h"
+#include "resourceManager.h"
 
 // Include STB-image library
 #define STB_IMAGE_IMPLEMENTATION
@@ -54,6 +55,9 @@ public:
 		// texloading function class
 		m_texLoading = new TextureLoading();
 
+		// Resource manager
+		m_resoManager = new ResourceManager();
+
 		// Create a new scene
 		m_scene = new Scene();
 
@@ -65,7 +69,7 @@ public:
 		setupScene();
 
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_backImage, m_texLoading, m_HDRI, m_GBuffer, m_ssaoClass, m_scene);
+		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_ssaoClass, m_scene, m_resoManager);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -121,6 +125,7 @@ public:
 		utils::deleteObject(m_iconClass);
 		utils::deleteObject(m_ssaoClass);
 		utils::deleteObject(m_scene);
+		utils::deleteObject(m_resoManager);
 
 		// Delete Camera
 		utils::deleteObject(m_camera);
@@ -465,6 +470,7 @@ private:
 	SSAO*						m_ssaoClass;
 	SaveFile*					m_saveFile;
 	Scene*						m_scene;
+	ResourceManager*			m_resoManager;
 };
 
 // Global pointer to the application
