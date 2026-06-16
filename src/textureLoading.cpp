@@ -4,7 +4,7 @@
 #include <iostream>
 #include <filesystem>
 
-TextureLoading::TextureLoading() : Object(__FUNCTION__) { std::cout << "pener :3" << std::endl; }
+TextureLoading::TextureLoading() : Object(__FUNCTION__) {}
 
 void TextureLoading::cleanupTextures() {
 	for (Texture* tex : m_textures) {

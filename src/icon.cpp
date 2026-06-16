@@ -1,6 +1,6 @@
 #include "icon.h"
 
-Icon::Icon(Mesh* mesh, TextureLoading* texLoading, UI* uiDraw, Inputs* inputs, Camera* camera) : m_meshRender(mesh), m_texLoading(texLoading), m_uiDraw(uiDraw), m_input(inputs), m_camera(camera), Object(__FUNCTION__) {}
+Icon::Icon(Mesh* mesh, ResourceManager* reso, Inputs* inputs, Camera* camera) : m_meshRender(mesh), m_resoManager(reso), m_input(inputs), m_camera(camera), Object(__FUNCTION__) {}
 
 Icon::~Icon() {
 	for (auto meshes : m_iconTexture) {
@@ -67,7 +67,7 @@ void Icon::renderIcons(Shader* m_icon, float iconSize, glm::vec3 targetPos, int 
 	m_meshRender->renderQuad();
 }
 
-void Icon::visualizeFocus(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* input, Camera* m_camera)
+void Icon::visualizeFocus(Shader* m_icon, float iconSize, Inputs* input, Camera* m_camera)
 {
 	// Scaling depending on the distance
 	float iconDistance = glm::length(input->getCameraPos() - input->getCameraFocus());
@@ -98,7 +98,7 @@ void Icon::visualizeFocus(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* 
 
 void Icon::loadIconTexture(const char* path) {
 	// Load the texture for an icon
-	Texture* iconTexture = m_texLoading->loadTexture(path);
+	Texture* iconTexture = m_resoManager->loadTexture(path);
 	iconTexture->setFilePath(path);
 	m_iconTexture.push_back(iconTexture);
 }

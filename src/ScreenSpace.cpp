@@ -1,11 +1,11 @@
-#include "ssao.h"
+#include "ScreenSpace.h"
 
-SSAO::SSAO(GBuffer* gbuffer, int inWidth, int inHeight)
+ScreenSpace::ScreenSpace(GBuffer* gbuffer, int inWidth, int inHeight)
 	: m_GBuffer(gbuffer), width(inWidth), height(inHeight), Object(__FUNCTION__) {
 	setupSSAO(); //constructSSAO(); constructed, when switching to the deferred rendering
 }
 
-SSAO::~SSAO() {
+ScreenSpace::~ScreenSpace() {
 	deconstructSSAO();
 	deconstructSSR();
 	if (ssaoBlurFBO != 0) { glDeleteFramebuffers(1, &ssaoBlurFBO); ssaoBlurFBO = 0; }
@@ -19,18 +19,18 @@ SSAO::~SSAO() {
 	}
 }
 
-void SSAO::deconstructSSAO() {
+void ScreenSpace::deconstructSSAO() {
 	if (m_SSAO != 0) { utils::deleteObject(m_SSAO); }
 	if (m_blurSSAO != 0) { utils::deleteObject(m_blurSSAO); }
 }
 
-void SSAO::deconstructSSR() {
+void ScreenSpace::deconstructSSR() {
 	if (m_SSR != 0) { utils::deleteObject(m_SSR); }
 	//if (m_blurSSR != 0) { utils::deleteObject(m_blurSSR); }
 	if (m_SSR_TA != 0) { utils::deleteObject(m_SSR_TA); }
 }
 
-void SSAO::constructSSAO() {
+void ScreenSpace::constructSSAO() {
 	// Load SSAO shaders
 	if (m_SSAO == 0)
 		m_SSAO = utils::makeShader("SSAO-Vert.glsl", "SSAO-Frag.glsl");
@@ -39,7 +39,7 @@ void SSAO::constructSSAO() {
 		m_blurSSAO = utils::makeShader("SSAO-Vert.glsl", "blurSSAO-Frag.glsl");
 }
 
-void SSAO::constructSSR() {
+void ScreenSpace::constructSSR() {
 	// Load SSAO shaders
 	if (m_SSR == 0)
 		m_SSR = utils::makeShader("SSAO-Vert.glsl", "SSR-Frag.glsl");
@@ -51,7 +51,23 @@ void SSAO::constructSSR() {
 		m_SSR_TA = utils::makeShader("SSAO-Vert.glsl", "SSR-TAF.glsl");
 }
 
-void SSAO::setupSSAO() {
+void ScreenSpace::constructDeferredRendering() {
+	glUseProgram(0); // Unbind any active shader
+	m_GBuffer->constructDeferredShaders();
+	m_GBuffer->deconstructForwardShaders();
+	constructSSAO();
+	constructSSR();
+}
+
+void ScreenSpace::constructForwardRendering() {
+	glUseProgram(0); // Unbind any active shader
+	deconstructSSAO();
+	deconstructSSR();
+	m_GBuffer->constructForwardShaders();
+	m_GBuffer->deconstructDeferredShaders();
+}
+
+void ScreenSpace::setupSSAO() {
 	std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 	std::default_random_engine generator;
 
@@ -85,7 +101,7 @@ void SSAO::setupSSAO() {
 	noiseTexture = createNoiseTexture(randomFloats, generator);
 }
 
-void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight, int samples) {
+void ScreenSpace::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight, int samples) {
 	width = inWidth;
 	height = inHeight;
 
@@ -128,7 +144,7 @@ void SSAO::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int in
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
+void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	// -------------------------------
 	// SSR
 	// -------------------------------
@@ -192,7 +208,7 @@ void SSAO::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
 	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
+void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	// -------------------------------
 	// SSR Temporal Accumulation
 	// -------------------------------
@@ -268,7 +284,7 @@ void SSAO::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	frameIndex++; // frame index used for the random
 }
 
-void SSAO::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw)
+void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw)
 {
 	// -------------------------------
 	// SSR Composite - Final Image
@@ -322,7 +338,7 @@ void SSAO::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_H
 	glEnable(GL_DEPTH_TEST);
 }
 
-void SSAO::updateSSAOUniforms() {
+void ScreenSpace::updateSSAOUniforms() {
 	if (!m_ssaoSettings.dirty)
 		return;
 
@@ -339,7 +355,7 @@ void SSAO::updateSSAOUniforms() {
 	m_ssaoSettings.dirty = false;
 }
 
-void SSAO::updateSSRUniforms() {
+void ScreenSpace::updateSSRUniforms() {
 	if (!m_ssrSettings.useTA) {
 		resetTA_SSR();
 		return;
@@ -363,7 +379,7 @@ float SSAOLerp(float a, float b, float f)
 	return a + f * (b - a);
 }
 
-std::vector<glm::vec3> SSAO::createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
+std::vector<glm::vec3> ScreenSpace::createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
 	for (unsigned int i = 0; i < 64; ++i)
 	{
 		glm::vec3 sample(randomFloats(generator) * 2.0 - 1.0, randomFloats(generator) * 2.0 - 1.0, randomFloats(generator));
@@ -380,7 +396,7 @@ std::vector<glm::vec3> SSAO::createSampleKernel(std::uniform_real_distribution<G
 	return ssaoKernel;
 }
 
-GLuint SSAO::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
+GLuint ScreenSpace::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator) {
 	std::vector<glm::vec3> ssaoNoise;
 
 	for (unsigned int i = 0; i < 16; i++)
@@ -399,7 +415,7 @@ GLuint SSAO::createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFl
 	return noiseTexture;
 }
 
-GLuint SSAO::createSsrSceneColorBuffer() {
+GLuint ScreenSpace::createSsrSceneColorBuffer() {
 	glGenTextures(1, &ssrColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -420,7 +436,7 @@ GLuint SSAO::createSsrSceneColorBuffer() {
 	return ssrColorBuffer;
 }
 
-void SSAO::createSSR_HistoryFramebuffer() {
+void ScreenSpace::createSSR_HistoryFramebuffer() {
 	glGenFramebuffers(2, ssrHistoryFBO);
 	glGenTextures(2, ssrTemporalBuffer);
 
@@ -443,7 +459,7 @@ void SSAO::createSSR_HistoryFramebuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::createTemporalBuffers()
+void ScreenSpace::createTemporalBuffers()
 {
 	// prevDepth
 	glGenTextures(1, &prevDepthTex);
@@ -470,7 +486,7 @@ void SSAO::createTemporalBuffers()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-GLuint SSAO::createSsrSceneColorBufferBlur() {
+GLuint ScreenSpace::createSsrSceneColorBufferBlur() {
 	glGenTextures(1, &ssrColorBufferBlur);
 	glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
@@ -491,23 +507,23 @@ GLuint SSAO::createSsrSceneColorBufferBlur() {
 	return ssrColorBufferBlur;
 }
 
-GLuint SSAO::createSsrFBO() {
+GLuint ScreenSpace::createSsrFBO() {
 	glGenFramebuffers(1, &ssrFBO); return ssrFBO;
 }
 
-GLuint SSAO::createSsaoFBO() {
+GLuint ScreenSpace::createSsaoFBO() {
 	glGenFramebuffers(1, &ssaoFBO); return ssaoFBO;
 }
 
-GLuint SSAO::createSsaoBlurFBO() {
+GLuint ScreenSpace::createSsaoBlurFBO() {
 	glGenFramebuffers(1, &ssaoBlurFBO); return ssaoBlurFBO;
 }
 
-GLuint SSAO::createSsrBlurFBO() {
+GLuint ScreenSpace::createSsrBlurFBO() {
 	glGenFramebuffers(1, &ssrBlurFBO); return ssrBlurFBO;
 }
 
-GLuint SSAO::createSsaoColorBuffer() {
+GLuint ScreenSpace::createSsaoColorBuffer() {
 	glGenTextures(1, &ssaoColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
@@ -521,7 +537,7 @@ GLuint SSAO::createSsaoColorBuffer() {
 	return ssaoColorBuffer;
 }
 
-GLuint SSAO::createSsaoColorBufferBlur() {
+GLuint ScreenSpace::createSsaoColorBufferBlur() {
 	glGenTextures(1, &ssaoColorBufferBlur);
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
@@ -535,7 +551,11 @@ GLuint SSAO::createSsaoColorBufferBlur() {
 	return ssaoColorBufferBlur;
 }
 
-void SSAO::recreateColorBuffer() {
+void ScreenSpace::recreateColorBuffer() {
+	// Reconstruct G-Buffer
+	m_GBuffer->updateResolution();
+
+	// Reconstruct screen space color buffers
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
@@ -566,7 +586,7 @@ void SSAO::recreateColorBuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void SSAO::resetTA_SSR() {
+void ScreenSpace::resetTA_SSR() {
 	ssrHistoryIndex = 0;
 	frameIndex = 0;
 	firstFrame = true;

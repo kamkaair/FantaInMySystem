@@ -38,6 +38,7 @@ public:
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }
 
+	void updateResolution();
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
 	void CleanUpGBuffer();
 	void constructGBuffer();

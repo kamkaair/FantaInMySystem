@@ -7,7 +7,7 @@
 #include "inputs.h"
 #include "GBuffer.h"
 #include "icon.h"
-#include "ssao.h"
+#include "ScreenSpace.h"
 #include "savefile.h"
 
 // Include STB-image library
@@ -32,7 +32,6 @@ public:
 		, m_backImage(0)
 		, m_uiDraw(nullptr)
 		, m_HDRI(nullptr)
-		, m_texLoading(nullptr)
 		, m_camera(nullptr)
 	{
 		bindShaders();
@@ -41,30 +40,25 @@ public:
 		m_GBuffer = new GBuffer(width, height);
 
 		// Loads and computes all the HDRI maps
+		// TODO: move HDRI shaders into HDRI class
 		m_HDRI = new HDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
 		// Screen Spaced Ambient Occlusion initialization
-		m_ssaoClass = new SSAO(m_GBuffer, width, height);
+		m_ssaoClass = new ScreenSpace(m_GBuffer, width, height);
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
-
-		// texloading function class
-		//m_texLoading = new TextureLoading();
 
 		// Resource manager
 		m_resoManager = new ResourceManager();
 		m_scene = m_resoManager->getScene();
 
-		// Load the scene from a file
+		// Setup the default save, load the scene from a file
 		setupDefaultSave();
-
-		// Set the current scene
-		//m_texLoading->setCurrentScene(m_resoManager->getScene());
 		setupScene();
 
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_ssaoClass, m_scene, m_resoManager);
+		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_ssaoClass, m_resoManager);
 
 		m_BackgroundShader->bind();
 		m_BackgroundShader->setUniform("environmentMap", 0);
@@ -77,7 +71,7 @@ public:
 		g_input = new Inputs(m_uiDraw, m_camera);
 
 		// Icon class initialization
-		m_iconClass = new Icon(m_meshRender, m_texLoading, m_uiDraw, g_input, m_camera);
+		m_iconClass = new Icon(m_meshRender, m_resoManager, g_input, m_camera);
 
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
@@ -85,7 +79,7 @@ public:
 
 		// Default material
 		if (m_scene->getMaterials().empty()) {
-			m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+			m_resoManager->checkAndAddMaterial(m_resoManager->loadTextureSet(
 				std::string("/textures/checkerboard.png"),
 				std::string("/textures/checkerboard.png"),
 				std::string("/textures/checkerboard.png"),
@@ -114,7 +108,6 @@ public:
 		// Delete references
 		utils::deleteObject(m_HDRI);
 		utils::deleteObject(m_uiDraw);
-		utils::deleteObject(m_texLoading);
 		utils::deleteObject(g_input);
 		utils::deleteObject(m_GBuffer);
 		utils::deleteObject(m_iconClass);
@@ -459,10 +452,9 @@ private:
 	Mesh*						m_meshRender;
 	UI*							m_uiDraw;
 	HDRI*						m_HDRI;
-	TextureLoading*				m_texLoading;
 	GBuffer*					m_GBuffer;
 	Icon*						m_iconClass;
-	SSAO*						m_ssaoClass;
+	ScreenSpace*				m_ssaoClass;
 	SaveFile*					m_saveFile;
 	Scene*						m_scene;
 	ResourceManager*			m_resoManager;

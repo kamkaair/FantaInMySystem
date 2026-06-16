@@ -27,7 +27,7 @@ struct SettingsMaterial {
 	bool useRoughnessTexture = true;
 };
 
-class SSAO;
+class ScreenSpace;
 
 class UI : public kgfw::Object
 {
@@ -35,8 +35,7 @@ public:
 	UI(Shader* backImage,
 		HDRI* hdri,
 		GBuffer* gbuffer,
-		SSAO* ssao,
-		Scene* scene,
+		ScreenSpace* ssao,
 		ResourceManager* resoManager);
 	~UI();
 
@@ -67,7 +66,7 @@ public:
 		if (!fileNames.empty())
 			fileNames.clear();
 
-		for (const auto& file : m_texLoading->FileSystem((std::string(ASSET_DIR) + "/" + location))) {
+		for (const auto& file : m_resoManager->FileSystem((std::string(ASSET_DIR) + "/" + location))) {
 			fileNames.push_back(file.c_str());
 		}
 	}
@@ -80,11 +79,9 @@ private:
 
 	Shader* m_backImage;
 
-	TextureLoading* m_texLoading;
 	HDRI* m_HDRI;
 	GBuffer* m_GBuffer;
-	SSAO* m_SSAO;
-	Scene* m_scene;
+	ScreenSpace* m_SSAO;
 	ResourceManager* m_resoManager;
 
 	// File names

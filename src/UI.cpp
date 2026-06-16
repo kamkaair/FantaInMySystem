@@ -1,5 +1,5 @@
 #include "UI.h"
-#include "ssao.h"
+#include "ScreenSpace.h"
 #include "savefile.h"
 
 #include <iostream>
@@ -9,14 +9,12 @@
 UI::UI(Shader* backImage,
 	HDRI* hdri,
 	GBuffer* gbuffer,
-	SSAO* ssao,
-	Scene* scene,
+	ScreenSpace* ssao,
 	ResourceManager* resoManager)
 	: m_backImage(backImage),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
 	m_SSAO(ssao),
-	m_scene(scene),
 	m_resoManager(resoManager),
 	ImGuiAlpha(0.3f),
 	Object(__FUNCTION__) {
@@ -185,28 +183,15 @@ void UI::ImGuiDraw()
 	shaderBind();
 
 	if (ImGui::Checkbox("Deferred Rendering", &deferredRendering)) {
-		if (deferredRendering) {
-			glUseProgram(0); // Unbind any active shader
-			m_GBuffer->constructDeferredShaders();
-			m_GBuffer->deconstructForwardShaders();
-			m_SSAO->constructSSAO();
-			m_SSAO->constructSSR();
-		}
-		else if (!deferredRendering) {
-			glUseProgram(0); // Unbind any active shader
-			m_SSAO->deconstructSSAO();
-			m_SSAO->deconstructSSR();
-			m_GBuffer->constructForwardShaders();
-			m_GBuffer->deconstructDeferredShaders();
-		}
+		if (deferredRendering)
+			m_SSAO->constructDeferredRendering();
+		else if (!deferredRendering)
+			m_SSAO->constructForwardRendering();
 	}
 
 	if(deferredRendering) {
 		glDisable(GL_BLEND);
 		if(ImGui::Button("Set Resolution")) {
-			m_GBuffer->CleanUpGBuffer();
-			m_GBuffer->setResolution(m_GBuffer->getWidth(), m_GBuffer->getHeight());
-			m_GBuffer->constructGBuffer();
 			m_SSAO->recreateColorBuffer();
 		}
 	}
@@ -218,7 +203,7 @@ void UI::ImGuiDraw()
 	{
 		wireFrame ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
-
+	
 	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 	ImGui::Text("'Refetch Files' -button updates the available files found in the asset-folder");
 	if (ImGui::Button("Refetch Files")) {
@@ -236,7 +221,7 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("RESETS"))
 			{
 				if (ImGui::Button("Reset all the transforms"))
-					for (auto models : m_scene->getModels()) {
+					for (auto models : m_resoManager->getScene()->getModels()) {
 						for (auto meshes : models->getMeshes()) {
 							meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 							meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
@@ -244,14 +229,14 @@ void UI::ImGuiDraw()
 					}			
 
 				if (ImGui::Button("Reset rotation"))
-					for (auto models : m_scene->getModels()) {
+					for (auto models : m_resoManager->getScene()->getModels()) {
 						for (auto meshes : models->getMeshes()) {
 							meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
 						}
 					}
 
 				if (ImGui::Button("Reset scale"))
-					for (auto models : m_scene->getModels()) {
+					for (auto models : m_resoManager->getScene()->getModels()) {
 						for (auto meshes : models->getMeshes()) {
 							meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
 						}
@@ -265,7 +250,7 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("TRANSFORM/MATERIAL MESHES"))
 			{
 				ImGui::Text("Below is all the meshes and their transforms");
-				for (auto model : m_scene->getModels()) {
+				for (auto model : m_resoManager->getScene()->getModels()) {
 					if (ImGui::TreeNode(model->getModelPath().c_str())) {
 						for (size_t i = 0; i < model->getMeshes().size(); i++)
 						{
@@ -314,12 +299,12 @@ void UI::ImGuiDraw()
 
 								if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
 								{
-									for (size_t i = 0; i < m_scene->getMaterials().size(); i++)
+									for (size_t i = 0; i < m_resoManager->getScene()->getMaterials().size(); i++)
 									{
-										bool isSelected = (m_scene->getMaterials()[i] == currentMat);
-										if (ImGui::Selectable(m_scene->getMaterials()[i]->getName().c_str(), isSelected))
+										bool isSelected = (m_resoManager->getScene()->getMaterials()[i] == currentMat);
+										if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected))
 										{
-											meshes->setMaterial(m_scene->getMaterials()[i]);  // Set the selected material to the mesh
+											meshes->setMaterial(m_resoManager->getScene()->getMaterials()[i]);  // Set the selected material to the mesh
 										}
 										if (isSelected)
 											ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
@@ -368,13 +353,13 @@ void UI::ImGuiDraw()
 				if (ImGui::Button("Add new mesh")) {
 					// Load the selected mesh
 					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
-					std::vector<Mesh*> newMeshes = m_texLoading->processMeshes(selectedItem);
+					std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem);
 
-					m_scene->getModels().push_back(new Model(selectedItem, newMeshes));
+					m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
 
 					// Add the new mesh to the std::vector
 					for (auto& mesh : newMeshes) {
-						mesh->setMaterial(m_scene->getMaterials()[0]);
+						mesh->setMaterial(m_resoManager->getScene()->getMaterials()[0]);
 					}
 
 				}
@@ -382,11 +367,11 @@ void UI::ImGuiDraw()
 				// For selecting and removing meshes
 				if (ImGui::TreeNode("Loaded Meshes"))
 				{
-					for (size_t i = 0; i < m_scene->getModels().size(); i++) {
-						ImGui::Text("Mesh %s", m_scene->getModels()[i]->getModelPath().c_str());
+					for (size_t i = 0; i < m_resoManager->getScene()->getModels().size(); i++) {
+						ImGui::Text("Mesh %s", m_resoManager->getScene()->getModels()[i]->getModelPath().c_str());
 
 						if (ImGui::TreeNode(("Child Meshes " + std::to_string(i)).c_str())) { // ("str" + str).c_str(), reminder because I'm a troglodyte
-							for (auto meshes : m_scene->getModels()[i]->getMeshes()) {
+							for (auto meshes : m_resoManager->getScene()->getModels()[i]->getMeshes()) {
 								ImGui::Text("Mesh vertex count: %d", meshes->getVertices());
 							}
 							ImGui::TreePop();
@@ -394,8 +379,8 @@ void UI::ImGuiDraw()
 
 						if (ImGui::Button(("Remove##" + std::to_string(i)).c_str())) { // Prevent duplicated names (duplicated names have uniform actions for all iterations)
 							// Remove mesh from vector and cleanup
-							delete m_scene->getModels()[i];
-							m_scene->getModels().erase(m_scene->getModels().begin() + i);
+							delete m_resoManager->getScene()->getModels()[i];
+							m_resoManager->getScene()->getModels().erase(m_resoManager->getScene()->getModels().begin() + i);
 							break;
 						}
 
@@ -415,13 +400,13 @@ void UI::ImGuiDraw()
 		{
 			if (ImGui::TreeNode("LAMPS"))
 			{
-				ImGui::Text("Amount of existing lamps: %zu", m_scene->getLights().size());
+				ImGui::Text("Amount of existing lamps: %zu", m_resoManager->getScene()->getLights().size());
 
 				// Point light addition
-				if (ImGui::Button("Add new point light") && m_scene->getLights().size() < 12) {
-					m_scene->getLights().push_back(FileLights{ glm::vec3(0.0, 0.0, 2.0), glm::vec3(1.0f, 0.5f, 0.31f), 5.0f });
+				if (ImGui::Button("Add new point light") && m_resoManager->getScene()->getLights().size() < 12) {
+					m_resoManager->getScene()->getLights().push_back(FileLights{ glm::vec3(0.0, 0.0, 2.0), glm::vec3(1.0f, 0.5f, 0.31f), 5.0f });
 				}
-				else if (m_scene->getLights().size() == 12) {
+				else if (m_resoManager->getScene()->getLights().size() == 12) {
 					ImGui::Text("Maximum amount of lamps reached!!!");
 				}
 
@@ -429,17 +414,17 @@ void UI::ImGuiDraw()
 
 				if (ImGui::TreeNode("POINT LAMPS"))
 				{
-					for (size_t i = 0; i < m_scene->getLights().size(); i++)
+					for (size_t i = 0; i < m_resoManager->getScene()->getLights().size(); i++)
 					{
 						ImGui::PushID(static_cast<int>(i));	// Each control to be unique
 						ImGui::Text("Point Light %zu", i);
 
-						ImGui::DragFloat3("Position", glm::value_ptr(m_scene->getLights()[i].pos), 0.1f);
-						ImGui::ColorEdit3("Color", glm::value_ptr(m_scene->getLights()[i].color));
-						ImGui::InputFloat("Strength", &m_scene->getLights()[i].strength);
+						ImGui::DragFloat3("Position", glm::value_ptr(m_resoManager->getScene()->getLights()[i].pos), 0.1f);
+						ImGui::ColorEdit3("Color", glm::value_ptr(m_resoManager->getScene()->getLights()[i].color));
+						ImGui::InputFloat("Strength", &m_resoManager->getScene()->getLights()[i].strength);
 
 						if (ImGui::Button("Erase point light")) {
-							m_scene->getLights().erase(m_scene->getLights().begin() + i);
+							m_resoManager->getScene()->getLights().erase(m_resoManager->getScene()->getLights().begin() + i);
 						}
 						ImGui::Separator();
 						ImGui::PopID();
@@ -536,7 +521,7 @@ void UI::ImGuiDraw()
 				if (backgroundMode == 1) {
 					ImGui::Text("Attention! .jpg images might cause issues, use .pngs!");
 					ImGui::Text("Drop textures into: ../opengl-graphicsengine/assets/backgrounds");
-					std::vector<std::string> backgroundFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/backgrounds/"));
+					std::vector<std::string> backgroundFiles = m_resoManager->FileSystem((std::string(ASSET_DIR) + "/backgrounds/"));
 					
 					std::vector<const char*> backgroundFileNames;
 					for (const auto& file : backgroundFiles)
@@ -583,7 +568,7 @@ void UI::ImGuiDraw()
 						// Clean up background texture
 						m_HDRI->cleanBackgroundTexture();
 						std::string selectedItem = "/backgrounds/" + backgroundFiles[currentBackground];
-						Texture* newBackground = m_texLoading->loadTexture(selectedItem.c_str(), true);
+						Texture* newBackground = m_resoManager->loadTexture(selectedItem.c_str(), true);
 						m_HDRI->setBackgroundTexture(newBackground);
 					}
 				}
@@ -657,7 +642,7 @@ void UI::ImGuiDraw()
 				// Use the member variable
 				SettingsMaterial& SetMat = m_settingsMaterial;
 
-				std::vector<std::string> materialFiles = m_texLoading->FileSystem((std::string(ASSET_DIR) + "/textures/"));
+				std::vector<std::string> materialFiles = m_resoManager->FileSystem((std::string(ASSET_DIR) + "/textures/"));
 
 				std::vector<const char*> materialFileNames;
 				for (const auto& file : materialFiles)
@@ -736,7 +721,8 @@ void UI::ImGuiDraw()
 					if (useNormalTexture)
 						normalMapName = materialFiles[currentItem[3]];
 
-					Material* newMaterial = m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
+					Material* newMaterial = m_resoManager->getMaterialMap()[m_resoManager->getMaterialMap().size() + 1] 
+						= m_resoManager->checkAndAddMaterial(m_resoManager->loadTextureSet(
 						std::string("/textures/" + materialFiles[currentItem[0]]), // Diffuse
 						std::string("/textures/" + materialFiles[currentItem[1]]), // Metallic
 						std::string("/textures/" + materialFiles[currentItem[2]]), // Roughness
@@ -752,7 +738,7 @@ void UI::ImGuiDraw()
 					newMaterial->useMetallicTexture = SetMat.useMetallicTexture;
 					newMaterial->useRoughnessTexture = SetMat.useRoughnessTexture;
 
-					m_texLoading->getMaterialMap()[m_texLoading->getMaterialMap().size() + 1] = newMaterial;
+					m_resoManager->getMaterialMap()[m_resoManager->getMaterialMap().size() + 1] = newMaterial;
 				}
 
 				ImGui::TreePop();

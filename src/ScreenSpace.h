@@ -29,16 +29,20 @@ struct SSR_Settings {
 	bool dirty = false;
 };
 
-class SSAO : public kgfw::Object {
+class ScreenSpace : public kgfw::Object {
 public:
-	SSAO(GBuffer* gbuffer, int inWidth, int inHeight);
-	~SSAO();
+	ScreenSpace(GBuffer* gbuffer, int inWidth, int inHeight);
+	~ScreenSpace();
 
 	void constructSSAO();
 	void constructSSR();
 	void deconstructSSAO();
 	void deconstructSSR();
 	void setupSSAO();
+
+	void constructDeferredRendering();
+	void constructForwardRendering();
+
 	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
 	void renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw);
 	void renderSSR_TA(Camera* m_camera, Mesh* m_meshRender);

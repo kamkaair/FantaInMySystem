@@ -8,17 +8,17 @@
 
 class Mesh;
 class Shader;
-class TextureLoading;
+class ResourceManager;
 class UI;
 
 class Icon : public kgfw::Object {
 public:
-	Icon(Mesh* mesh, TextureLoading* texLoading, UI* uiDraw, Inputs* inputs, Camera* camera);
+	Icon(Mesh* mesh, ResourceManager* reso, Inputs* inputs, Camera* camera);
 	~Icon();
 
 	void renderIcons(Shader* m_icon, float iconSize, std::vector<FileLights> targetPos, int texIndex);
 	void renderIcons(Shader* m_icon, float iconSize, glm::vec3 targetPos, int texIndex);
-	void visualizeFocus(Shader* m_icon, float iconSize, UI* m_uiDraw, Inputs* input, Camera* m_camera);
+	void visualizeFocus(Shader* m_icon, float iconSize, Inputs* input, Camera* m_camera);
 	void loadIconTexture(const char* path);
 
 	glm::mat4 processIconMatrix(glm::vec3 targetPos, float iconSize);
@@ -26,7 +26,7 @@ public:
 private:
 	std::vector<Texture*> m_iconTexture;
 	Mesh* m_meshRender;
-	TextureLoading* m_texLoading;
+	ResourceManager* m_resoManager;
 	UI* m_uiDraw;
 	Inputs* m_input;
 	Camera* m_camera;

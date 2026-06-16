@@ -102,25 +102,6 @@ GLuint GBuffer::createGMetallicRoughness() {
 }
 
 GLuint GBuffer::createDepthBuffer() {
-	// Depth buffer
-	//glGenRenderbuffers(1, &rboDepth);
-	//glBindRenderbuffer(GL_RENDERBUFFER, rboDepth);
-	//glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-	//glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rboDepth);
-	//// Check completeness
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//	std::cout << "Framebuffer not complete!" << std::endl;
-
-	// The depth buffer most likely has to be a texture instead of glRenderbufferStorage
-	//glGenTextures(1, &rboDepth);
-	//glBindTexture(GL_TEXTURE_2D, rboDepth);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, rboDepth, 0);
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//	std::cout << "Framebuffer not complete!" << std::endl;
-
 	glGenTextures(1, &rboDepth);
 	glBindTexture(GL_TEXTURE_2D, rboDepth);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, 0);
@@ -201,6 +182,13 @@ void GBuffer::CleanUpGBuffer() {
 	if (m_lightingIndirectDiff != 0) { glDeleteTextures(1, &m_lightingIndirectDiff); m_lightingIndirectDiff = 0; }
 	if (m_lightingIndirectSpec != 0) { glDeleteTextures(1, &m_lightingIndirectSpec); m_lightingIndirectSpec = 0; }
 }
+
+void GBuffer::updateResolution() {
+	// Reconstruct GBuffer
+	CleanUpGBuffer();
+	constructGBuffer();
+}
+
 
 void GBuffer::constructDeferredShaders() {
 	if (m_geometryPass == 0)
