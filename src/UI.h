@@ -1,20 +1,12 @@
 #pragma once
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
-
-#include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
-#include <glad/gl.h>		// Include glad
-#include <glm/glm.hpp>      // Include glm
-#include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
-#include <glm/gtc/type_ptr.hpp>
-
-#include "mesh.h"
-#include "textureLoading.h"
 #include "HDRI.h"
 #include "GBuffer.h"
 #include "scene.h"
 #include "resourceManager.h"
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
 
 #include <vector>
 #include <stb_image.h>
@@ -104,7 +96,7 @@ private:
 	int backgroundMode = 0;
 	
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
-	std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
+	const std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
 	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true;

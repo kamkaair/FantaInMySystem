@@ -3,9 +3,8 @@
 #include <kgfw/GLUtils.h>	// Include GLUtils for checkGLError
 #include <iostream>
 #include <filesystem>
-#include "material.h"
 
-TextureLoading::TextureLoading() : Object(__FUNCTION__) {}
+TextureLoading::TextureLoading() : Object(__FUNCTION__) { std::cout << "pener :3" << std::endl; }
 
 void TextureLoading::cleanupTextures() {
 	for (Texture* tex : m_textures) {

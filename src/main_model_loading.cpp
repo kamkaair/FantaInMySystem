@@ -4,14 +4,11 @@
 #include "utils.h"			// Utility functions, has 
 #include "UI.h"
 #include "HDRI.h"
-#include "textureLoading.h"
 #include "inputs.h"
 #include "GBuffer.h"
 #include "icon.h"
 #include "ssao.h"
 #include "savefile.h"
-#include "scene.h"
-#include "resourceManager.h"
 
 // Include STB-image library
 #define STB_IMAGE_IMPLEMENTATION
@@ -53,19 +50,17 @@ public:
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
 		// texloading function class
-		m_texLoading = new TextureLoading();
+		//m_texLoading = new TextureLoading();
 
 		// Resource manager
 		m_resoManager = new ResourceManager();
-
-		// Create a new scene
-		m_scene = new Scene();
+		m_scene = m_resoManager->getScene();
 
 		// Load the scene from a file
 		setupDefaultSave();
 
 		// Set the current scene
-		m_texLoading->setCurrentScene(m_scene);
+		//m_texLoading->setCurrentScene(m_resoManager->getScene());
 		setupScene();
 
 		// the UI class, contains ImGui and such
@@ -182,7 +177,7 @@ public:
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
 
-		std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
+		std::vector<Material*> materials = m_resoManager->MaterialsPushback(restored.getPathNames());
 		m_scene->getMaterials() = materials;
 
 		for (auto m : materials) {
@@ -191,13 +186,13 @@ public:
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		std::vector<Model*> models;
-		m_texLoading->loadMeshes(models, restored.getFileMeshes());
+		m_resoManager->loadMeshes(models, restored.getFileMeshes());
 		m_scene->getModels() = models;
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
 		// TODO: serialize background image path
-		Texture* backgroundImage = m_texLoading->loadTexture(restored.getBackgroundTexPath());
+		Texture* backgroundImage = m_resoManager->loadTexture(restored.getBackgroundTexPath());
 		m_HDRI->setBackgroundTexture(backgroundImage);
 
 		// Load the HDR texture and create all the HDRI maps

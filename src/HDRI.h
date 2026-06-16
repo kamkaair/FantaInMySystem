@@ -1,13 +1,5 @@
 #pragma once
-
-#include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
-#include <glad/gl.h>		// Include glad
-#include <glm/glm.hpp>      // Include glm
-#include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
-#include <glm/gtc/type_ptr.hpp>
-
 #include <stb_image.h>
-#include "camera.h"
 #include "models.h"
 #include "texture.h"
 #include "shader.h"

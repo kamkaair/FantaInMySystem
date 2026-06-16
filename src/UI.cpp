@@ -144,44 +144,8 @@ void UI::ImGuiDraw()
 						std::cout << "Opened " + std::string(files) + "\n";
 
 						// Clean up the whole scene
-						m_scene->cleanupScene();
-						m_texLoading->cleanupTextures();
-						m_HDRI->cleanUpHDRI();
-						m_HDRI->cleanBackgroundTexture();
-
-						// Deserialize the object
-						SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/" + files);
-
-						std::vector<Material*> materials = m_texLoading->MaterialsPushback(restored.getPathNames());
-						m_scene->getMaterials() = materials;
-
-						std::vector<Model*> models;
-						m_texLoading->loadMeshes(models, restored.getFileMeshes()); // Preset modes from 0 - 3
-						m_scene->getModels() = models;
-
-						std::cout << "Background tex load: " << restored.getBackgroundTexPath() << std::endl;
-
-						Texture* backgroundImage = m_texLoading->loadTexture(restored.getBackgroundTexPath());
-						m_HDRI->setBackgroundTexture(backgroundImage);
-
-						// Load the HDR texture and create all the HDRI maps
-						m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
-
-						// Set up lights and color
-						m_scene->getLights() = restored.getLightData();
-
-						m_scene->constructScene(models, materials, restored.getLightData());
-
-						// Just in case, if no materials were added
-						if (m_scene->getMaterials().empty()) {
-							m_texLoading->checkAndAddMaterial(m_texLoading->loadTextureSet(
-								std::string("/textures/checkerboard.png"),
-								std::string("/textures/checkerboard.png"),
-								std::string("/textures/checkerboard.png"),
-								std::string("/textures/checkerboardNormal.png")
-							), "Default Material");
-							std::cout << "Material empty, creating Default Material" << std::endl;
-						}
+						m_resoManager->cleanResourceManager(m_HDRI);
+						m_resoManager->fileLoad(files, m_HDRI);
 					}
 				}
 				ImGui::EndMenu();
@@ -191,53 +155,7 @@ void UI::ImGuiDraw()
 
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
-				// Light positions, colors and light strength
-
-				// And all the meshes and materials
-				std::unordered_map<Material*, int> checkedMap;
-				std::vector<FileModels> fileModels;
-				std::vector<MaterialPaths> materialPath;
-
-				int texIndex = 0;
-				for (auto model : m_scene->getModels()) {
-					std::vector<FileMeshes> fileMeshes;
-					for(auto mesh : model->getMeshes()) {
-
-						auto it = checkedMap.find(mesh->getMaterial());					
-						if (it == checkedMap.end()) { // Check, whether the material already exists
-							std::vector<Texture*> foundTexs;
-							checkedMap.insert({ mesh->getMaterial(), texIndex });
-							mesh->getMaterial()->getMaterialIndex() = texIndex;
-
-							for (auto maps : mesh->getMaterial()->getTextures()) {
-								foundTexs.push_back(m_texLoading->findTexture(maps));
-							}
-
-							materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
-							foundTexs[0]->getFilePath(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
-							foundTexs[1]->getFilePath(), mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
-							foundTexs[2]->getFilePath(), mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
-							foundTexs[3]->getFilePath() });
-							texIndex++;
-						}				
-
-						fileMeshes.push_back(FileMeshes{ 
-							mesh->getDisplayName(),
-							mesh->getPosition(),
-							mesh->getScaling(),
-							mesh->getRotation(), mesh->getMaterial()->getMaterialIndex() });
-						
-						std::cout << "Material ID: " << mesh->getMaterial()->getMaterialIndex() << std::endl;
-					}
-
-					fileModels.push_back(FileModels{ model->getModelPath(), fileMeshes });
-				}				
-				std::cout << "Background tex path: " << m_HDRI->getBackgroundTexture()->getFilePath() << std::endl;
-
-				// Create and serialize an object
-				SaveFile original(m_scene->getLights(), materialPath, fileModels, m_HDRI->getBackgroundTexture()->getFilePath(), m_HDRI->getHDRI_Path());
-				original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
-				
+				m_resoManager->fileSave(saveName, m_HDRI);	
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
 		

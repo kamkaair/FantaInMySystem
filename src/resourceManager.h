@@ -4,9 +4,13 @@
 
 class ResourceManager : public TextureLoading {
 public:
-	void fileLoad(std::string file, Scene* scene, HDRI* hdri);
-	void fileSave(std::string saveName, Scene* scene, HDRI* hdri);
-	void cleanResourceManager(Scene* scene, HDRI* hdri);
+	ResourceManager();
 
+	void fileLoad(std::string file, HDRI* hdri);
+	void fileSave(std::string saveName, HDRI* hdri);
+	void cleanResourceManager(HDRI* hdri);
+
+	Scene* getScene() { return m_scene; }
 private:
+	Scene* m_scene;
 };

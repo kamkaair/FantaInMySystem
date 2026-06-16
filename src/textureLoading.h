@@ -1,12 +1,11 @@
 #pragma once
 #include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 #include <glad/gl.h>		// Include glad
-#include "material.h"
 #include <unordered_map>
-#include "texture.h"
+
 #include "models.h"
+#include "texture.h"
 #include "scene.h"
-#include "savefileStructs.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/postprocess.h>
