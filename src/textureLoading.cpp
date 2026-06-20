@@ -253,6 +253,15 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	Material* meshMaterial = nullptr;
 	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size()) {
 		meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
+
+		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
+		aiString MatName;
+		if (Mat->Get(AI_MATKEY_NAME, MatName) == AI_SUCCESS) {
+			std::cout << "Material Name: " << MatName.C_Str() << " - Index: " << mesh->mMaterialIndex << std::endl;
+		}
+		else {
+			std::cout << "Blyat cyka" << std::endl;
+		}
 	}
 
 	// Create the Mesh object with the vertices, indices, and preloaded material

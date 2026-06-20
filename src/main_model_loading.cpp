@@ -184,7 +184,6 @@ public:
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
-		// TODO: serialize background image path
 		Texture* backgroundImage = m_resoManager->loadTexture(restored.getBackgroundTexPath());
 		m_HDRI->setBackgroundTexture(backgroundImage);
 
@@ -430,6 +429,9 @@ public:
 		
 		// Keeping the movement inside the update loop
 		g_input->movementControls(window, deltaTime);
+
+		// TODO: save camera position
+		//std::cout << "Camera POS: " << glm::to_string(g_input->getCameraPos()) << " - Front: " << glm::to_string(g_input->getCameraFront()) << std::endl;
 	}
 
 private:

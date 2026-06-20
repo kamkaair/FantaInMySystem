@@ -95,7 +95,7 @@ private:
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 	const std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
-	bool meshRotationEnabled = true, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
+	bool meshRotationEnabled = false, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };

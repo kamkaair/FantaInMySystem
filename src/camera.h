@@ -42,7 +42,6 @@ private:
     float m_aspect;
 
     void updateProjectionMatrix() {
-        //m_projection = glm::perspective(glm::radians(m_fov), m_width / m_height, m_near, m_far);
         m_projection = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);
     }
 };

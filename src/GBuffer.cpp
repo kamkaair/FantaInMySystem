@@ -13,7 +13,7 @@ GBuffer::~GBuffer() {
 	deconstructDeferredShaders();
 }
 
-void GBuffer::constructGBuffer() {
+void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing everything this method creates, fix that
 	// This constructor sets up the G-Buffer
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
