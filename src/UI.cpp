@@ -257,9 +257,6 @@ void UI::ImGuiDraw()
 							Mesh* meshes = model->getMeshes()[i];
 							if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName() + " " + std::to_string(i)).c_str())) // Added an index to the name to avoid duplicates
 							{
-								//ImGui::Text(model->getMeshes()[i]->getDisplayName().c_str());
-								//ImGui::Dummy(ImVec2(0.0f, 7.5f));
-
 								glm::vec3 pos = meshes->getPosition();
 								if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
 									meshes->setPosition(pos); // Update the position if the value changes
@@ -347,6 +344,19 @@ void UI::ImGuiDraw()
 					}
 
 					ImGui::EndCombo();
+				}
+
+				if (ImGui::Button("Add mesh with automatic textures")) {
+					// Load the selected mesh
+					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
+					std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem, true);
+
+					/*m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
+
+					// Add the new mesh to the std::vector
+					for (auto& mesh : newMeshes) {
+						mesh->setMaterial(m_resoManager->getScene()->getMaterials()[0]);
+					}*/
 				}
 
 				// Load selected HDR file and generate the maps for them
@@ -443,7 +453,7 @@ void UI::ImGuiDraw()
 				static int currentItem = 0;
 
 				ImGui::Text("You can upload your own HDRI files!");
-				ImGui::Text("File path: ../opengl-graphicsengine/assets/HDRI");
+				ImGui::Text("File path: ../FantaInMySystem/assets/HDRI");
 
 				if (ImGui::BeginCombo("Available HDRIs", hdrFileNames[currentItem].c_str()))
 				{
@@ -520,7 +530,7 @@ void UI::ImGuiDraw()
 				// For textures based background
 				if (backgroundMode == 1) {
 					ImGui::Text("Attention! .jpg images might cause issues, use .pngs!");
-					ImGui::Text("Drop textures into: ../opengl-graphicsengine/assets/backgrounds");
+					ImGui::Text("Drop textures into: ../FantaInMySystem/assets/backgrounds");
 					std::vector<std::string> backgroundFiles = m_resoManager->FileSystem((std::string(ASSET_DIR) + "/backgrounds/"));
 					
 					std::vector<const char*> backgroundFileNames;

@@ -87,6 +87,10 @@ public:
 			), "Default Material");
 		}
 
+		for (auto m : m_scene->getMaterials()) {
+			std::cout << "Input Name: " << m->getName() << " - MatName: " << m->getMaterialName() << std::endl;
+		}
+
 		// Alpha blending
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -165,7 +169,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Multiples.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";

@@ -31,12 +31,16 @@ public:
 	std::pair<std::vector<GLuint>, std::vector<Texture*>> loadTextureSet(const std::string& baseColorPath, const std::string& metallicMapPath, const std::string& roughnessMapPath, const std::string& normalMapPath);
 	
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::string path);
+	Mesh* processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path);
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
-	std::vector<Mesh*> processMeshes(const std::string& path);
+	void processNodeAutoTexture(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
+	std::vector<Mesh*> processMeshes(const std::string& path, bool autoTexture = false);
 	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
 	void loadMeshes(std::vector<Model*>& model, std::vector<FileModels> fileModels);
 
-	std::vector<std::string> FileSystem(std::string& path);
+	Material* findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh);
+
+	std::vector<std::string> FileSystem(const std::string path);
 	Texture* findTexture(GLuint textureID);
 
 	std::vector<Texture*> getTrackedTextures() { return m_textures; }

@@ -190,7 +190,7 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 						break;
 					}	
 				}
-				if (newMap) {
+				if (newMap) { // newMap should be a feature inside loadTexture
 					textureMap = loadTexture(map.first.c_str());
 					m_textures.push_back(textureMap);
 				}			
@@ -222,11 +222,10 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 	return matVec;
 }
 
-Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {
-	std::vector<Vertex> vertices;
-	std::vector<unsigned int> indices;
-
+std::vector<Vertex> loadVertexData(aiMesh* mesh) {
 	// Load vertex data
+	std::vector<Vertex> vertices;
+
 	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
 		Vertex vertex; //temporable container for the data of each loop
 		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
@@ -240,14 +239,30 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 		}
 		vertices.push_back(vertex);
 	}
+	return vertices;
+}
 
+std::vector<unsigned int> loadIndices(aiMesh* mesh) {
 	// Retrieve the corresponding vertex indices
+	std::vector<unsigned int> indices;
+
 	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
 		aiFace face = mesh->mFaces[i];
 		for (unsigned int j = 0; j < face.mNumIndices; j++) {
 			indices.push_back(face.mIndices[j]);
 		}
 	}
+	return indices;
+}
+
+Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {
+	static int meshIndex = 0;
+
+	// Load vertex data
+	std::vector<Vertex> vertices = loadVertexData(mesh);
+
+	// Load/retrieve the indices of the vertices
+	std::vector<unsigned int> indices = loadIndices(mesh);
 
 	// Assign the preloaded material by index
 	Material* meshMaterial = nullptr;
@@ -256,12 +271,10 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 
 		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
 		aiString MatName;
-		if (Mat->Get(AI_MATKEY_NAME, MatName) == AI_SUCCESS) {
-			std::cout << "Material Name: " << MatName.C_Str() << " - Index: " << mesh->mMaterialIndex << std::endl;
-		}
-		else {
-			std::cout << "Blyat cyka" << std::endl;
-		}
+		if ((Mat->Get(AI_MATKEY_NAME, MatName) == AI_SUCCESS)) {
+			meshMaterial->getMaterialName() = MatName.C_Str();
+			std::cout << "Scene matVec size: " << m_scene->getMaterials().size() << " - Material Name: " << meshMaterial->getMaterialName() << " - Index: " << meshIndex << std::endl;
+		}	
 	}
 
 	// Create the Mesh object with the vertices, indices, and preloaded material
@@ -275,6 +288,74 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	return newMesh;
 }
 
+Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
+	// Assign the preloaded material by index
+	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Normal" };
+
+	std::vector<std::string> allFiles = FileSystem(ASSET_DIR + std::string("/textures"));
+	for (auto file : allFiles) {
+		std::cout << "Filename: " << file << std::endl;
+	}
+	
+	Material* meshMaterial = nullptr;
+	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size()) {
+		meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
+
+		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
+		aiString MatName;
+		if ((Mat->Get(AI_MATKEY_NAME, MatName) == AI_SUCCESS)) {
+			meshMaterial->getMaterialName() = MatName.C_Str();
+			std::cout << "Scene matVec size: " << m_scene->getMaterials().size() << " - Material Name: " << meshMaterial->getMaterialName() << std::endl;
+		}
+		else {
+			return nullptr;
+		}
+
+		for (auto type : types) {
+			// TODO: file system queries
+			//if(MatName.C_Str() + type == queryEntry)
+			auto it = std::find(allFiles.begin(), allFiles.end(), std::string(MatName.C_Str() + type + ".png"));
+			std::cout << "Trying to find: " << std::string(MatName.C_Str() + type + ".png") << " - ";
+			if (it != allFiles.end()) {
+				std::cout << "Foundie: " << it->c_str() << " - Target str: " << std::string(MatName.C_Str() + type + ".png") << std::endl;
+			}
+			else {
+				std::cout << "not found! target format: " << type << std::endl;
+			}
+
+			//Texture* textureMap = loadTexture(path);
+			//m_textures.push_back(textureMap);
+			//textureIDs.push_back(textureMap->getTextureId());
+		}
+	}
+	
+	return meshMaterial;
+}
+
+Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path) {
+	/*static int meshIndex = 0;
+
+	// Load vertex data
+	std::vector<Vertex> vertices = loadVertexData(mesh);
+
+	// Load/retrieve the indices of the vertices
+	std::vector<unsigned int> indices = loadIndices(mesh);*/
+
+	// Find materials
+	Material* meshMaterial = findTexturesWithPath(path, scene, mesh);
+
+	/*// Create the Mesh object with the vertices, indices, and preloaded material
+	Mesh* newMesh = new Mesh(vertices, indices);
+	newMesh->setMaterial(meshMaterial);
+
+	// Push back all the model's vertex amounts
+	newMesh->getVertices() = vertices.size();
+	//std::cout << newMesh->getName() << " - " << vertices.size() << " Amount of Indices: " << indices.size() << std::endl;
+
+	return newMesh;*/
+	return nullptr;
+}
+
 void setMeshDisplayName(Mesh* meshRef, const std::string& name) {
 	if (meshRef) {
 		meshRef->setDisplayName(name);
@@ -283,6 +364,7 @@ void setMeshDisplayName(Mesh* meshRef, const std::string& name) {
 	else { printf("Error: Mesh reference is null\n"); }
 }
 
+// TODO: a function should be a parameter (processMesh or processMeshAutoTexture)
 void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path) {
 	// process each mesh located at the current node
 	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
@@ -299,7 +381,23 @@ void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const
 	}
 }
 
-std::vector<Mesh*> TextureLoading::processMeshes(const std::string& path) {
+void TextureLoading::processNodeAutoTexture(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path) {
+	// process each mesh located at the current node
+	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
+		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
+		// the node object only contains indices to index the actual objects in the scene.
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		meshes->push_back(processMeshAutoTexture(mesh, scene, path));
+		setMeshDisplayName(meshes->back(), node->mName.C_Str());
+	}
+
+	// after we've processed all of the meshes (if any) we then recursively process each of the children nodes
+	for (unsigned int i = 0; i < node->mNumChildren; i++) {
+		processNodeAutoTexture(meshes, node->mChildren[i], scene, path);
+	}
+}
+
+std::vector<Mesh*> TextureLoading::processMeshes(const std::string& path, bool autoTexture) {
 	std::vector<Mesh*> meshes; // Create the container that will be returned by this function
 
 	//read file with Assimp
@@ -313,17 +411,17 @@ std::vector<Mesh*> TextureLoading::processMeshes(const std::string& path) {
 	}
 
 	// Process Assimp's root node recursively
-	processNode(&meshes, scene->mRootNode, scene, path);
+	if(!autoTexture)
+		processNode(&meshes, scene->mRootNode, scene, path);	
+	else
+		processNodeAutoTexture(&meshes, scene->mRootNode, scene, path); // TODO add a new node
 
 	return meshes;
 }
 
-std::vector<std::string> TextureLoading::FileSystem(std::string& path)
-{
+std::vector<std::string> TextureLoading::FileSystem(const std::string path) {
 	std::vector<std::string> filenames;
-	for (const auto& entry : std::filesystem::directory_iterator(path))
-	{
-		//std::cout << entry.path() << std::endl;
+	for (const auto& entry : std::filesystem::directory_iterator(path)) {
 		filenames.push_back(entry.path().filename().string());
 	}
 
@@ -418,17 +516,6 @@ void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
 
 	std::cout << "Amount of meshes in the scene: " << meshes.size() << std::endl;
 }
-
-/*Material findMaterial(std::vector<Material> vecMat, Material targetMat) {
-	for (auto mat : vecMat) {
-		if (targetMat.getTextures() == mat.getTextures()) {
-			std::cout << "Found material" << mat.getName() << std::endl;
-			return mat;
-		}	
-	}
-	std::cout << "ERROR: Could not find the corresponding material" << std::endl;
-	return;
-}*/
 
 void TextureLoading::loadMeshes(std::vector<Model*>& container, std::vector<FileModels> fileModels) {
 	/*for (auto mat : m_scene->getMaterials()) {

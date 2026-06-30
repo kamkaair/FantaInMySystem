@@ -23,9 +23,11 @@ public:
     const std::vector<GLuint>& getTextures() const;
     const std::string& getName() const;
     int& getMaterialIndex();
+    std::string& getMaterialName() { return m_materialName; }
 
 private:
     std::vector<GLuint> m_texturesC;
-    std::string m_name;
+    std::string m_displayName;
+    std::string m_materialName;
     int m_materialIndex;
 };
