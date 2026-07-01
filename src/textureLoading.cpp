@@ -89,81 +89,6 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 	return m_scene->getMaterials().back();  // Return the last added material
 }
 
-std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode) {
-	//std::unordered_map<int, Material*> materialsMap;
-
-	// mat 0
-	materialsMap[0] = checkAndAddMaterial(loadTextureSet(
-		ASSET_DIR + std::string("/textures/checkerboard.png"),
-		ASSET_DIR + std::string("/textures/checkerboard.png"),
-		ASSET_DIR + std::string("/textures/checkerboard.png"),
-		ASSET_DIR + std::string("/textures/checkerboardNormal.png")
-	), "TestMaterial");
-
-	if (presetMode >= 1) {
-		// mat 1
-		materialsMap[1] = checkAndAddMaterial(loadTextureSet(
-			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png")
-		), "MP18");
-	}
-
-	if (presetMode >= 2) {
-		// mat 2
-		materialsMap[2] = checkAndAddMaterial(loadTextureSet(
-			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png")
-		), "Barrel");
-	}
-
-	if (presetMode >= 3) {
-		//mat 3
-		materialsMap[3] = checkAndAddMaterial(loadTextureSet(
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Blade1_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Blade1_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Blade1_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Blade1_Normal.png")
-		), "Blade");
-
-		//mat 4
-		materialsMap[4] = checkAndAddMaterial(loadTextureSet(
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Grip_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Grip_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Grip_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Grip_Normal.png")
-		), "Grip");
-
-		//mat 5
-		materialsMap[5] = checkAndAddMaterial(loadTextureSet(
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_GripDetail_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_GripDetail_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_GripDetail_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_GripDetail_Normal.png")
-		), "Ornaments");
-
-		// mat 6
-		materialsMap[6] = checkAndAddMaterial(loadTextureSet(
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnifeStand_DefaultMaterial_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnifeStand_DefaultMaterial_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnifeStand_DefaultMaterial_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnifeStand_DefaultMaterial_Normal.png")
-		), "Holder");
-
-		// mat 7
-		materialsMap[7] = checkAndAddMaterial(loadTextureSet(
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Screws_BaseColor.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Screws_Metallic.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Screws_Roughness.png"),
-			ASSET_DIR + std::string("/textures/PresetMaterials/OrnamentKnife/GoofyAhhKnife_Screws_Normal.png")
-		), "Screws");
-	}
-	return materialsMap;
-}
-
 void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, const std::vector<std::pair<std::string, bool>> maps) {
 	// Decide to either use an image texture or use a value for the maps
 	for (auto map : maps) {
@@ -265,8 +190,6 @@ std::vector<unsigned int> loadIndices(aiMesh* mesh) {
 }
 
 Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {
-	static int meshIndex = 0;
-
 	// Load vertex data
 	std::vector<Vertex> vertices = loadVertexData(mesh);
 
@@ -277,13 +200,6 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	Material* meshMaterial = nullptr;
 	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size()) {
 		meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
-
-		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
-		aiString MatName;
-		if ((Mat->Get(AI_MATKEY_NAME, MatName) == AI_SUCCESS)) {
-			meshMaterial->getMaterialName() = MatName.C_Str();
-			std::cout << "Scene matVec size: " << m_scene->getMaterials().size() << " - Material Name: " << meshMaterial->getMaterialName() << " - Index: " << meshIndex << std::endl;
-		}	
 	}
 
 	// Create the Mesh object with the vertices, indices, and preloaded material
@@ -366,23 +282,15 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 		}
 
 		// Create a new material with the values
-		createMaterial(usables);
+		return createMaterial(usables);
 	}
-	
-	return meshMaterial;
+	return nullptr;
 }
 
 Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path) {
-	static int meshIndex = 0;
-
-	// Load vertex data
-	std::vector<Vertex> vertices = loadVertexData(mesh);
-
-	// Load/retrieve the indices of the vertices
-	std::vector<unsigned int> indices = loadIndices(mesh);
-
-	// Find materials
-	Material* meshMaterial = findTexturesWithPath(path, scene, mesh);
+	std::vector<Vertex> vertices = loadVertexData(mesh); // Load vertex data
+	std::vector<unsigned int> indices = loadIndices(mesh); // Load/retrieve the indices of the vertices
+	Material* meshMaterial = findTexturesWithPath(path, scene, mesh); // Find materials
 
 	// Create the Mesh object with the vertices, indices, and preloaded material
 	Mesh* newMesh = new Mesh(vertices, indices);
@@ -390,7 +298,6 @@ Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene,
 
 	// Push back all the model's vertex amounts
 	newMesh->getVertices() = vertices.size();
-	//std::cout << newMesh->getName() << " - " << vertices.size() << " Amount of Indices: " << indices.size() << std::endl;
 
 	return newMesh;
 }
@@ -489,81 +396,6 @@ Texture* TextureLoading::findTexture(GLuint textureID) {
 	
 	int index = distance(m_textures.begin(), iterator);
 	return m_textures[index];*/
-}
-
-// Added & to pass a reference, silly dinky me...
-void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode) {
-
-	auto PlaneMesh = processMeshes((std::string(ASSET_DIR) + "/models/plane.obj"));
-	for (size_t i = 0; i < PlaneMesh.size(); ++i) {
-		meshes.push_back(PlaneMesh[i]);
-
-		if (i == 0) {  // Reflectivity test plane
-			meshes.back()->setScaling(glm::vec3(6.0f));
-			meshes.back()->setMaterial(m_scene->getMaterials()[0]);
-			meshes.back()->setPosition(glm::vec3(0.0f, -1.0f, 0.0f));
-		}
-	}
-
-	if (presetMode >= 1) {
-		auto MP18Mesh = processMeshes((std::string(ASSET_DIR) + "/models/MP18Low.obj"));
-		for (size_t i = 0; i < MP18Mesh.size(); ++i) {
-			meshes.push_back(MP18Mesh[i]);
-
-			if (i == 0) {  // MP18 -Gun model
-				meshes.back()->setScaling(glm::vec3(1.0f));
-				meshes.back()->setMaterial(m_scene->getMaterials()[1]);
-				meshes.back()->setPosition(glm::vec3(0.0f, 1.0f, 0.0f));
-			}
-		}
-	}
-
-	if (presetMode >= 2) {
-		auto BarrelMesh = processMeshes((std::string(ASSET_DIR) + "/models/barrel.obj"));
-		for (size_t i = 0; i < BarrelMesh.size(); ++i) {
-			meshes.push_back(BarrelMesh[i]);
-
-			if (i == 0) {  // Barrel
-				meshes.back()->setScaling(glm::vec3(1.0f));
-				meshes.back()->setMaterial(m_scene->getMaterials()[2]);
-				meshes.back()->setPosition(glm::vec3(0.0f, 2.0f, 0.0f));
-			}
-		}
-	}
-
-	if (presetMode >= 3) {
-		auto OrnamentKnifeMesh = processMeshes((std::string(ASSET_DIR) + "/models/OrnamentKnife/1.0OrnamentKnife.obj"));
-		for (size_t i = 0; i < OrnamentKnifeMesh.size(); ++i) {
-			meshes.push_back(OrnamentKnifeMesh[i]);
-			// Set unique transformations for each object (grip, blade, ornaments)
-			switch (i) {
-			case 0: // Blade
-				meshes.back()->setMaterial(m_scene->getMaterials()[3]);
-				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-				break;
-			case 1: // Screws - not the actual texture, uses the blade's texture
-				meshes.back()->setMaterial(m_scene->getMaterials()[0]);
-				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-				break;
-			case 2: // Ornaments
-				meshes.back()->setMaterial(m_scene->getMaterials()[5]);
-				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-				break;
-			case 3: // Grip
-				meshes.back()->setMaterial(m_scene->getMaterials()[4]);
-				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-				break;
-			case 4: // Holder
-				meshes.back()->setMaterial(m_scene->getMaterials()[6]);
-				meshes.back()->setPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-				break;
-			default:
-				std::cout << "LoadMeshes Index out of reach" << std::endl;
-			}
-		}
-	}
-
-	std::cout << "Amount of meshes in the scene: " << meshes.size() << std::endl;
 }
 
 void TextureLoading::loadMeshes(std::vector<Model*>& container, std::vector<FileModels> fileModels) {

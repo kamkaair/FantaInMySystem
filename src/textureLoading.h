@@ -20,13 +20,13 @@ public:
 
 	void cleanupTextures();
 
+	// TODO: get rid of materialMap. Refactor UI to use a different container
 	std::unordered_map<int, Material*> getMaterialMap() {
 		return materialsMap;
 	}
 
 	Texture* loadTexture(const std::string& path, bool flipTexture = false);
 	Material* checkAndAddMaterial(const std::pair<std::vector<GLuint>, std::vector<Texture*>>& textureData, const std::string& materialName);
-	std::unordered_map<int, Material*> loadMaterials(int presetMode);
 	std::vector<Material*> MaterialsPushback(const std::vector<MaterialPaths>& materialList);
 	std::pair<std::vector<GLuint>, std::vector<Texture*>> loadTextureSet(const std::string& baseColorPath, const std::string& metallicMapPath, const std::string& roughnessMapPath, const std::string& normalMapPath);
 	void checkDuplicateTextures(std::vector<GLuint>& textureIDs, std::vector<std::pair<std::string, bool>> maps);
@@ -37,7 +37,6 @@ public:
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
 	void processNodeAutoTexture(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
 	std::vector<Mesh*> processMeshes(const std::string& path, bool autoTexture = false);
-	void TextureLoading::loadAllMeshes(std::vector<Mesh*>& meshes, int presetMode);
 	void loadMeshes(std::vector<Model*>& model, std::vector<FileModels> fileModels);
 
 	Material* findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh);
@@ -51,8 +50,6 @@ public:
 	void setCurrentScene(Scene* scene) { m_scene = scene; }
 
 private:
-
-
 	int m_materialIndex = 0;
 	std::unordered_map<int, Material*> materialsMap;
 	std::vector<Texture*>		m_textures;
