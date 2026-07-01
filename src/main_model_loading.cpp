@@ -169,17 +169,13 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/Multiples.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/ProblematicScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
 
 		std::vector<Material*> materials = m_resoManager->MaterialsPushback(restored.getPathNames());
 		m_scene->getMaterials() = materials;
-
-		for (auto m : materials) {
-			std::cout << "Mat name: " << m->getName() << " Mat index:" << m->getMaterialIndex() << std::endl;
-		}
 
 		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
 		std::vector<Model*> models;

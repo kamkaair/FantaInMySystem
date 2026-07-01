@@ -29,7 +29,9 @@ public:
 	std::unordered_map<int, Material*> loadMaterials(int presetMode);
 	std::vector<Material*> MaterialsPushback(const std::vector<MaterialPaths>& materialList);
 	std::pair<std::vector<GLuint>, std::vector<Texture*>> loadTextureSet(const std::string& baseColorPath, const std::string& metallicMapPath, const std::string& roughnessMapPath, const std::string& normalMapPath);
-	
+	void checkDuplicateTextures(std::vector<GLuint>& textureIDs, std::vector<std::pair<std::string, bool>> maps);
+	Material* createMaterial(const MaterialPaths& materialPaths);
+
 	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::string path);
 	Mesh* processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path);
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
@@ -41,6 +43,7 @@ public:
 	Material* findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh);
 
 	std::vector<std::string> FileSystem(const std::string path);
+	std::vector<std::pair<std::string, std::string>> FileSystemTuple(const std::string path);
 	Texture* findTexture(GLuint textureID);
 
 	std::vector<Texture*> getTrackedTextures() { return m_textures; }
@@ -48,6 +51,8 @@ public:
 	void setCurrentScene(Scene* scene) { m_scene = scene; }
 
 private:
+
+
 	int m_materialIndex = 0;
 	std::unordered_map<int, Material*> materialsMap;
 	std::vector<Texture*>		m_textures;

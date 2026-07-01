@@ -19,6 +19,7 @@ TextureLoading::~TextureLoading() {
 }
 
 Texture* TextureLoading::loadTexture(const std::string& path, bool flipTexture) {
+	// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
 	int width, height, nrChannels;
 	stbi_set_flip_vertically_on_load(flipTexture);
 	GLubyte* data = stbi_load((ASSET_DIR + path).c_str(), &width, &height, &nrChannels, 0);
@@ -163,60 +164,68 @@ std::unordered_map<int, Material*> TextureLoading::loadMaterials(int presetMode)
 	return materialsMap;
 }
 
+void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, const std::vector<std::pair<std::string, bool>> maps) {
+	// Decide to either use an image texture or use a value for the maps
+	for (auto map : maps) {
+		if (map.second) {
+			Texture* textureMap;
+			bool newMap = true;
+
+			// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
+			for (auto tex : m_textures) {
+				if (tex->getFilePath() == map.first) {
+					textureMap = tex;
+					newMap = false;
+					break;
+				}
+			}
+
+			if (newMap) { // newMap should be a feature inside loadTexture
+				textureMap = loadTexture(map.first.c_str());
+				m_textures.push_back(textureMap);
+			}
+			textureIDs.push_back(textureMap->getTextureId());
+			std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePath() << std::endl;
+		}
+		else {
+			textureIDs.push_back(GLuint(0));
+		}
+	}
+}
+
+Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
+	// Maps added to make the texture loading process more tidy
+	std::vector<GLuint> textureIDs;
+	std::vector<std::pair<std::string, bool>> maps = {
+		{materialPaths.diffuse.path, materialPaths.diffuse.useMap},
+		{materialPaths.metallic.path, materialPaths.metallic.useMap},
+		{materialPaths.roughness.path, materialPaths.roughness.useMap},
+		{materialPaths.normalPath, true} // Normal maps always use textures
+	};
+
+	// Decide to either use an image texture or use a value for the maps
+	checkDuplicateTextures(textureIDs, maps);
+
+	// Create a new material and push_back into the scene
+	Material* newMat = new Material(textureIDs, materialPaths.materialName, m_materialIndex);
+	m_scene->getMaterials().push_back(newMat);
+	m_materialIndex++;
+
+	newMat->diffuseColor = materialPaths.diffuse.value;
+	newMat->metallic = materialPaths.metallic.value;
+	newMat->roughness = materialPaths.roughness.value;
+
+	newMat->useDiffuseTexture = materialPaths.diffuse.useMap;
+	newMat->useMetallicTexture = materialPaths.metallic.useMap;
+	newMat->useRoughnessTexture = materialPaths.roughness.useMap;
+
+	return newMat;
+}
+
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
 	std::vector<Material*> matVec;
 	for (int i = 0; i < materialList.size(); i++) {
-
-		// Maps added to make the texture loading process more tidy
-		std::vector<GLuint> textureIDs;
-		std::vector<std::pair<std::string, bool>> maps = {
-			{materialList[i].diffuse.path, materialList[i].diffuse.useMap},
-			{materialList[i].metallic.path, materialList[i].metallic.useMap},
-			{materialList[i].roughness.path, materialList[i].roughness.useMap},
-			{materialList[i].normalPath, true} // Normal maps always use textures
-		};
-
-		// Decide to either use an image texture or use a value for the maps
-		for (auto& map : maps) {
-			if (map.second) {
-				Texture* textureMap;
-				bool newMap = true;
-				
-				// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
-				for (auto tex : m_textures) {
-					if (tex->getFilePath() == map.first) {
-						textureMap = tex;
-						newMap = false;
-						break;
-					}	
-				}
-				if (newMap) { // newMap should be a feature inside loadTexture
-					textureMap = loadTexture(map.first.c_str());
-					m_textures.push_back(textureMap);
-				}			
-				textureIDs.push_back(textureMap->getTextureId());	
-				std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePath() << std::endl;
-			}
-			else {
-				textureIDs.push_back(GLuint(0));
-			}
-			//std::cout << "Name: " << map.first << " - Bool: " << map.second << std::endl;
-		}
-
-		// Create a new material and push_back into the scene
-		Material* newMat = new Material(textureIDs, materialList[i].materialName, m_materialIndex);
-		m_scene->getMaterials().push_back(newMat);
-		m_materialIndex++;
-
-		newMat->diffuseColor = materialList[i].diffuse.value;
-		newMat->metallic = materialList[i].metallic.value;
-		newMat->roughness = materialList[i].roughness.value;
-
-		newMat->useDiffuseTexture = materialList[i].diffuse.useMap;
-		newMat->useMetallicTexture = materialList[i].metallic.useMap;
-		newMat->useRoughnessTexture = materialList[i].roughness.useMap;
-
-		matVec.push_back(newMat);
+		matVec.push_back(createMaterial(materialList[i]));
 	}
 
 	return matVec;
@@ -292,59 +301,90 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 	// Assign the preloaded material by index
 	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Normal" };
 
-	std::vector<std::string> allFiles = FileSystem(ASSET_DIR + std::string("/textures"));
-	for (auto file : allFiles) {
-		std::cout << "Filename: " << file << std::endl;
+	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + std::string("/textures"));
+	std::vector<std::string> filenames, ends;
+	for (auto f : allFiles) {
+		filenames.push_back(f.first);
+		ends.push_back(f.second);
 	}
-	
+
 	Material* meshMaterial = nullptr;
 	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size()) {
 		meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
 
 		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
 		aiString MatName;
-		if ((Mat->Get(AI_MATKEY_NAME, MatName) == AI_SUCCESS)) {
-			meshMaterial->getMaterialName() = MatName.C_Str();
-			std::cout << "Scene matVec size: " << m_scene->getMaterials().size() << " - Material Name: " << meshMaterial->getMaterialName() << std::endl;
-		}
-		else {
+		MaterialPaths usables;
+
+		// Pointers for the maps, used in createMaterial
+		struct mapRef {
+			std::string* path;
+			bool* useMap;
+		};
+
+		std::vector<mapRef> maps = {
+			{&usables.diffuse.path, &usables.diffuse.useMap},
+			{&usables.metallic.path, &usables.metallic.useMap},
+			{&usables.roughness.path, &usables.roughness.useMap},
+			{&usables.normalPath, nullptr} // Normal maps always use textures
+		};
+
+		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) {
 			return nullptr;
 		}
 
-		for (auto type : types) {
-			// TODO: file system queries
-			//if(MatName.C_Str() + type == queryEntry)
-			auto it = std::find(allFiles.begin(), allFiles.end(), std::string(MatName.C_Str() + type + ".png"));
-			std::cout << "Trying to find: " << std::string(MatName.C_Str() + type + ".png") << " - ";
-			if (it != allFiles.end()) {
-				std::cout << "Foundie: " << it->c_str() << " - Target str: " << std::string(MatName.C_Str() + type + ".png") << std::endl;
+		// Set the loaded material name
+		usables.materialName = MatName.C_Str();
+
+		for (int i = 0; i < types.size(); i++) {
+			auto it = std::find(filenames.begin(), filenames.end(), std::string(MatName.C_Str() + types[i])); // find the string
+			int nameIndex = std::distance(filenames.begin(), it); // get the index for the found string, parallel usage with ends
+
+			std::cout << "Trying to find: " << std::string(MatName.C_Str() + types[i]) << " - ";
+
+			if (it != filenames.end()) {
+				std::cout << "Foundie: " << it->c_str() << " - Target str: " << std::string(MatName.C_Str() + types[i]) << std::endl;
+				*maps[i].path = std::string("/textures/") + it->c_str() + ends[nameIndex]; // name + file type
+				if(maps[i].useMap != nullptr)
+					*maps[i].useMap = true;
 			}
 			else {
-				std::cout << "not found! target format: " << type << std::endl;
+				std::cout << "not found! target format: " << types[i] << std::endl;
+				*maps[i].path = "";
+				if (maps[i].useMap != nullptr)
+					*maps[i].useMap = false;
 			}
-
-			//Texture* textureMap = loadTexture(path);
-			//m_textures.push_back(textureMap);
-			//textureIDs.push_back(textureMap->getTextureId());
 		}
+
+		for (auto m : maps) {
+			std::cout << "Path: " << *m.path;
+			if (m.useMap != nullptr)
+				std::cout << " Bool: " << *m.useMap << std::endl;
+			else {
+				std::cout << "Was nullptr" << std::endl;
+			}
+		}
+
+		// Create a new material with the values
+		createMaterial(usables);
 	}
 	
 	return meshMaterial;
 }
 
 Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path) {
-	/*static int meshIndex = 0;
+	static int meshIndex = 0;
 
 	// Load vertex data
 	std::vector<Vertex> vertices = loadVertexData(mesh);
 
 	// Load/retrieve the indices of the vertices
-	std::vector<unsigned int> indices = loadIndices(mesh);*/
+	std::vector<unsigned int> indices = loadIndices(mesh);
 
 	// Find materials
 	Material* meshMaterial = findTexturesWithPath(path, scene, mesh);
 
-	/*// Create the Mesh object with the vertices, indices, and preloaded material
+	// Create the Mesh object with the vertices, indices, and preloaded material
 	Mesh* newMesh = new Mesh(vertices, indices);
 	newMesh->setMaterial(meshMaterial);
 
@@ -352,8 +392,7 @@ Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene,
 	newMesh->getVertices() = vertices.size();
 	//std::cout << newMesh->getName() << " - " << vertices.size() << " Amount of Indices: " << indices.size() << std::endl;
 
-	return newMesh;*/
-	return nullptr;
+	return newMesh;
 }
 
 void setMeshDisplayName(Mesh* meshRef, const std::string& name) {
@@ -423,6 +462,16 @@ std::vector<std::string> TextureLoading::FileSystem(const std::string path) {
 	std::vector<std::string> filenames;
 	for (const auto& entry : std::filesystem::directory_iterator(path)) {
 		filenames.push_back(entry.path().filename().string());
+	}
+
+	return filenames;
+}
+
+std::vector<std::pair<std::string, std::string>> TextureLoading::FileSystemTuple(const std::string path) {
+	std::vector<std::pair<std::string, std::string>> filenames;
+	
+	for (const auto& entry : std::filesystem::directory_iterator(path)) {
+		filenames.push_back(std::pair(entry.path().stem().string(), entry.path().extension().string()));
 	}
 
 	return filenames;

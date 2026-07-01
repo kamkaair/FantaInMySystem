@@ -334,9 +334,7 @@ void UI::ImGuiDraw()
 				{
 					for (size_t i = 0; i < meshFileNames.size(); i++) {
 						bool isSelected = (currentItem == i);
-						if (ImGui::Selectable(meshFileNames[i].c_str(), isSelected))
-						{
-							//meshFileNames[i];
+						if (ImGui::Selectable(meshFileNames[i].c_str(), isSelected)) {
 							currentItem = i;
 						}
 						if (isSelected)
@@ -351,12 +349,7 @@ void UI::ImGuiDraw()
 					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
 					std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem, true);
 
-					/*m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
-
-					// Add the new mesh to the std::vector
-					for (auto& mesh : newMeshes) {
-						mesh->setMaterial(m_resoManager->getScene()->getMaterials()[0]);
-					}*/
+					m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
 				}
 
 				// Load selected HDR file and generate the maps for them
