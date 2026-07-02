@@ -173,10 +173,11 @@ public:
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
 
+		// Create materials and their textures
 		std::vector<Material*> materials = m_resoManager->MaterialsPushback(restored.getPathNames());
 		m_scene->getMaterials() = materials;
 
-		//m_texLoading->loadAllMeshes(m_uiDraw->getMeshes(), presetMode); // Preset modes from 0 - 3
+		// Create models and assign materials
 		std::vector<Model*> models;
 		m_resoManager->loadMeshes(models, restored.getFileMeshes());
 		m_scene->getModels() = models;
@@ -190,7 +191,6 @@ public:
 		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
 
 		// Set up lights and color
-		//initializeLights(restored.getLightData());
 		m_scene->getLights() = restored.getLightData();
 	}
 

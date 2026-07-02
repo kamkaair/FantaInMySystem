@@ -20,13 +20,13 @@ public:
     bool useMetallicTexture = true;
     bool useRoughnessTexture = true;
 
-    const std::vector<GLuint>& getTextures() const;
+    std::vector<GLuint>& getTextures();
     const std::string& getName() const;
     int& getMaterialIndex();
     std::string& getMaterialName() { return m_materialName; }
 
 private:
-    std::vector<GLuint> m_texturesC;
+    std::vector<GLuint> m_materialTextures;
     std::string m_displayName;
     std::string m_materialName;
     int m_materialIndex;

@@ -56,7 +56,7 @@ public:
 
 	bool getLightOrientation() { return lightOrientationOn; }
 
-	SettingsMaterial getSettingsMaterial() { return m_settingsMaterial; }
+	SettingsMaterial getSettingsMaterial() { return m_settingsCreateMat; }
 
 	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
 	void shaderSet(const char* uniform, bool value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
@@ -75,7 +75,9 @@ public:
 	ImGuiWindowFlags disableInteraction();
 
 private:
-	SettingsMaterial m_settingsMaterial;
+	void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
+
+	SettingsMaterial m_settingsCreateMat, m_settingsEditMat;
 
 	Shader* m_backImage;
 
@@ -85,7 +87,7 @@ private:
 	ResourceManager* m_resoManager;
 
 	// File names
-	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames;
+	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames, m_materialFileNames;
 
 	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
 		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;

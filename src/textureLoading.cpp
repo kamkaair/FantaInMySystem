@@ -92,29 +92,29 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, const std::vector<std::pair<std::string, bool>> maps) {
 	// Decide to either use an image texture or use a value for the maps
 	for (auto map : maps) {
-		if (map.second) {
-			Texture* textureMap;
-			bool newMap = true;
-
-			// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
-			for (auto tex : m_textures) {
-				if (tex->getFilePath() == map.first) {
-					textureMap = tex;
-					newMap = false;
-					break;
-				}
-			}
-
-			if (newMap) { // newMap should be a feature inside loadTexture
-				textureMap = loadTexture(map.first.c_str());
-				m_textures.push_back(textureMap);
-			}
-			textureIDs.push_back(textureMap->getTextureId());
-			std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePath() << std::endl;
-		}
-		else {
+		if (!map.second) {
 			textureIDs.push_back(GLuint(0));
+			continue;
 		}
+
+		Texture* textureMap;
+		bool newMap = true;
+
+		// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
+		for (auto tex : m_textures) {
+			if (tex->getFilePath() == map.first) {
+				textureMap = tex;
+				newMap = false;
+				break;
+			}
+		}
+
+		if (newMap) {
+			textureMap = loadTexture(map.first.c_str());
+			m_textures.push_back(textureMap);
+		}
+		textureIDs.push_back(textureMap->getTextureId());
+		std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePath() << std::endl;
 	}
 }
 
@@ -128,10 +128,6 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 		{materialPaths.roughness.path, materialPaths.roughness.useMap},
 		{materialPaths.normalPath, true} // Normal maps always use textures
 	};
-
-	for (auto m : maps) {
-		std::cout << "Pathy: " << m.first << " - " << " Bool: " << m.second << std::endl;
-	}
 
 	// Decide to either use an image texture or use a value for the maps
 	checkDuplicateTextures(textureIDs, maps);
@@ -150,6 +146,33 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	newMat->useRoughnessTexture = materialPaths.roughness.useMap;
 
 	return newMat;
+}
+
+void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& materialPaths) {
+	// Maps added to make the texture loading process more tidy
+	std::vector<GLuint> textureIDs;
+
+	std::vector<std::pair<std::string, bool>> maps = {
+		{materialPaths.diffuse.path, materialPaths.diffuse.useMap},
+		{materialPaths.metallic.path, materialPaths.metallic.useMap},
+		{materialPaths.roughness.path, materialPaths.roughness.useMap},
+		{materialPaths.normalPath, true} // Normal maps always use textures
+	};
+
+	// Decide to either use an image texture or use a value for the maps
+	checkDuplicateTextures(textureIDs, maps);
+
+	for (size_t i = 0; i < editableMat->getTextures().size(); i++) {
+		editableMat->getTextures()[i] = textureIDs[i];
+	}
+
+	editableMat->diffuseColor = materialPaths.diffuse.value;
+	editableMat->metallic = materialPaths.metallic.value;
+	editableMat->roughness = materialPaths.roughness.value;
+
+	editableMat->useDiffuseTexture = materialPaths.diffuse.useMap;
+	editableMat->useMetallicTexture = materialPaths.metallic.useMap;
+	editableMat->useRoughnessTexture = materialPaths.roughness.useMap;
 }
 
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
@@ -279,15 +302,6 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 
 		if (usables.normalPath.empty()) // Add the default normal path, if normal path is empty
 			usables.normalPath = emptyNormalPath;
-
-		/*for (auto m : maps) {
-			std::cout << "Path: " << *m.path;
-			if (m.useMap != nullptr)
-				std::cout << " Bool: " << *m.useMap << std::endl;
-			else {
-				std::cout << "Was nullptr" << std::endl;
-			}
-		}*/
 
 		// Create a new material with the values
 		return createMaterial(usables);
