@@ -724,8 +724,7 @@ void UI::ImGuiDraw()
 					if (useNormalTexture)
 						normalMapName = materialFiles[currentItem[3]];
 
-					Material* newMaterial = m_resoManager->getMaterialMap()[m_resoManager->getMaterialMap().size() + 1] 
-						= m_resoManager->checkAndAddMaterial(m_resoManager->loadTextureSet(
+					Material* newMaterial = m_resoManager->checkAndAddMaterial(m_resoManager->loadTextureSet(
 						std::string("/textures/" + materialFiles[currentItem[0]]), // Diffuse
 						std::string("/textures/" + materialFiles[currentItem[1]]), // Metallic
 						std::string("/textures/" + materialFiles[currentItem[2]]), // Roughness
@@ -740,8 +739,6 @@ void UI::ImGuiDraw()
 					newMaterial->useDiffuseTexture = SetMat.useDiffuseTexture;
 					newMaterial->useMetallicTexture = SetMat.useMetallicTexture;
 					newMaterial->useRoughnessTexture = SetMat.useRoughnessTexture;
-
-					m_resoManager->getMaterialMap()[m_resoManager->getMaterialMap().size() + 1] = newMaterial;
 				}
 
 				ImGui::TreePop();
