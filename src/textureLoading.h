@@ -48,5 +48,7 @@ private:
 	unsigned int m_materialIndex = 0;
 	std::vector<Texture*> m_textures;
 
+	std::string emptyNormalPath = "/textures/EmptyNormal.png";
+
 	Scene* m_scene;
 };

@@ -121,12 +121,17 @@ void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, con
 Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	// Maps added to make the texture loading process more tidy
 	std::vector<GLuint> textureIDs;
+
 	std::vector<std::pair<std::string, bool>> maps = {
 		{materialPaths.diffuse.path, materialPaths.diffuse.useMap},
 		{materialPaths.metallic.path, materialPaths.metallic.useMap},
 		{materialPaths.roughness.path, materialPaths.roughness.useMap},
 		{materialPaths.normalPath, true} // Normal maps always use textures
 	};
+
+	for (auto m : maps) {
+		std::cout << "Pathy: " << m.first << " - " << " Bool: " << m.second << std::endl;
+	}
 
 	// Decide to either use an image texture or use a value for the maps
 	checkDuplicateTextures(textureIDs, maps);
@@ -272,14 +277,17 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			}
 		}
 
-		for (auto m : maps) {
+		if (usables.normalPath.empty()) // Add the default normal path, if normal path is empty
+			usables.normalPath = emptyNormalPath;
+
+		/*for (auto m : maps) {
 			std::cout << "Path: " << *m.path;
 			if (m.useMap != nullptr)
 				std::cout << " Bool: " << *m.useMap << std::endl;
 			else {
 				std::cout << "Was nullptr" << std::endl;
 			}
-		}
+		}*/
 
 		// Create a new material with the values
 		return createMaterial(usables);

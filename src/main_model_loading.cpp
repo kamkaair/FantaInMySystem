@@ -16,7 +16,6 @@
 
 Inputs* g_input = 0;
 int width = 640, height = 480;
-//int width = 1280, height = 720;
 
 class Application : public kgfw::Object
 {
