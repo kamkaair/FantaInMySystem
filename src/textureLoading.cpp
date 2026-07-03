@@ -411,13 +411,7 @@ Texture* TextureLoading::findTexture(GLuint textureID) {
 		if (m_textures[i]->getTextureId() == textureID)
 			return m_textures[i];
 	}
-
-	return m_textures[0];
-
-	/*auto iterator = std::find(m_textures.begin(), m_textures.end(), int(textureID));
-	
-	int index = distance(m_textures.begin(), iterator);
-	return m_textures[index];*/
+	return nullptr;
 }
 
 void TextureLoading::loadMeshes(std::vector<Model*>& container, std::vector<FileModels> fileModels) {

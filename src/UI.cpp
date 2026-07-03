@@ -751,49 +751,64 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("EDIT MATERIALS"))
 			{
 				static int select = 0;
-				std::vector<Material*> materials = m_resoManager->getScene()->getMaterials();
+				static int comboBoxSelection[4] = { 0, 0, 0, 0 }; // One for each texture type
+				std::vector<Material*>& materials = m_resoManager->getScene()->getMaterials();
 				SettingsMaterial& SetMat = m_settingsEditMat;
 
-				// Control for material
-				const char* materialName = materials[select] ? materials[select]->getName().c_str() : "None"; // transform string into c_str() or set name to "None"
+				if (!materials.empty()) {
+					// Control for material
+					const char* materialName = materials[select] ? materials[select]->getName().c_str() : "None"; // transform string into c_str() or set name to "None"
 
-				if (ImGui::BeginCombo("Material", materialName))  // Combo box to choose material
-				{
-					for (size_t i = 0; i < materials.size(); i++) {
-						bool isSelected = (materials[i] == materials[select]);
-						if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
-							select = i;
-						}
-						if (isSelected)
-							ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+					if (ImGui::Button("Remove selected material")) {
+						materials.erase(materials.begin() + select);
+						select = 0;
 					}
-					ImGui::EndCombo();
-				}
 
-				static int comboBoxSelection[4] = { 0, 0, 0, 0 }; // One for each texture type
-				renderMaterialOptions(SetMat, comboBoxSelection);
+					if (ImGui::BeginCombo("Material", materialName))  // Combo box to choose material
+					{
+						for (size_t i = 0; i < materials.size(); i++) {
+							bool isSelected = (materials[i] == materials[select]);
+							if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
+								select = i;
+								/*std::vector<Texture*> texIDs;
+								for (auto tex : materials[select]->getTextures()) {
+									texIDs.push_back(m_resoManager->findTexture(tex));
+								}
+								//SetMat.diffuseTexture = texIDs[0]->getFilePath();*/
+							}
+							if (isSelected)
+								ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+						}
+						ImGui::EndCombo();
+					}
 
-				if (ImGui::Button("Apply edited material"))
-				{
-					stbi_set_flip_vertically_on_load(false);
+					// TODO: an option to remove existing materials
 
-					std::string normalMapName = "EmptyNormal.png";
-					if (useNormalTexture)
-						normalMapName = m_materialFileNames[comboBoxSelection[3]];
+					renderMaterialOptions(SetMat, comboBoxSelection);
 
-					// Use the selected options from "renderMaterialOptions" to create a new MaterialPaths
-					MaterialPaths newMaterialParams = { std::string(materials[select]->getName()),
-						std::string("/textures/" + m_materialFileNames[comboBoxSelection[0]]), SetMat.useDiffuseTexture, SetMat.diffuseColor,	// Diffuse
-						std::string("/textures/" + m_materialFileNames[comboBoxSelection[1]]), SetMat.useMetallicTexture, SetMat.metallic,		// Metallic
-						std::string("/textures/" + m_materialFileNames[comboBoxSelection[2]]), SetMat.useRoughnessTexture, SetMat.roughness,	// Roughness
-						std::string("/textures/" + normalMapName) };																			// Normal
+					if (ImGui::Button("Apply edited material"))
+					{
+						stbi_set_flip_vertically_on_load(false);
 
-					// Material to be edited and the parameters
-					m_resoManager->editMaterial(m_resoManager->getScene()->getMaterials()[select], newMaterialParams);
-				}
+						std::string normalMapName = "EmptyNormal.png";
+						if (useNormalTexture)
+							normalMapName = m_materialFileNames[comboBoxSelection[3]];
+
+						// Use the selected options from "renderMaterialOptions" to create a new MaterialPaths
+						MaterialPaths newMaterialParams = { std::string(materials[select]->getName()),
+							std::string("/textures/" + m_materialFileNames[comboBoxSelection[0]]), SetMat.useDiffuseTexture, SetMat.diffuseColor,	// Diffuse
+							std::string("/textures/" + m_materialFileNames[comboBoxSelection[1]]), SetMat.useMetallicTexture, SetMat.metallic,		// Metallic
+							std::string("/textures/" + m_materialFileNames[comboBoxSelection[2]]), SetMat.useRoughnessTexture, SetMat.roughness,	// Roughness
+							std::string("/textures/" + normalMapName) };																			// Normal
+
+						// Material to be edited and the parameters
+						m_resoManager->editMaterial(materials[select], newMaterialParams);
+					}
+					
+				}			
 				ImGui::TreePop();
 
-				}
+			}
 			ImGui::Separator();
 
 			ImGui::EndTabItem();
