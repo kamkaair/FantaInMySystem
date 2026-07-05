@@ -55,4 +55,15 @@ Texture::~Texture() {
 
 GLuint Texture::getTextureId() const { return m_textureId; }
 std::string Texture::getFilePath() const { return m_filePath; }
-void Texture::setFilePath(std::string inPath) { m_filePath = inPath; }
+std::string Texture::getTextureFilename() const { return m_textureFilename; }
+void Texture::setFilePath(std::string inPath) { 
+	m_filePath = inPath; // Semi-full filepath (only project path .../textures/filename.png)
+
+	std::reverse(inPath.begin(), inPath.end());
+	for (auto c : inPath) {
+		if (c == '/')
+			break;
+		m_textureFilename += c;
+	}
+	std::reverse(m_textureFilename.begin(), m_textureFilename.end()); // Contains only the filename and the extension of the texture, good enough for now
+}

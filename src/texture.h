@@ -12,7 +12,9 @@ public:
 
 	GLuint getTextureId() const;
 	std::string getFilePath() const;
+	std::string getTextureFilename() const;
 private:
 	GLuint m_textureId;	// Texture id
-	std::string m_filePath;
+	std::string m_filePath = "";
+	std::string m_textureFilename = "";
 };

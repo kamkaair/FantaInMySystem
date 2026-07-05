@@ -47,9 +47,7 @@ ImGuiWindowFlags UI::disableInteraction() {
 void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]) {
 	// This is probably quite useless, should probably just use std::string instead and not convert these to c_str() everytime
 	std::vector<const char*> materialFileNames;
-	for (const auto& file : m_materialFileNames)
-	{
-		// file into c_str()
+	for (const auto& file : m_materialFileNames) {
 		materialFileNames.push_back(file.c_str());
 	}
 
@@ -756,33 +754,43 @@ void UI::ImGuiDraw()
 				SettingsMaterial& SetMat = m_settingsEditMat;
 
 				if (!materials.empty()) {
-					// Control for material
 					const char* materialName = materials[select] ? materials[select]->getName().c_str() : "None"; // transform string into c_str() or set name to "None"
 
-					if (ImGui::Button("Remove selected material")) {
-						materials.erase(materials.begin() + select);
-						select = 0;
-					}
-
-					if (ImGui::BeginCombo("Material", materialName))  // Combo box to choose material
+					if (ImGui::BeginCombo("Material", materialName))
 					{
 						for (size_t i = 0; i < materials.size(); i++) {
 							bool isSelected = (materials[i] == materials[select]);
 							if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
-								select = i;
-								/*std::vector<Texture*> texIDs;
-								for (auto tex : materials[select]->getTextures()) {
-									texIDs.push_back(m_resoManager->findTexture(tex));
+								select = i; // Set the selected index
+								for (size_t j = 0; j < 4; j++) { // comboBoxSelection size
+									Texture* foundTex = m_resoManager->findTexture(materials[select]->getTextures()[j]);
+									if (foundTex == nullptr) // solid values are nullptrs
+										continue;
+									
+									std::string texFilename = foundTex->getTextureFilename();
+									for (size_t k = 0; k < m_materialFileNames.size(); k++) {
+										//std::cout << "Compared: " << m_materialFileNames[k] << " - Target:" << texFilename << std::endl;
+										if (m_materialFileNames[k] == texFilename) { // maybe store the material names into an unordered_map
+											comboBoxSelection[j] = k;
+											break;
+										}
+									}
 								}
-								//SetMat.diffuseTexture = texIDs[0]->getFilePath();*/
+
+								// Set material properties and bools
+								SetMat.diffuseColor = materials[select]->diffuseColor;
+								SetMat.metallic = materials[select]->metallic;
+								SetMat.roughness = materials[select]->roughness;						
+
+								SetMat.useDiffuseTexture = materials[select]->useDiffuseTexture;
+								SetMat.useMetallicTexture = materials[select]->useMetallicTexture;
+								SetMat.useRoughnessTexture = materials[select]->useRoughnessTexture;
 							}
 							if (isSelected)
 								ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
 						}
 						ImGui::EndCombo();
 					}
-
-					// TODO: an option to remove existing materials
 
 					renderMaterialOptions(SetMat, comboBoxSelection);
 
@@ -804,7 +812,13 @@ void UI::ImGuiDraw()
 						// Material to be edited and the parameters
 						m_resoManager->editMaterial(materials[select], newMaterialParams);
 					}
-					
+					ImGui::Dummy(ImVec2(0.0f, 4.0f));
+
+					ImGui::Text("This removes the selected material");
+					if (ImGui::Button("Remove selected material")) {
+						materials.erase(materials.begin() + select);
+						select = 0;
+					}
 				}			
 				ImGui::TreePop();
 
