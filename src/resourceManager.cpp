@@ -56,19 +56,27 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 
 			auto it = checkedMap.find(mesh->getMaterial());
 			if (it == checkedMap.end()) { // Check, whether the material already exists
-				std::vector<Texture*> foundTexs;
+				std::vector<std::string> filePaths;
 				checkedMap.insert({ mesh->getMaterial(), texIndex });
 				mesh->getMaterial()->getMaterialIndex() = texIndex;
 
 				for (auto maps : mesh->getMaterial()->getTextures()) {
-					foundTexs.push_back(findTexture(maps));
+					Texture* foundTexture = findTexture(maps);
+					if (foundTexture != nullptr)
+						filePaths.push_back(foundTexture->getFilePath());
+					else
+						filePaths.push_back("");
+					
 				}
+				std::cout << filePaths[0] << std::endl;
+				std::cout << mesh->getMaterial()->useDiffuseTexture << std::endl;
+				std::cout << glm::to_string(mesh->getMaterial()->diffuseColor) << std::endl;
 
 				materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
-				foundTexs[0]->getFilePath(), mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
-				foundTexs[1]->getFilePath(), mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
-				foundTexs[2]->getFilePath(), mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
-				foundTexs[3]->getFilePath() });
+				filePaths[0], mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
+				filePaths[1], mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
+				filePaths[2], mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
+				filePaths[3] });
 				texIndex++;
 			}
 

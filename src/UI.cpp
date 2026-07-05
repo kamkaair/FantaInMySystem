@@ -221,6 +221,7 @@ void UI::ImGuiDraw()
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
 				m_resoManager->fileSave(saveName, m_HDRI);	
+				updateFiles(m_saveFiles, "Saves/");
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
 		
