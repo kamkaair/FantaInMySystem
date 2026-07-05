@@ -7,10 +7,10 @@
 TextureLoading::TextureLoading() : Object(__FUNCTION__) {}
 
 void TextureLoading::cleanupTextures() {
-	for (Texture* tex : m_textures) {
-		delete tex;
+	for (auto texMap : m_textureMap) {
+		delete texMap.second;
 	}
-	m_textures.clear();
+	m_textureMap.clear();
 	m_materialIndex = 0;
 }
 
@@ -78,7 +78,7 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 
 		// Track the textures for later cleanup
 		for (Texture* tex : textures) {
-			m_textures.push_back(tex);
+			m_textureMap.insert({tex->getTextureId(), tex});
 		}
 		m_materialIndex++;
 	}
@@ -101,9 +101,10 @@ void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, con
 		bool newMap = true;
 
 		// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
-		for (auto tex : m_textures) {
-			if (tex->getFilePath() == map.first) {
-				textureMap = tex;
+		// TODO: look for a better way, maybe...
+		for (auto tex : m_textureMap) {
+			if (tex.second->getFilePath() == map.first) {
+				textureMap = tex.second;
 				newMap = false;
 				break;
 			}
@@ -111,7 +112,8 @@ void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, con
 
 		if (newMap) {
 			textureMap = loadTexture(map.first.c_str());
-			m_textures.push_back(textureMap);
+			//m_textures.push_back(textureMap);
+			m_textureMap.insert({ textureMap->getTextureId(), textureMap });
 		}
 		textureIDs.push_back(textureMap->getTextureId());
 		std::cout << "Is a newMap: " << newMap << " - TexID: " << textureMap->getTextureId() << " - Name: " << textureMap->getFilePath() << std::endl;
@@ -407,11 +409,11 @@ std::vector<std::pair<std::string, std::string>> TextureLoading::FileSystemTuple
 }
 
 Texture* TextureLoading::findTexture(GLuint textureID) {
-	for (int i = 0; i < m_textures.size(); i++) {
-		if (m_textures[i]->getTextureId() == textureID)
-			return m_textures[i];
-	}
-	return nullptr;
+	auto it = m_textureMap.find(textureID); // m_textureMap.at(textureID) works as well
+	if (it == m_textureMap.end())
+		return nullptr;
+
+	return it->second;
 }
 
 void TextureLoading::loadMeshes(std::vector<Model*>& container, std::vector<FileModels> fileModels) {

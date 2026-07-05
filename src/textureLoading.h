@@ -38,7 +38,7 @@ public:
 	std::vector<std::string> FileSystem(const std::string path);
 	std::vector<std::pair<std::string, std::string>> FileSystemTuple(const std::string path);
 
-	std::vector<Texture*> getTrackedTextures() { return m_textures; }
+	std::unordered_map<GLuint, Texture*> getTrackedTextures() { return m_textureMap; }
 	void setCurrentScene(Scene* scene) { m_scene = scene; }
 
 private:
@@ -47,7 +47,8 @@ private:
 	void processNodeAutoTexture(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
 
 	unsigned int m_materialIndex = 0;
-	std::vector<Texture*> m_textures;
+	//std::vector<Texture*> m_textures;
+	std::unordered_map<GLuint, Texture*> m_textureMap;
 	std::string emptyNormalPath = "/textures/EmptyNormal.png";
 
 	Scene* m_scene;

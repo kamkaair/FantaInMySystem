@@ -86,10 +86,6 @@ public:
 			), "Default Material");
 		}
 
-		for (auto m : m_scene->getMaterials()) {
-			std::cout << "Input Name: " << m->getName() << " - MatName: " << m->getMaterialName() << std::endl;
-		}
-
 		// Alpha blending
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
