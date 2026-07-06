@@ -817,8 +817,11 @@ void UI::ImGuiDraw()
 
 					ImGui::Text("This removes the selected material");
 					if (ImGui::Button("Remove selected material")) {
-						materials.erase(materials.begin() + select);
+						m_resoManager->replaceMaterials(materials[select], m_resoManager->getScene()->getDefaultMaterial());
+						delete materials[select];
+						materials.erase(materials.begin() + select);	
 						select = 0;
+						m_resoManager->checkInvalidTextures();
 					}
 				}			
 				ImGui::TreePop();

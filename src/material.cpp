@@ -6,9 +6,6 @@ Material::Material(const std::vector<GLuint>& textures, const std::string& name,
     : m_materialTextures(textures), m_displayName(name), m_materialIndex(materialIndex) {}
 
 Material::~Material() {
-    for (GLuint textureId : m_materialTextures) {
-        glDeleteTextures(1, &textureId);
-    }
     m_materialTextures.clear();
 }
 

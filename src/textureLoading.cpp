@@ -8,8 +8,10 @@ TextureLoading::TextureLoading() : Object(__FUNCTION__) {}
 
 void TextureLoading::cleanupTextures() {
 	for (auto texMap : m_textureMap) {
+		glDeleteTextures(1, &texMap.first);
 		delete texMap.second;
 	}
+
 	m_textureMap.clear();
 	m_materialIndex = 0;
 }

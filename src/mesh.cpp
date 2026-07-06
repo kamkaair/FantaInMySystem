@@ -108,7 +108,7 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 	// Model matrix
 	shader->setUniform("M", getModelMatrix());
 
-	// Point light properties // ADD LightP.size()!!!!!!
+	// Point light properties
 	for (int i = 0; i < lights.size(); i++) {
 		// Set the point light position
 		shader->setUniform("pointLights[" + std::to_string(i) + "].position", lights[i].pos);
@@ -126,11 +126,9 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 	shader->setUniform("NUM_POINT_LIGHTS", lightAmount);
 
 	shader->setUniform("viewPos", m_camera->getPosition().x, m_camera->getPosition().y, m_camera->getPosition().z);
-	//shader->setUniform("invModel", glm::transpose(glm::mat3(getModelMatrix())));
-	//shader->setUniform("view", m_camera->getViewMatrix());
-	//shader->setUniform("proj", m_camera->getProjectionMatrix());
 	
 	// Bind material textures
+	const std::vector<GLuint>& textureIds = m_material->getTextures();
 	if (m_material) {
 
 		// Set uniform values for material properties
@@ -142,7 +140,6 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 		shader->setUniform("useMetallicTexture", m_material->useMetallicTexture);
 		shader->setUniform("useRoughnessTexture", m_material->useRoughnessTexture);
 
-		const std::vector<GLuint>& textureIds = m_material->getTextures();
 		// Ensure you bind the textures with the appropriate uniforms
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, textureIds[0]);  // DiffuseMap
@@ -172,7 +169,6 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 
 	// Unbind textures
 	if (m_material) {
-		const std::vector<GLuint>& textureIds = m_material->getTextures();
 		for (int i = 0; i < textureIds.size(); ++i) {
 			glActiveTexture(GL_TEXTURE1 + i);
 			glBindTexture(GL_TEXTURE_2D, 0);

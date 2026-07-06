@@ -15,6 +15,8 @@ public:
 		}
 		m_materials.clear();
 		m_lights.clear();
+
+		delete m_defaultMaterial;
 	}
 
 	void constructScene(std::vector<Model*>& meshes, std::vector<Material*>& material, std::vector<FileLights>& lights) {
@@ -29,12 +31,16 @@ public:
 
 	std::vector<Model*>& getModels() { return m_models; }
 	std::vector<Material*>& getMaterials() { return m_materials; }
-	std::vector<FileLights>& getLights() {return m_lights;}
+	std::vector<FileLights>& getLights() { return m_lights; }
+	Material* getDefaultMaterial() { return m_defaultMaterial; }
+	void setDefaultMaterial(Material* inDefaultMat) { m_defaultMaterial = inDefaultMat; }
 
 private:
 	std::vector<Model*> m_models;
 	std::vector<FileLights> m_lights;
 	std::vector<Material*> m_materials;
+
+	Material* m_defaultMaterial;
 };
 
 /*

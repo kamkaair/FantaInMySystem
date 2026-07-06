@@ -1,10 +1,18 @@
 #include "resourceManager.h"
 #include "savefile.h"
+#include <unordered_set>
 
 ResourceManager::ResourceManager() {
 	// Create a new scene
 	m_scene = new Scene();
 	setCurrentScene(m_scene);
+
+	// Set the default material
+	m_scene->setDefaultMaterial(createMaterial(MaterialPaths{ std::string("Checkerboard"),
+		std::string("/textures/checkerboard.png"), true, glm::vec3(0),	// Diffuse
+		std::string("/textures/checkerboard.png"), true, 0.0f,			// Metallic
+		std::string("/textures/checkerboard.png"), true, 0.0f,			// Roughness
+		std::string("/textures/checkerboardNormal.png") })); // Add the default material
 }
 
 void ResourceManager::fileLoad(std::string file, HDRI* hdri) {
@@ -96,6 +104,57 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 	// Create and serialize an object
 	SaveFile original(m_scene->getLights(), materialPath, fileModels, hdri->getBackgroundTexture()->getFilePath(), hdri->getHDRI_Path());
 	original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
+}
+
+void ResourceManager::replaceMaterials(Material* oldMat, Material* newMat) {
+	for (auto& model : m_scene->getModels())
+		for (auto& mesh : model->getMeshes()) {
+			if (mesh->getMaterial() == oldMat)
+				mesh->setMaterial(newMat);
+		}
+}
+
+void ResourceManager::checkInvalidTextures() { // Probably unnecessarily mega expensive, but I'll take a look at it later
+	// Get the old map
+	std::unordered_map<GLuint, bool> checkMap;
+	for (auto map : getTrackedTextures()) {
+		checkMap.insert({ map.first, false });
+	}
+
+	// Find redundant textures
+	for (auto mat : m_scene->getMaterials()) {
+		for (auto texture : mat->getTextures()) {
+			auto it = checkMap.find(texture);
+			std::cout << "textureID: " << texture << std::endl;
+			if (it != checkMap.end()) {
+				it->second = true;
+			}
+		}
+	}
+	for (auto map : checkMap) {
+		std::cout << "Redundant textureID: " << map.first << " - Condition: " << map.second << std::endl;
+	}
+
+	// Delete redundant textures, which have not been found
+	/*for (auto map : checkMap) {
+		if (map.second != false) {
+			glDeleteTextures(1, &map.first);
+			delete texture.second;
+		}
+	}*/
+
+	std::vector<std::pair<const GLuint, Texture*>> tbd;
+	for (auto& texture : getTrackedTextures()) {
+		auto it = checkMap.find(texture.first);
+		if (!it->second) {
+			tbd.push_back(texture);
+			glDeleteTextures(1, &texture.first);
+			delete texture.second;
+		}		
+	}
+
+	for (auto deleteTex : tbd) 
+		getTrackedTextures().erase(deleteTex.first);
 }
 
 void ResourceManager::cleanResourceManager(HDRI* hdri) {

@@ -44,7 +44,7 @@ private:
 	GLuint m_VBO;
 
 	size_t m_indiceCount;
-	Material* m_material = 0;
+	Material* m_material = nullptr;
 
 	std::string m_meshDisplayName;
 	int m_vertexAmount;

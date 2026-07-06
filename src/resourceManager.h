@@ -10,6 +10,9 @@ public:
 	void fileSave(std::string saveName, HDRI* hdri);
 	void cleanResourceManager(HDRI* hdri);
 
+	void replaceMaterials(Material* oldMat, Material* newMat);
+	void checkInvalidTextures();
+
 	Scene* getScene() { return m_scene; }
 private:
 	Scene* m_scene;

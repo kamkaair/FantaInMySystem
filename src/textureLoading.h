@@ -38,7 +38,7 @@ public:
 	std::vector<std::string> FileSystem(const std::string path);
 	std::vector<std::pair<std::string, std::string>> FileSystemTuple(const std::string path);
 
-	std::unordered_map<GLuint, Texture*> getTrackedTextures() { return m_textureMap; }
+	std::unordered_map<GLuint, Texture*>& getTrackedTextures() { return m_textureMap; }
 	void setCurrentScene(Scene* scene) { m_scene = scene; }
 
 private:

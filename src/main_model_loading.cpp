@@ -76,16 +76,6 @@ public:
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
 
-		// Default material
-		if (m_scene->getMaterials().empty()) {
-			m_resoManager->checkAndAddMaterial(m_resoManager->loadTextureSet(
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboard.png"),
-				std::string("/textures/checkerboardNormal.png")
-			), "Default Material");
-		}
-
 		// Alpha blending
 		glEnable(GL_BLEND);
 		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -164,7 +154,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/ProblematicScene.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
