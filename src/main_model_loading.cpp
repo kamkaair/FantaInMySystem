@@ -124,7 +124,7 @@ public:
 
 		std::vector<MaterialPaths> materialPath; // Path, use map and value
 
-		materialPath.push_back(MaterialPaths{std::string("Checkerboard"),
+		materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
 			std::string("/textures/checkerboard.png"), true, glm::vec3(0),	// Diffuse
 			std::string("/textures/checkerboard.png"), true, 0.0f,			// Metallic
 			std::string("/textures/checkerboard.png"), true, 0.0f,			// Roughness

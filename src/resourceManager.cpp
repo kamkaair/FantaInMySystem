@@ -114,47 +114,38 @@ void ResourceManager::replaceMaterials(Material* oldMat, Material* newMat) {
 		}
 }
 
-void ResourceManager::checkInvalidTextures() { // Probably unnecessarily mega expensive, but I'll take a look at it later
+void ResourceManager::clearUnusedTextures() { // Probably unnecessarily mega expensive, but I'll take a look at it later
 	// Get the old map
-	std::unordered_map<GLuint, bool> checkMap;
-	for (auto map : getTrackedTextures()) {
-		checkMap.insert({ map.first, false });
+	std::unordered_set<GLuint> usedTextures;
+	for (const auto& mat : m_scene->getMaterials()) {
+		for(const auto& tex : mat->getTextures())
+			usedTextures.insert( tex );
 	}
 
-	// Find redundant textures
-	for (auto mat : m_scene->getMaterials()) {
-		for (auto texture : mat->getTextures()) {
-			auto it = checkMap.find(texture);
-			std::cout << "textureID: " << texture << std::endl;
-			if (it != checkMap.end()) {
-				it->second = true;
-			}
+	// Default material is an exception, it shouldn't be deleted
+	GLuint defaultMaterialTextures[2] = { m_scene->getDefaultMaterial()->getTextures()[0], m_scene->getDefaultMaterial()->getTextures()[3] };
+
+	// Find and delete redundant textures, which have not been found
+	std::vector<GLuint> tbd;
+	for (auto it = getTrackedTextures().begin(); it != getTrackedTextures().end(); it++) { // The iterator can be ++'d
+		bool notDefaultTexture = (defaultMaterialTextures[0] != it->first && defaultMaterialTextures[1] != it->first);
+
+		std::cout << "Checked: " << it->first;
+		if (usedTextures.count(it->first) == 0 && notDefaultTexture) {
+			std::cout << " DELETED";
+			tbd.push_back(it->first);
+			delete it->second;
 		}
-	}
-	for (auto map : checkMap) {
-		std::cout << "Redundant textureID: " << map.first << " - Condition: " << map.second << std::endl;
+		std::cout << std::endl;
 	}
 
-	// Delete redundant textures, which have not been found
 	/*for (auto map : checkMap) {
-		if (map.second != false) {
-			glDeleteTextures(1, &map.first);
-			delete texture.second;
-		}
+		std::cout << "Redundant textureID: " << map.first << " - Condition: " << map.second << std::endl;
 	}*/
 
-	std::vector<std::pair<const GLuint, Texture*>> tbd;
-	for (auto& texture : getTrackedTextures()) {
-		auto it = checkMap.find(texture.first);
-		if (!it->second) {
-			tbd.push_back(texture);
-			glDeleteTextures(1, &texture.first);
-			delete texture.second;
-		}		
-	}
-
-	for (auto deleteTex : tbd) 
-		getTrackedTextures().erase(deleteTex.first);
+	// Erase from the list
+	for (const auto& deleteTex : tbd)
+		getTrackedTextures().erase(deleteTex);
 }
 
 void ResourceManager::cleanResourceManager(HDRI* hdri) {

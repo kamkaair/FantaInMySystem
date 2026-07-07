@@ -11,7 +11,7 @@ public:
 	void cleanResourceManager(HDRI* hdri);
 
 	void replaceMaterials(Material* oldMat, Material* newMat);
-	void checkInvalidTextures();
+	void clearUnusedTextures();
 
 	Scene* getScene() { return m_scene; }
 private:

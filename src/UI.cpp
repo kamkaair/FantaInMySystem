@@ -712,34 +712,27 @@ void UI::ImGuiDraw()
 			{
 				static int currentItem[4] = { 0, 0, 0, 0 }; // One for each texture type
 				static char materialName[128] = ""; // Input field for material name
-				SettingsMaterial& SetMat = m_settingsEditMat;
+				SettingsMaterial& SetMat = m_settingsCreateMat;
 
 				renderMaterialOptions(SetMat, currentItem);
 
 				ImGui::InputText("Set name for the material", materialName, IM_ARRAYSIZE(materialName));
-				if (ImGui::Button("Create a new material"))
-				{
+				if (ImGui::Button("Create a new material")) {
 					stbi_set_flip_vertically_on_load(false);
 
 					std::string normalMapName = "EmptyNormal.png";
 					if (useNormalTexture)
 						normalMapName = m_materialFileNames[currentItem[3]];
 
-					Material* newMaterial = m_resoManager->checkAndAddMaterial(m_resoManager->loadTextureSet(
-						std::string("/textures/" + m_materialFileNames[currentItem[0]]), // Diffuse
-						std::string("/textures/" + m_materialFileNames[currentItem[1]]), // Metallic
-						std::string("/textures/" + m_materialFileNames[currentItem[2]]), // Roughness
-						std::string("/textures/" + normalMapName) // Normal
-					), materialName);
+					// Set the default material
+					m_resoManager->createMaterial(MaterialPaths{ std::string(materialName),
+						std::string("/textures/" + m_materialFileNames[currentItem[0]]), SetMat.useDiffuseTexture, SetMat.diffuseColor,		// Diffuse
+						std::string("/textures/" + m_materialFileNames[currentItem[1]]), SetMat.useMetallicTexture, SetMat.metallic,		// Metallic
+						std::string("/textures/" + m_materialFileNames[currentItem[2]]), SetMat.useRoughnessTexture, SetMat.roughness,		// Roughness
+						std::string("/textures/" + normalMapName) }); // Add the default material
 
-					// Set material properties for the struct
-					newMaterial->diffuseColor = SetMat.diffuseColor;
-					newMaterial->roughness = SetMat.roughness;
-					newMaterial->metallic = SetMat.metallic;
-
-					newMaterial->useDiffuseTexture = &SetMat.useDiffuseTexture;
-					newMaterial->useMetallicTexture = &SetMat.useMetallicTexture;
-					newMaterial->useRoughnessTexture = &SetMat.useRoughnessTexture;
+					for (const auto& texture : m_resoManager->getTrackedTextures())
+						std::cout << "Current textures: " << texture.first << std::endl;
 				}
 
 				ImGui::TreePop();
@@ -821,7 +814,7 @@ void UI::ImGuiDraw()
 						delete materials[select];
 						materials.erase(materials.begin() + select);	
 						select = 0;
-						m_resoManager->checkInvalidTextures();
+						m_resoManager->clearUnusedTextures();
 					}
 				}			
 				ImGui::TreePop();
