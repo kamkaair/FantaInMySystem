@@ -38,17 +38,6 @@ void ResourceManager::fileLoad(std::string file, HDRI* hdri) {
 	m_scene->getLights() = restored.getLightData();
 
 	m_scene->constructScene(models, materials, restored.getLightData());
-
-	// Just in case, if no materials were added
-	if (m_scene->getMaterials().empty()) {
-		checkAndAddMaterial(loadTextureSet(
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboard.png"),
-			std::string("/textures/checkerboardNormal.png")
-		), "Default Material");
-		std::cout << "Material empty, creating Default Material" << std::endl;
-	}
 }
 
 void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
@@ -130,18 +119,13 @@ void ResourceManager::clearUnusedTextures() { // Probably unnecessarily mega exp
 	for (auto it = getTrackedTextures().begin(); it != getTrackedTextures().end(); it++) { // The iterator can be ++'d
 		bool notDefaultTexture = (defaultMaterialTextures[0] != it->first && defaultMaterialTextures[1] != it->first);
 
-		std::cout << "Checked: " << it->first;
+		//std::cout << "Checked: " << it->first;
 		if (usedTextures.count(it->first) == 0 && notDefaultTexture) {
-			std::cout << " DELETED";
+			std::cout << it->first << " DELETED" << std::endl;
 			tbd.push_back(it->first);
 			delete it->second;
 		}
-		std::cout << std::endl;
 	}
-
-	/*for (auto map : checkMap) {
-		std::cout << "Redundant textureID: " << map.first << " - Condition: " << map.second << std::endl;
-	}*/
 
 	// Erase from the list
 	for (const auto& deleteTex : tbd)

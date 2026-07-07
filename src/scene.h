@@ -14,9 +14,7 @@ public:
 			delete mat;
 		}
 		m_materials.clear();
-		m_lights.clear();
-
-		delete m_defaultMaterial;
+		m_lights.clear();		
 	}
 
 	void constructScene(std::vector<Model*>& meshes, std::vector<Material*>& material, std::vector<FileLights>& lights) {
@@ -27,6 +25,7 @@ public:
 
 	~Scene() {
 		cleanupScene();
+		delete m_defaultMaterial;
 	}
 
 	std::vector<Model*>& getModels() { return m_models; }
