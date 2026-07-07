@@ -221,6 +221,71 @@ std::vector<unsigned int> loadIndices(aiMesh* mesh) {
 	return indices;
 }
 
+Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
+	// Assign the preloaded material by index
+	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Normal" };
+
+	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + std::string("/textures"));
+	std::vector<std::string> filenames, cutPath;
+	for (auto f : allFiles) {
+		filenames.push_back(f.first);
+		cutPath.push_back(f.second);
+	}
+
+	if (mesh->mMaterialIndex >= 0) {
+		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
+		aiString MatName;
+		MaterialPaths usables;
+
+		// Pointers for the maps, used in createMaterial
+		struct mapRef {
+			std::string* path;
+			bool* useMap;
+		};
+
+		std::vector<mapRef> maps = {
+			{&usables.diffuse.path, &usables.diffuse.useMap},
+			{&usables.metallic.path, &usables.metallic.useMap},
+			{&usables.roughness.path, &usables.roughness.useMap},
+			{&usables.normalPath, nullptr} // Normal maps always use textures
+		};
+
+		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) { // Assimp error catching and Get() in one
+			return nullptr;
+		}
+
+		// Set the loaded material name
+		usables.materialName = MatName.C_Str();
+
+		for (int i = 0; i < types.size(); i++) {
+			auto it = std::find(filenames.begin(), filenames.end(), std::string(MatName.C_Str() + types[i])); // find the string
+			int nameIndex = std::distance(filenames.begin(), it); // get the index for the found string, parallel usage with ends
+
+			std::cout << "Trying to find: " << std::string(MatName.C_Str() + types[i]) << " - ";
+
+			if (it != filenames.end()) {
+				std::cout << "Foundie: " << it->c_str() << " - Target str: " << std::string(MatName.C_Str() + types[i]) << std::endl;
+				*maps[i].path = std::string("/textures/" + cutPath[nameIndex]); // includes folders and their paths (textures/coolFolder/coolTex.png)
+				if(maps[i].useMap != nullptr)
+					*maps[i].useMap = true;
+			}
+			else {
+				std::cout << "not found! target format: " << types[i] << std::endl;
+				*maps[i].path = "";
+				if (maps[i].useMap != nullptr)
+					*maps[i].useMap = false;
+			}
+		}
+
+		if (usables.normalPath.empty()) // Add the default normal path, if normal path is empty
+			usables.normalPath = emptyNormalPath;
+
+		// Create a new material with the values
+		return createMaterial(usables);
+	}
+	return nullptr;
+}
+
 Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {
 	// Load vertex data
 	std::vector<Vertex> vertices = loadVertexData(mesh);
@@ -243,74 +308,6 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	//std::cout << newMesh->getName() << " - " << vertices.size() << " Amount of Indices: " << indices.size() << std::endl;
 
 	return newMesh;
-}
-
-Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
-	// Assign the preloaded material by index
-	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Normal" };
-
-	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + std::string("/textures"));
-	std::vector<std::string> filenames, ends;
-	for (auto f : allFiles) {
-		filenames.push_back(f.first);
-		ends.push_back(f.second);
-	}
-
-	Material* meshMaterial = nullptr;
-	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size()) {
-		meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
-
-		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
-		aiString MatName;
-		MaterialPaths usables;
-
-		// Pointers for the maps, used in createMaterial
-		struct mapRef {
-			std::string* path;
-			bool* useMap;
-		};
-
-		std::vector<mapRef> maps = {
-			{&usables.diffuse.path, &usables.diffuse.useMap},
-			{&usables.metallic.path, &usables.metallic.useMap},
-			{&usables.roughness.path, &usables.roughness.useMap},
-			{&usables.normalPath, nullptr} // Normal maps always use textures
-		};
-
-		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) {
-			return nullptr;
-		}
-
-		// Set the loaded material name
-		usables.materialName = MatName.C_Str();
-
-		for (int i = 0; i < types.size(); i++) {
-			auto it = std::find(filenames.begin(), filenames.end(), std::string(MatName.C_Str() + types[i])); // find the string
-			int nameIndex = std::distance(filenames.begin(), it); // get the index for the found string, parallel usage with ends
-
-			std::cout << "Trying to find: " << std::string(MatName.C_Str() + types[i]) << " - ";
-
-			if (it != filenames.end()) {
-				std::cout << "Foundie: " << it->c_str() << " - Target str: " << std::string(MatName.C_Str() + types[i]) << std::endl;
-				*maps[i].path = std::string("/textures/") + it->c_str() + ends[nameIndex]; // name + file type
-				if(maps[i].useMap != nullptr)
-					*maps[i].useMap = true;
-			}
-			else {
-				std::cout << "not found! target format: " << types[i] << std::endl;
-				*maps[i].path = "";
-				if (maps[i].useMap != nullptr)
-					*maps[i].useMap = false;
-			}
-		}
-
-		if (usables.normalPath.empty()) // Add the default normal path, if normal path is empty
-			usables.normalPath = emptyNormalPath;
-
-		// Create a new material with the values
-		return createMaterial(usables);
-	}
-	return nullptr;
 }
 
 Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path) {
@@ -402,9 +399,10 @@ std::vector<std::string> TextureLoading::FileSystem(const std::string path) {
 
 std::vector<std::pair<std::string, std::string>> TextureLoading::FileSystemTuple(const std::string path) {
 	std::vector<std::pair<std::string, std::string>> filenames;
-	
-	for (const auto& entry : std::filesystem::directory_iterator(path)) {
-		filenames.push_back(std::pair(entry.path().stem().string(), entry.path().extension().string()));
+
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+		std::filesystem::path relative = std::filesystem::relative(entry.path(), path); // Get the path relative to the given path (cut out ASSET_DIR)
+		filenames.push_back(std::pair(entry.path().stem().string(), relative.string()));
 	}
 
 	return filenames;

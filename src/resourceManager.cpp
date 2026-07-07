@@ -121,7 +121,7 @@ void ResourceManager::clearUnusedTextures() { // Probably unnecessarily mega exp
 
 		//std::cout << "Checked: " << it->first;
 		if (usedTextures.count(it->first) == 0 && notDefaultTexture) {
-			std::cout << it->first << " DELETED" << std::endl;
+			std::cout << "Texture ID: " << it->first << " DELETED" << std::endl;
 			tbd.push_back(it->first);
 			delete it->second;
 		}

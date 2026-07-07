@@ -131,16 +131,16 @@ public:
 			std::string("/textures/checkerboardNormal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_BaseColor.png"), true, glm::vec3(0),
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Metallic.png"), true, 0.0f,
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Roughness.png"), true, 0.0f,
-			std::string("/textures/PresetMaterials/MP18/MP18Low_Metallic_Normal.png") });
+			std::string("/textures/MP18/Metallic_Diffuse.png"), true, glm::vec3(0),
+			std::string("/textures/MP18/Metallic_Metallic.png"), true, 0.0f,
+			std::string("/textures/MP18/Metallic_Roughness.png"), true, 0.0f,
+			std::string("/textures/MP18/Metallic_Normal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_BaseColor.png"), true, glm::vec3(0),
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Metallic.png"), true, 0.0f,
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Roughness.png"), true, 0.0f,
-			std::string("/textures/PresetMaterials/Barrel/Barrel_Normal.png") });
+			std::string("/textures/Barrel/Barrel_BaseColor.png"), true, glm::vec3(0),
+			std::string("/textures/Barrel/Barrel_Metallic.png"), true, 0.0f,
+			std::string("/textures/Barrel/Barrel_Roughness.png"), true, 0.0f,
+			std::string("/textures/Barrel/Barrel_Normal.png") });
 
 		std::vector<FileModels> fileModels;
 		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });

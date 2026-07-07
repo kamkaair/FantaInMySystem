@@ -394,7 +394,7 @@ void UI::ImGuiDraw()
 			{
 				ImGui::Text("You can load your own 3D-models!");
 				ImGui::Text("Supports at least .obj and .fbx");
-				ImGui::Text("File path: ../opengl-graphicsengine/assets/models");
+				ImGui::Text("File path: ../FantaInMySystem/assets/models");
 
 				static int currentItem = 0;
 				// Create a combo box with available mesh files
