@@ -5,7 +5,7 @@
 
 class Texture : public kgfw::Object {
 public:
-	Texture(int width, int height, int nrChannels, const GLubyte* data);
+	Texture(int width, int height, int nrChannels, const GLubyte* data, bool generateMipmaps = true);
 	~Texture();
 
 	void setFilePath(std::string inPath);

@@ -3,7 +3,7 @@
 #include <kgfw/GLUtils.h>	// Include GLUtils for checkGLError
 #include <iostream>
 
-Texture::Texture(int width, int height, int nrChannels, const GLubyte* data) : Object(__FUNCTION__) {
+Texture::Texture(int width, int height, int nrChannels, const GLubyte* data, bool generateMipmaps) : Object(__FUNCTION__) {
 	//stbi_set_flip_vertically_on_load(false);
 	// Create texture
 	glGenTextures(1, &m_textureId);
@@ -14,15 +14,15 @@ Texture::Texture(int width, int height, int nrChannels, const GLubyte* data) : O
 
 	if (nrChannels == 4) {
 		// set the texture data as RGBA
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	}
 	else if (nrChannels == 3) {
 		// set the texture data as RGB
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
 	}
 	else if (nrChannels == 1) {
 		// set the texture data as RED (for grayscale)
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
 	}
 	checkGLError();
 
@@ -30,19 +30,22 @@ Texture::Texture(int width, int height, int nrChannels, const GLubyte* data) : O
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
+	if (generateMipmaps) {
+		// Generate mipmaps
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); // Actually use mipmaps this time around
+		checkGLError();
+	}
+	else {
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		checkGLError();
+	}
+
 	// set the texture filtering to nearest (disabled filtering)
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	//checkGLError();
 	//glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	//checkGLError();
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	checkGLError();
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	checkGLError();
-
-	// Generate mipmaps
-	glGenerateMipmap(GL_TEXTURE_2D);
 	checkGLError();
 }
 
