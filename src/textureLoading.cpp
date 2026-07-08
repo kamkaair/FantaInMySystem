@@ -250,13 +250,22 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			{&usables.normalPath, nullptr} // Normal maps always use textures
 		};
 
-		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) { // Assimp error catching and Get() in one
+		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) { // Assimp error catching and Get() a material name in one
 			return nullptr;
 		}
 
 		// Set the loaded material name
 		usables.materialName = MatName.C_Str();
 
+		// Check, whether a material with a same name already exists. Use the existing one
+		for (const auto& material : m_scene->getMaterials()) {
+			if (usables.materialName == material->getName()) {
+				std::cout << "Material: " << usables.materialName << " already exists" << std::endl;
+				return material;
+			}
+		}
+
+		// Find the corresponding textures
 		for (int i = 0; i < types.size(); i++) {
 			auto it = std::find(filenames.begin(), filenames.end(), std::string(MatName.C_Str() + types[i])); // find the string
 			int nameIndex = std::distance(filenames.begin(), it); // get the index for the found string, parallel usage with ends
@@ -264,13 +273,13 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			std::cout << "Trying to find: " << std::string(MatName.C_Str() + types[i]) << " - ";
 
 			if (it != filenames.end()) {
-				std::cout << "Foundie: " << it->c_str() << " - Target str: " << std::string(MatName.C_Str() + types[i]) << std::endl;
+				std::cout << "Texture Found! Format: " << types[i] << std::endl;
 				*maps[i].path = std::string("/textures/" + cutPath[nameIndex]); // includes folders and their paths (textures/coolFolder/coolTex.png)
 				if(maps[i].useMap != nullptr)
 					*maps[i].useMap = true;
 			}
 			else {
-				std::cout << "not found! target format: " << types[i] << std::endl;
+				std::cout << "ERROR: Not found! Target format: " << types[i] << std::endl;
 				*maps[i].path = "";
 				if (maps[i].useMap != nullptr)
 					*maps[i].useMap = false;
@@ -390,8 +399,13 @@ std::vector<Mesh*> TextureLoading::processMeshes(const std::string& path, bool a
 
 std::vector<std::string> TextureLoading::FileSystem(const std::string path) {
 	std::vector<std::string> filenames;
-	for (const auto& entry : std::filesystem::directory_iterator(path)) {
-		filenames.push_back(entry.path().filename().string());
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+		if (entry.path().extension() == "") // Eliminate the folders (and the other files without an extension)
+			continue;
+
+		std::filesystem::path relative = std::filesystem::relative(entry.path(), path); // Get the path relative to the given path (cut out ASSET_DIR)
+		filenames.push_back(relative.string());
+		//filenames.push_back(entry.path().filename().string());
 	}
 
 	return filenames;

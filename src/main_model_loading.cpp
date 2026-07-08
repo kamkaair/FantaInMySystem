@@ -137,7 +137,7 @@ public:
 			std::string("/textures/MP18/Metallic_Normal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
-			std::string("/textures/Barrel/Barrel_BaseColor.png"), true, glm::vec3(0),
+			std::string("/textures/Barrel/Barrel_Diffuse.png"), true, glm::vec3(0),
 			std::string("/textures/Barrel/Barrel_Metallic.png"), true, 0.0f,
 			std::string("/textures/Barrel/Barrel_Roughness.png"), true, 0.0f,
 			std::string("/textures/Barrel/Barrel_Normal.png") });
@@ -154,7 +154,7 @@ public:
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/EmptyScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
