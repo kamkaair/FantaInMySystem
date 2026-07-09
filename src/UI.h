@@ -11,6 +11,7 @@
 #include <vector>
 #include <stb_image.h>
 #include <initializer_list>
+#include <functional>
 
 struct SettingsMaterial {
 	glm::vec3 diffuseColor = glm::vec3(1.0f);  // Default white color
@@ -62,19 +63,26 @@ public:
 	void shaderSet(const char* uniform, bool value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
 	void shaderBind() { m_GBuffer->getCurrentShader()->bind(); }
 
-	void updateFiles(std::vector<std::string>& fileNames, std::string location) {
-		if (!fileNames.empty())
-			fileNames.clear();
-
-		for (const auto& file : m_resoManager->FileSystem((std::string(ASSET_DIR) + "/" + location))) {
-			fileNames.push_back(file.c_str());
-		}
-	}
-
 	void setWindowInteract(bool newBool) { windowDisabled = newBool; }
 	ImGuiWindowFlags disableInteraction();
 
 private:
+	void updateAllFiles() {
+		updateFiles(meshFileNames, "models/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
+		updateFiles(m_materialFileNames, "textures/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
+		updateFiles(m_saveFiles, "Saves/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
+		updateFiles(hdrFileNames, "HDRI/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
+		updateFiles(m_folderNames, "textures/", [this](const std::string& path) { return m_resoManager->FileSystemFolders(path); });
+	}
+
+	void updateFiles(std::vector<std::string>& fileNames, std::string location, std::function< std::vector<std::string>(const std::string path) > func) {
+		if (!fileNames.empty())
+			fileNames.clear();
+
+		//fileNames = m_resoManager->FileSystem((std::string(ASSET_DIR) + "/" + location));
+		fileNames = func(std::string(ASSET_DIR) + "/" + location);
+	}
+
 	void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 
 	SettingsMaterial m_settingsCreateMat, m_settingsEditMat;
@@ -87,7 +95,8 @@ private:
 	ResourceManager* m_resoManager;
 
 	// File names
-	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames, m_materialFileNames;
+	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames, m_materialFileNames, m_folderNames;
+	std::string defaultFolderPath = "/textures";
 
 	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
 		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
@@ -98,7 +107,7 @@ private:
 	const std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
 	bool meshRotationEnabled = false, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
-		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true;
+		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true, useFolderFiltering = false;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };

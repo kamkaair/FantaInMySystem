@@ -35,11 +35,14 @@ public:
 	std::vector<Mesh*> processMeshes(const std::string& path, bool autoTexture = false);
 	void loadMeshes(std::vector<Model*>& model, std::vector<FileModels> fileModels);
 
-	std::vector<std::string> FileSystem(const std::string path);
-	std::vector<std::pair<std::string, std::string>> FileSystemTuple(const std::string path);
+	std::vector<std::string> FileSystem(const std::string& path);
+	std::vector<std::string> FileSystemFolders(const std::string& path);
+	std::vector<std::pair<std::string, std::string>> FileSystemTuple(const std::string& path);
 
 	std::unordered_map<GLuint, Texture*>& getTrackedTextures() { return m_textureMap; }
 	void setCurrentScene(Scene* scene) { m_scene = scene; }
+	void setFolderSearchPath(const std::string& inPath) { m_folderSearchPath = inPath; }
+	std::string& getFolderSearchPath() { return m_folderSearchPath; }
 
 private:
 	void checkDuplicateTextures(std::vector<GLuint>& textureIDs, std::vector<std::pair<std::string, bool>> maps);
@@ -50,6 +53,7 @@ private:
 	//std::vector<Texture*> m_textures;
 	std::unordered_map<GLuint, Texture*> m_textureMap;
 	std::string emptyNormalPath = "/textures/EmptyNormal.png";
+	std::string m_folderSearchPath = ASSET_DIR + std::string("/textures");
 
 	Scene* m_scene;
 };

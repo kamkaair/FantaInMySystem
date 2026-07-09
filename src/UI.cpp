@@ -19,10 +19,7 @@ UI::UI(Shader* backImage,
 	ImGuiAlpha(0.3f),
 	Object(__FUNCTION__) {
 
-	updateFiles(meshFileNames, "models/");
-	updateFiles(m_materialFileNames, "textures/");
-	updateFiles(m_saveFiles, "Saves/");
-	updateFiles(hdrFileNames, "HDRI/");
+	updateAllFiles();
 }
 
 utils::utils fpsCounter;
@@ -221,7 +218,7 @@ void UI::ImGuiDraw()
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
 				m_resoManager->fileSave(saveName, m_HDRI);	
-				updateFiles(m_saveFiles, "Saves/");
+				updateFiles(m_saveFiles, "Saves/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
 		
@@ -275,9 +272,7 @@ void UI::ImGuiDraw()
 	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 	ImGui::Text("'Refetch Files' -button updates the available files found in the asset-folder");
 	if (ImGui::Button("Refetch Files")) {
-		updateFiles(meshFileNames, "models/");
-		updateFiles(m_saveFiles, "Saves/");
-		updateFiles(hdrFileNames, "HDRI/");
+		updateAllFiles();
 	}
 	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 
@@ -412,6 +407,34 @@ void UI::ImGuiDraw()
 					ImGui::EndCombo();
 				}
 
+				// Section for the targeted file searching from a folder
+				if (ImGui::Checkbox("Use a Specific Folder Search", &useFolderFiltering))
+					m_resoManager->setFolderSearchPath(defaultFolderPath); // Let it be default value
+
+				if (useFolderFiltering) {
+					static int currentFolder = 0;
+
+					ImGui::Text(("Current folder path: " + m_resoManager->getFolderSearchPath()).c_str());
+					if (ImGui::BeginCombo("Available folders", m_folderNames[currentFolder].c_str())) // Should make a method for Combo Boxes
+					{
+						for (size_t i = 0; i < m_folderNames.size(); i++) {
+							bool foundSelected = (currentFolder == i);
+							if (ImGui::Selectable(m_folderNames[i].c_str(), foundSelected)) {
+								currentFolder = i;
+								m_resoManager->setFolderSearchPath(std::string("/textures/") + m_folderNames[currentFolder] + "/"); // Let it be default value
+							}
+							if (foundSelected)
+								ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+						}
+
+						ImGui::EndCombo();
+					}
+
+					if (ImGui::Button("Reset folder search path")) {
+						m_resoManager->setFolderSearchPath(defaultFolderPath); // Let it be default value
+					}
+				}
+
 				if (ImGui::Button("Add mesh with automatic textures")) {
 					// Load the selected mesh
 					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
@@ -432,7 +455,6 @@ void UI::ImGuiDraw()
 					for (auto& mesh : newMeshes) {
 						mesh->setMaterial(m_resoManager->getScene()->getMaterials()[0]);
 					}
-
 				}
 
 				// For selecting and removing meshes

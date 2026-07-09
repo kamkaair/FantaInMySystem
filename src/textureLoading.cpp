@@ -27,18 +27,16 @@ Texture* TextureLoading::loadTexture(const std::string& path, bool flipTexture) 
 	GLubyte* data = stbi_load((ASSET_DIR + path).c_str(), &width, &height, &nrChannels, 0);
 	stbi_set_flip_vertically_on_load(false);
 
-	if (data) {
-		Texture* texture = new Texture(width, height, nrChannels, data);
-		texture->setFilePath(path);
-		stbi_image_free(data);  // Free image data after creating the texture
-
-		return texture;
-	}
-	else {
-		printf("Error loading texture file \"%s\"\n", (ASSET_DIR + path).c_str());
-
+	if (!data) {
+		printf("TEXTURE ERROR: failed loading a texture file \"%s\"\n", (ASSET_DIR + path).c_str());
 		return nullptr;
 	}
+
+	Texture* texture = new Texture(width, height, nrChannels, data);
+	texture->setFilePath(path);
+	stbi_image_free(data);  // Free image data after creating the texture
+
+	return texture;
 }
 
 std::pair<std::vector<GLuint>, std::vector<Texture*>> TextureLoading::loadTextureSet(const std::string& baseColorPath, const std::string& metallicMapPath,
@@ -115,6 +113,11 @@ void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, con
 		if (newMap) {
 			textureMap = loadTexture(map.first.c_str());
 			//m_textures.push_back(textureMap);
+			if (textureMap == nullptr) { // Fallback on the default material, if loading a texture fails
+				textureIDs.push_back(m_scene->getDefaultMaterial()->getTextures()[0]);
+				continue;
+			}
+
 			m_textureMap.insert({ textureMap->getTextureId(), textureMap });
 		}
 		textureIDs.push_back(textureMap->getTextureId());
@@ -225,7 +228,7 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 	// Assign the preloaded material by index
 	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Normal" };
 
-	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + std::string("/textures"));
+	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + getFolderSearchPath());
 	std::vector<std::string> filenames, cutPath;
 	for (auto f : allFiles) {
 		filenames.push_back(f.first);
@@ -274,7 +277,7 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 
 			if (it != filenames.end()) {
 				std::cout << "Texture Found! Format: " << types[i] << std::endl;
-				*maps[i].path = std::string("/textures/" + cutPath[nameIndex]); // includes folders and their paths (textures/coolFolder/coolTex.png)
+				*maps[i].path = std::string(getFolderSearchPath() + cutPath[nameIndex]); // includes folders and their paths (textures/coolFolder/coolTex.png)
 				if(maps[i].useMap != nullptr)
 					*maps[i].useMap = true;
 			}
@@ -397,7 +400,7 @@ std::vector<Mesh*> TextureLoading::processMeshes(const std::string& path, bool a
 	return meshes;
 }
 
-std::vector<std::string> TextureLoading::FileSystem(const std::string path) {
+std::vector<std::string> TextureLoading::FileSystem(const std::string& path) {
 	std::vector<std::string> filenames;
 	for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
 		if (entry.path().extension() == "") // Eliminate the folders (and the other files without an extension)
@@ -411,7 +414,19 @@ std::vector<std::string> TextureLoading::FileSystem(const std::string path) {
 	return filenames;
 }
 
-std::vector<std::pair<std::string, std::string>> TextureLoading::FileSystemTuple(const std::string path) {
+std::vector<std::string> TextureLoading::FileSystemFolders(const std::string& path) {
+	std::vector<std::string> folders;
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
+		if (entry.path().extension() == "") { // Eliminate the folders (and the other files without an extension)
+			std::filesystem::path relative = std::filesystem::relative(entry.path(), path); // Get the path relative to the given path (cut out ASSET_DIR)
+			folders.push_back(relative.string());
+		}
+	}
+
+	return folders;
+}
+
+std::vector<std::pair<std::string, std::string>> TextureLoading::FileSystemTuple(const std::string& path) {
 	std::vector<std::pair<std::string, std::string>> filenames;
 
 	for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
