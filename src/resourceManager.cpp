@@ -45,6 +45,7 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 	std::unordered_map<Material*, int> checkedMap;
 	std::vector<FileModels> fileModels;
 	std::vector<MaterialPaths> materialPath;
+	FileCamera fileCamera;
 
 	int texIndex = 0;
 	for (auto model : m_scene->getModels()) {
@@ -89,9 +90,15 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 		fileModels.push_back(FileModels{ model->getModelPath(), fileMeshes });
 	}
 	std::cout << "Background tex path: " << hdri->getBackgroundTexture()->getFilePath() << std::endl;
+	
+	Camera* camera = m_scene->getCamera();
+	fileCamera.cameraFocus = camera->getCameraFocus();
+	fileCamera.cameraFront = camera->getCameraFront();
+	fileCamera.cameraPos = camera->getCameraPos();
+	fileCamera.freeMovementEnabled = camera->getIsMovementOrbit();
 
 	// Create and serialize an object
-	SaveFile original(m_scene->getLights(), materialPath, fileModels, hdri->getBackgroundTexture()->getFilePath(), hdri->getHDRI_Path());
+	SaveFile original(m_scene->getLights(), materialPath, fileModels, fileCamera, hdri->getBackgroundTexture()->getFilePath(), hdri->getHDRI_Path());
 	original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 }
 

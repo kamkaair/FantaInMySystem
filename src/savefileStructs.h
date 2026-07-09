@@ -40,3 +40,11 @@ struct FileModels {
 	std::string modelPath;
 	std::vector<FileMeshes> meshes;
 };
+
+struct FileCamera {
+	glm::vec3 cameraPos;
+	glm::vec3 cameraFront;
+	glm::vec3 cameraFocus;
+
+	bool freeMovementEnabled = false;
+};

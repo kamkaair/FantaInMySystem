@@ -52,10 +52,6 @@ public:
 		m_resoManager = new ResourceManager();
 		m_scene = m_resoManager->getScene();
 
-		// Setup the default save, load the scene from a file
-		setupDefaultSave();
-		setupScene();
-
 		// the UI class, contains ImGui and such
 		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_ssaoClass, m_resoManager);
 
@@ -65,12 +61,17 @@ public:
 		// Create perspective-projection camera
 		const int fov = 40.0f;
 		m_camera = new Camera(fov, width/height, 0.1f, 100.0f);
+		m_scene->setActiveCamera(m_camera);
 
 		// Input class
 		g_input = new Inputs(m_uiDraw, m_camera);
 
+		// Setup the default save, load the scene from a file
+		setupDefaultSave();
+		setupScene();
+
 		// Icon class initialization
-		m_iconClass = new Icon(m_meshRender, m_resoManager, g_input, m_camera);
+		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);
 
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
@@ -147,14 +148,16 @@ public:
 		fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 1}} });
 		fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
 
+		FileCamera fileCamera({ glm::vec3(-1.003025, 3.101946, 9.453670), glm::vec3(0.100302, -0.310195, -0.945367), glm::vec3(0.0f, 0.0f, 0.0f), false });
+
 		// Create and serialize an object
-		SaveFile original(fileLights, materialPath, fileModels, backgroundTex, hdriPath);
+		SaveFile original(fileLights, materialPath, fileModels, fileCamera, backgroundTex, hdriPath);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 	}
 
 	void setupScene() {
 		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/EmptyScene.bin");
+		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
 
 		// Test the  deserialized object
 		std::cout << "Deserialized Object:\n";
@@ -167,6 +170,23 @@ public:
 		std::vector<Model*> models;
 		m_resoManager->loadMeshes(models, restored.getFileMeshes());
 		m_scene->getModels() = models;
+
+		FileCamera cam = restored.getFileCamera();
+
+		std::cout << "cameraPos: " << glm::to_string(cam.cameraPos) << std::endl;
+		std::cout << "cameraFront: " << glm::to_string(cam.cameraFront) << std::endl;
+		std::cout << "cameraFocus: " << glm::to_string(cam.cameraFocus) << std::endl;
+		std::cout << "bool: " << cam.freeMovementEnabled << std::endl;
+
+		/*g_input->setCameraPos(cam.cameraPos);
+		g_input->setCameraFront(cam.cameraFront);
+		g_input->setCameraFocusPoint(cam.cameraFocus);
+		g_input->setMovementMode(cam.freeMovementEnabled);*/
+
+		m_camera->getCameraPos() = cam.cameraPos;
+		m_camera->getCameraFront() = cam.cameraFront;
+		m_camera->getCameraFocus() = cam.cameraFocus;
+		m_camera->getIsMovementOrbit() = cam.freeMovementEnabled;
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -237,7 +257,7 @@ public:
 		if (!g_input->getImGuiVisibility()) {
 			//renderIcons(); // Render all the point lamp icons
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
+			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
 	}
@@ -283,7 +303,7 @@ public:
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, g_input->getCameraFocus(), 1);
+			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->getCameraFocus(), 1);
 			m_uiDraw->ImGuiDraw();
 		}
 	}
@@ -416,7 +436,7 @@ public:
 		g_input->movementControls(window, deltaTime);
 
 		// TODO: save camera position
-		//std::cout << "Camera POS: " << glm::to_string(g_input->getCameraPos()) << " - Front: " << glm::to_string(g_input->getCameraFront()) << std::endl;
+		std::cout << "Camera POS: " << glm::to_string(m_camera->getCameraPos()) << " - Front: " << glm::to_string(m_camera->getCameraFront()) << std::endl;
 	}
 
 private:
@@ -530,7 +550,7 @@ int main(void) {
 			g_input->inputHide(window);
 			break;
 		case GLFW_KEY_V:	// Enable free mode
-			g_input->setMovementMode(window);
+			g_input->toggleMovementMode(window);
 			break;
 		}
 

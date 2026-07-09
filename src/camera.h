@@ -34,12 +34,25 @@ public:
 
     float getFOV() const { return m_fov; }
 
+    glm::vec3& getCameraPos() { return cameraPos; }
+    glm::vec3& getCameraFront() { return cameraFront; }
+    glm::vec3& getCameraUp() { return cameraUp; }
+    glm::vec3& getCameraFocus() { return cameraFocus; }
+    
+    bool& getIsMovementOrbit() { return m_orbitMovement; }
+
 private:
     glm::mat4 m_projection;
 
     float m_fov;
     float m_width, m_height, m_near, m_far;
     float m_aspect;
+
+    bool m_orbitMovement = false;
+
+    // Camera vectors
+    glm::vec3 cameraPos = glm::vec3(0.0f, 0.5f, 1.0f), cameraFront = glm::vec3(0.0f, 0.0f, -1.0f),
+        cameraUp = glm::vec3(0.0f, 1.0f, 0.0f), cameraFocus = glm::vec3(0.0f, 0.0f, 0.0f);
 
     void updateProjectionMatrix() {
         m_projection = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);

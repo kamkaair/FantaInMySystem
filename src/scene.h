@@ -32,12 +32,16 @@ public:
 	std::vector<Material*>& getMaterials() { return m_materials; }
 	std::vector<FileLights>& getLights() { return m_lights; }
 	Material* getDefaultMaterial() { return m_defaultMaterial; }
+	Camera* getCamera() { return m_camera; }
+
 	void setDefaultMaterial(Material* inDefaultMat) { m_defaultMaterial = inDefaultMat; }
+	void setActiveCamera(Camera* cam) { m_camera = cam; }
 
 private:
 	std::vector<Model*> m_models;
 	std::vector<FileLights> m_lights;
 	std::vector<Material*> m_materials;
+	Camera* m_camera;
 
 	Material* m_defaultMaterial;
 };

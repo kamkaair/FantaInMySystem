@@ -2,6 +2,7 @@
 #include "gameobject.h"     // Include base class
 #include "UI.h"
 #include "camera.h"
+#include <iostream> // KILL
 
 class Inputs : public kgfw::Object {
 public:
@@ -16,42 +17,36 @@ public:
 
 	void orbitCursorLeft(GLFWwindow* window, double xposIn, double yposIn);
 	void orbitCursorRight(GLFWwindow* window, double xposIn, double yposIn);
-	void movementControls(GLFWwindow* window, float deltaTime);
-	void movementFreeMode(GLFWwindow* window, float deltaTime);
-	void movementOrbitMode(GLFWwindow* window);
+	void movementControls(GLFWwindow* window, float deltaTime); // private pls??
+	void movementFreeMode(GLFWwindow* window, float deltaTime); // private pls
+	void movementOrbitMode(GLFWwindow* window); // private pls
 
 	void mousePosUpdate(GLFWwindow* window);
 
 	void updateCameraVectors();
 	glm::vec3 calculateCameraPosition();
-	void setCameraFocusPoint(glm::vec3 focusPoint);
 
-	glm::vec3 getCameraPos() { return cameraPos; }
-	glm::vec3 getCameraFront() { return cameraFront; }
-	glm::vec3 getCameraUp() { return cameraUp; }
-	glm::vec3 getCameraFocus() { return cameraFocus; }
-	Camera* getCamera() { return m_camera; }
-
-	void setCameraPos(glm::vec3 newPos) { cameraPos = newPos; }
-	void setCameraFront(glm::vec3 newFront) { cameraFront = newFront; }
+	Camera* getCamera() { return m_cam; }
 
 	bool getImGuiVisibility() { return isHidden; }
-	bool getMovementMode() { return movementMode; }
+	bool getMovementMode() { return m_cam->getIsMovementOrbit(); }
 	bool getMouseEnabled() { return mouseEnabled; }
 
 	void setMouseLeftEnabled(bool inState) { mouseLeftEnabled = inState; }
 	void setMouseRightEnabled(bool inState) { mouseRightEnabled = inState; }
-	void setMovementMode(GLFWwindow* window);
+	void setMovementMode(bool newMode) { m_cam->getIsMovementOrbit() = newMode; }
+	void toggleMovementMode(GLFWwindow* window);
+
+	void setCameraFocusPoint(glm::vec3& focusPoint);
+	void setCameraPos(glm::vec3& newPos) { m_cam->getCameraPos() = newPos; }
+	void setCameraFront(glm::vec3& newFront) { m_cam->getCameraFront() = newFront; }
 
 	void setImGuiInteractability(GLFWwindow* window, int cursorMode, float ImGuiAlpha, float orbitSens, float focusSens, bool WindowInteract);
 
 private:
-	// Camera vectors
-	glm::vec3 cameraPos = glm::vec3(0.0f, 0.5f, 1.0f), cameraFront = glm::vec3(0.0f, 0.0f, -1.0f), cameraUp = glm::vec3(0.0f, 1.0f, 0.0f), cameraFocus = glm::vec3(0.0f, 0.0f, 0.0f);
-
 	// Is mouse active?
 	bool firstMouse = true;
-	bool mouseEnabled = false, mouseLeftEnabled = false, mouseRightEnabled = false, movementMode = false;
+	bool mouseEnabled = false, mouseLeftEnabled = false, mouseRightEnabled = false;
 	bool togglePressed = false, togglePressedHide = false, togglePressedMovement = false, isHidden = false;
 
 	float pitch = 0.0f, yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
@@ -62,5 +57,5 @@ private:
 	double xPos = 0.0f, yPos = 0.0f;
 
 	UI* m_uiDraw;
-	Camera* m_camera;
+	Camera* m_cam;
 };

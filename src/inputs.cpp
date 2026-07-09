@@ -1,7 +1,7 @@
 #include "inputs.h"
 #include <GLFW/glfw3.h>				// Include glfw for windows
 
-Inputs::Inputs(UI* ui, Camera* camera) : m_uiDraw(ui), m_camera(camera), Object(__FUNCTION__) {}
+Inputs::Inputs(UI* ui, Camera* camera) : m_uiDraw(ui), m_cam(camera), Object(__FUNCTION__) {}
 
 Inputs::~Inputs(){}
 
@@ -55,7 +55,7 @@ void Inputs::inputScrollFOV(GLFWwindow* window, double xoffset, double yoffset, 
 			fov = 45.0f;
 
 		// Apply the new FOV to the camera
-		m_camera->setFOV(fov);
+		m_cam->setFOV(fov);
 	}
 }
 
@@ -107,10 +107,11 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 		if (pitch < -89.0f)
 			pitch = -89.0f;
 
-		cameraFront.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraFront.y = sin(glm::radians(pitch));
-		cameraFront.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-		cameraFront = glm::normalize(cameraFront);
+		
+		m_cam->getCameraFront().x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+		m_cam->getCameraFront().y = sin(glm::radians(pitch));
+		m_cam->getCameraFront().z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+		m_cam->getCameraFront() = glm::normalize(m_cam->getCameraFront());
 	}
 }
 
@@ -151,31 +152,31 @@ void Inputs::orbitCursorRight(GLFWwindow* window, double xposIn, double yposIn)
 		xPos = xposIn;
 		yPos = yposIn;
 
-		glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
-		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraRight, cameraFront));
+		glm::vec3 cameraRight = glm::normalize(glm::cross(m_cam->getCameraFront(), m_cam->getCameraUp()));
+		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraRight, m_cam->getCameraFront()));
 
 		// Added times cameraRight for the X-axis to make the cameraFocus transforming according to camera's view
-		cameraFocus += cameraRight * dx * focusSens;
-		cameraFocus += cameraUpAdjust * -dy * focusSens;
+		m_cam->getCameraFocus() += cameraRight * dx * focusSens;
+		m_cam->getCameraFocus() += cameraUpAdjust * -dy * focusSens;
 	}
 }
 
 glm::vec3 Inputs::calculateCameraPosition() {
-	float x = radius * sinf(phi) * cosf(theta) + cameraFocus.x;
-	float y = radius * cosf(phi) + cameraFocus.y;
-	float z = radius * sinf(phi) * sinf(theta) + cameraFocus.z;
+	float x = radius * sinf(phi) * cosf(theta) + m_cam->getCameraFocus().x;
+	float y = radius * cosf(phi) + m_cam->getCameraFocus().y;
+	float z = radius * sinf(phi) * sinf(theta) + m_cam->getCameraFocus().z;
 
 	return glm::vec3(x, y, z);
 }
 
-void Inputs::setCameraFocusPoint(glm::vec3 focusPoint) {
+void Inputs::setCameraFocusPoint(glm::vec3& focusPoint) {
 	const float pi = 3.14159265359;
 
 	yaw = 0;
 	pitch = 0;
 
 	// Direction of the focusPoint
-	glm::vec3 dirVec = normalize(focusPoint - cameraPos);
+	glm::vec3 dirVec = normalize(focusPoint - m_cam->getCameraPos());
 
 	float newYaw = atan2(dirVec.z, dirVec.x);
 	float newPitch = asin(dirVec.y);
@@ -187,25 +188,25 @@ void Inputs::setCameraFocusPoint(glm::vec3 focusPoint) {
 	pitch = pitchDeg;
 
 	// Set the cameraFront's direction
-	cameraFront = glm::normalize(cameraFocus - cameraPos);
+	m_cam->getCameraFront() = glm::normalize(m_cam->getCameraFocus() - m_cam->getCameraPos());
 	firstMouse = true; // Set firstMouse true to combat the camera snapping
 }
 
 void Inputs::updateCameraVectors() {
-	cameraPos = calculateCameraPosition(); // Orbiting camera position
-	cameraFront = glm::normalize(cameraFocus - cameraPos);
+	m_cam->getCameraPos() = calculateCameraPosition(); // Orbiting camera position
+	m_cam->getCameraFront() = glm::normalize(m_cam->getCameraFocus() - m_cam->getCameraPos());
 }
 
-void Inputs::setMovementMode(GLFWwindow* window) {
+void Inputs::toggleMovementMode(GLFWwindow* window) {
 	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !togglePressedMovement && !ImGui::GetIO().WantTextInput) {
-		if (!movementMode) {
+		if (!m_cam->getIsMovementOrbit()) {
 			togglePressedMovement = true;
-			movementMode = !movementMode;
-			setCameraFocusPoint(getCameraFocus());
+			m_cam->getIsMovementOrbit() = !m_cam->getIsMovementOrbit();
+			setCameraFocusPoint(m_cam->getCameraFocus());
 		}
 		else {
 			togglePressedMovement = true;
-			movementMode = !movementMode;
+			m_cam->getIsMovementOrbit() = !m_cam->getIsMovementOrbit();
 			getCamera()->setFOV(40.0f);
 		}
 	}
@@ -225,28 +226,28 @@ void Inputs::movementFreeMode(GLFWwindow* window, float deltaTime) {
 		float cameraSpeed = 1.0 * deltaTime;
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 			cameraSpeed = 2.5 * deltaTime;
-
+		
 		// WASD movement controls, descend/ascend with space and l-control
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-			cameraPos += cameraSpeed * cameraFront;
+			m_cam->getCameraPos() += cameraSpeed * m_cam->getCameraFront();
 		else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-			cameraPos -= cameraSpeed * cameraFront;
+			m_cam->getCameraPos() -= cameraSpeed * m_cam->getCameraFront();
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-			cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			m_cam->getCameraPos() -= glm::normalize(glm::cross(m_cam->getCameraFront(), m_cam->getCameraUp())) * cameraSpeed;
 		else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-			cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+			m_cam->getCameraPos() += glm::normalize(glm::cross(m_cam->getCameraFront(), m_cam->getCameraUp())) * cameraSpeed;
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-			cameraPos += cameraSpeed * cameraUp;
+			m_cam->getCameraPos() += cameraSpeed * m_cam->getCameraUp();
 		else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
-			cameraPos -= cameraSpeed * cameraUp;
+			m_cam->getCameraPos() -= cameraSpeed * m_cam->getCameraUp();
 	}
 	
 	//Update camera position and LookAt direction
-	m_camera->setPosition(cameraPos);
-	m_camera->setLookAt(cameraPos + cameraFront); // redundant
+	m_cam->setPosition(m_cam->getCameraPos());
+	m_cam->setLookAt(m_cam->getCameraPos() + m_cam->getCameraFront()); // redundant
 
 	//Update view matrix
-	m_camera->setViewMatrix(cameraPos + cameraFront);
+	m_cam->setViewMatrix(m_cam->getCameraPos() + m_cam->getCameraFront());
 }
 
 void Inputs::movementOrbitMode(GLFWwindow* window) {
@@ -254,13 +255,13 @@ void Inputs::movementOrbitMode(GLFWwindow* window) {
 	updateCameraVectors();
 
 	glm::vec3 camPos = calculateCameraPosition();
-	m_camera->setPosition(camPos);
-	m_camera->setLookAt(cameraPos + cameraFront); // redundant
-	m_camera->setViewMatrix(cameraPos + cameraFront);
+	m_cam->setPosition(camPos);
+	m_cam->setLookAt(m_cam->getCameraPos() + m_cam->getCameraFront()); // redundant
+	m_cam->setViewMatrix(m_cam->getCameraPos() + m_cam->getCameraFront());
 
 	mousePosUpdate(window);
 }
 
 void Inputs::movementControls(GLFWwindow* window, float deltaTime) {
-	movementMode ? movementFreeMode(window, deltaTime) : movementOrbitMode(window);
+	m_cam->getIsMovementOrbit() ? movementFreeMode(window, deltaTime) : movementOrbitMode(window);
 }

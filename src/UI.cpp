@@ -190,7 +190,7 @@ void UI::ImGuiDraw()
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
-
+	
 	//ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 10.0f);
 	ImGui::PushStyleVar(ImGuiStyleVar_Alpha, ImGuiAlpha);
 	ImGuiStyleSetup();
@@ -413,7 +413,7 @@ void UI::ImGuiDraw()
 
 				if (useFolderFiltering) {
 					static int currentFolder = 0;
-
+					
 					ImGui::Text(("Current folder path: " + m_resoManager->getFolderSearchPath()).c_str());
 					if (ImGui::BeginCombo("Available folders", m_folderNames[currentFolder].c_str())) // Should make a method for Combo Boxes
 					{

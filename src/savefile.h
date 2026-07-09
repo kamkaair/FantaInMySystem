@@ -158,12 +158,34 @@ inline void readFileMeshes(std::ifstream& file, std::vector<FileModels>& inVec) 
 	}
 }
 
+inline void writeCameraData(std::ofstream& file, FileCamera& inCamera) {
+	file.write(reinterpret_cast<const char*>(&inCamera), sizeof(inCamera));
+
+	file.write(reinterpret_cast<const char*>(&inCamera.cameraPos), sizeof(inCamera.cameraPos));
+	file.write(reinterpret_cast<const char*>(&inCamera.cameraFront), sizeof(inCamera.cameraFront));
+	file.write(reinterpret_cast<const char*>(&inCamera.cameraFocus), sizeof(inCamera.cameraFocus));
+
+	file.write(reinterpret_cast<const char*>(&inCamera.freeMovementEnabled), sizeof(inCamera.freeMovementEnabled));
+}
+
+inline void readCameraData(std::ifstream& file, FileCamera& outVec) {
+	file.read(reinterpret_cast<char*>(&outVec), sizeof(outVec));
+
+	file.read(reinterpret_cast<char*>(&outVec.cameraPos), sizeof(outVec.cameraPos));
+	file.read(reinterpret_cast<char*>(&outVec.cameraFront), sizeof(outVec.cameraFront));
+	file.read(reinterpret_cast<char*>(&outVec.cameraFocus), sizeof(outVec.cameraFocus));
+
+	file.read(reinterpret_cast<char*>(&outVec.freeMovementEnabled), sizeof(outVec.freeMovementEnabled));
+}
+
 class SaveFile {
 public:
 	/*SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
 		m_pos(pos), m_color(color), m_strength(strength) {}*/
-	SaveFile(std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, std::vector<FileModels> fileMeshes, std::string backgroundTextPath, std::string hdriPath) 
-		: m_lightData(lightData), m_pathNames(pathNames), m_fileModels(fileMeshes), m_backgroundTexPath(backgroundTextPath), m_hdriPath(hdriPath) {}
+	SaveFile(std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, 
+		std::vector<FileModels> fileMeshes, FileCamera fileCamera, std::string backgroundTextPath, std::string hdriPath)
+		: m_lightData(lightData), m_pathNames(pathNames), m_fileModels(fileMeshes), m_fileCamera(fileCamera),
+		m_backgroundTexPath(backgroundTextPath), m_hdriPath(hdriPath) {}
 
 	void serialize(const std::string& filename) {
 		std::ofstream file(filename, std::ios::binary);
@@ -172,16 +194,10 @@ public:
 			return;
 		}
 		
-		//file.write(reinterpret_cast<char*>(&m_pos), sizeof(m_pos));
-		//std::cout << " Vector: " << sizeof(m_lightData) << std::endl;
-
 		// Write lightdata
 		writeVector(file, m_lightData);
 
 		// Write MaterialPaths
-		//std::cout << "Path names sizeof: " << sizeof(m_pathNames) << " pathnames.size(): " << m_pathNames.size() << std::endl;
-		//std::cout << "Pathname[0] sizeof: " << sizeof(m_pathNames[0]) << " Sizeof color: " << sizeof(m_pathNames[0].colorPath) << " - " << sizeof(m_pathNames[0].roughnessPath) << std::endl;
-		//writeStringVector(file, m_pathNames);
 		writeMaterialVector(file, m_pathNames);
 
 		// Write FileMeshes
@@ -193,6 +209,8 @@ public:
 		// Write HDRI
 		writeString(file, m_hdriPath);
 
+		// Write camera data
+		writeCameraData(file, m_fileCamera);
 		std::cout << std::endl;
 		std::cout << filename << " - Object serialized successfully." << std::endl;
 		file.close();
@@ -203,7 +221,7 @@ public:
 		std::ifstream file(filename, std::ios::binary);
 		if (!file.is_open()) {
 			std::cerr << "Error: Failed to open file for reading." << std::endl;
-			return SaveFile(std::vector<FileLights>(0), std::vector<MaterialPaths>(), std::vector<FileModels>(), "", "");
+			return SaveFile(std::vector<FileLights>(0), std::vector<MaterialPaths>(), std::vector<FileModels>(), FileCamera(), "", "");
 		}
 
 		// Read lights
@@ -224,14 +242,18 @@ public:
 		std::string hdri;
 		readString(file, hdri);
 
+		FileCamera cameraData;
+		readCameraData(file, cameraData);
+
 		std::cout << filename << " - Object deserialized successfully." << std::endl;
 		file.close();
-		return SaveFile(lights, materialPaths, fileModel, backgroundTex, hdri);
+		return SaveFile(lights, materialPaths, fileModel, cameraData, backgroundTex, hdri);
 	}
-
+	
 	std::vector<FileLights> getLightData() const { return m_lightData; }
 	std::vector<MaterialPaths> getPathNames() const { return m_pathNames; }
 	std::vector<FileModels> getFileMeshes() const { return m_fileModels; }
+	FileCamera getFileCamera() const { return m_fileCamera; }
 	std::string getBackgroundTexPath() const { return m_backgroundTexPath; }
 	std::string getHdriPath() const { return m_hdriPath; }
 
@@ -239,6 +261,7 @@ private:
 	std::vector<FileLights> m_lightData;
 	std::vector<MaterialPaths> m_pathNames;
 	std::vector<FileModels> m_fileModels;
+	FileCamera m_fileCamera;
 	std::string m_backgroundTexPath;
 	std::string m_hdriPath;
 };
