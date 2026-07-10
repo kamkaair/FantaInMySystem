@@ -148,8 +148,15 @@ public:
 		fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 1}} });
 		fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
 
-		FileCamera fileCamera({ glm::vec3(-1.003025, 3.101946, 9.453670), glm::vec3(0.100302, -0.310195, -0.945367), glm::vec3(0.0f, 0.0f, 0.0f), false });
+		float radius = 10.0f, theta = 0.0f, phi = 3.14159265359f / 4.0f;
+		float pitch = 0.0f, yaw = -90.0, lastX = 800.0f / 2.0, lastY = 600.0 / 2.0;
+		double xPos = 0.0f, yPos = 0.0f;
 
+		// Default values for the camera position
+		FileCamera fileCamera({ glm::vec3(0.0f, 0.5f, 1.0f), glm::vec3(0.0f, 0.0f, -1.0f), glm::vec3(0.0f, 0.0f, 0.0f),
+			radius, theta, phi,
+			pitch, yaw, lastX, lastY, xPos, yPos, false });
+		
 		// Create and serialize an object
 		SaveFile original(fileLights, materialPath, fileModels, fileCamera, backgroundTex, hdriPath);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
@@ -171,22 +178,8 @@ public:
 		m_resoManager->loadMeshes(models, restored.getFileMeshes());
 		m_scene->getModels() = models;
 
-		FileCamera cam = restored.getFileCamera();
-
-		std::cout << "cameraPos: " << glm::to_string(cam.cameraPos) << std::endl;
-		std::cout << "cameraFront: " << glm::to_string(cam.cameraFront) << std::endl;
-		std::cout << "cameraFocus: " << glm::to_string(cam.cameraFocus) << std::endl;
-		std::cout << "bool: " << cam.freeMovementEnabled << std::endl;
-
-		/*g_input->setCameraPos(cam.cameraPos);
-		g_input->setCameraFront(cam.cameraFront);
-		g_input->setCameraFocusPoint(cam.cameraFocus);
-		g_input->setMovementMode(cam.freeMovementEnabled);*/
-
-		m_camera->getCameraPos() = cam.cameraPos;
-		m_camera->getCameraFront() = cam.cameraFront;
-		m_camera->getCameraFocus() = cam.cameraFocus;
-		m_camera->getIsMovementOrbit() = cam.freeMovementEnabled;
+		// Set the camera values
+		m_resoManager->loadCameraOrientation(m_scene->getCamera(), restored.getFileCamera());
 
 		// stbi_set_flip_vertically_on_load(true);
 		// Load the texture for the background texture
@@ -315,8 +308,6 @@ public:
 
 		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
 
-		//glClear(GL_COLOR_BUFFER_BIT); // Already clearing in deferredRendering()
-
 		m_GBuffer->getLightPass()->bind();
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
@@ -351,14 +342,9 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_scene->getLights()[i].strength);
 		}
 
-		//std::cout << glm::to_string(m_camera->getLookAt()) << std::endl;
-
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_scene->getLights().size());
 		if (m_uiDraw->getLightOrientation())
 			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
-		//m_GBuffer->getLightPass()->setUniform("view", m_camera->getViewMatrix());
-		//m_GBuffer->getLightPass()->setUniform("projection", m_camera->getProjectionMatrix());
-		//m_GBuffer->getLightPass()->setUniform("screenSize", glm::vec2(width, height));
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
@@ -436,7 +422,7 @@ public:
 		g_input->movementControls(window, deltaTime);
 
 		// TODO: save camera position
-		std::cout << "Camera POS: " << glm::to_string(m_camera->getCameraPos()) << " - Front: " << glm::to_string(m_camera->getCameraFront()) << std::endl;
+		//std::cout << "Camera POS: " << glm::to_string(m_camera->getCameraPos()) << " - Front: " << glm::to_string(m_camera->getCameraFront()) << std::endl;
 	}
 
 private:

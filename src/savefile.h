@@ -161,27 +161,59 @@ inline void readFileMeshes(std::ifstream& file, std::vector<FileModels>& inVec) 
 inline void writeCameraData(std::ofstream& file, FileCamera& inCamera) {
 	file.write(reinterpret_cast<const char*>(&inCamera), sizeof(inCamera));
 
+	// Vec3s
 	file.write(reinterpret_cast<const char*>(&inCamera.cameraPos), sizeof(inCamera.cameraPos));
 	file.write(reinterpret_cast<const char*>(&inCamera.cameraFront), sizeof(inCamera.cameraFront));
 	file.write(reinterpret_cast<const char*>(&inCamera.cameraFocus), sizeof(inCamera.cameraFocus));
 
+	// Floats
+	file.write(reinterpret_cast<const char*>(&inCamera.radius), sizeof(inCamera.radius));
+	file.write(reinterpret_cast<const char*>(&inCamera.theta), sizeof(inCamera.theta));
+	file.write(reinterpret_cast<const char*>(&inCamera.phi), sizeof(inCamera.phi));
+
+	file.write(reinterpret_cast<const char*>(&inCamera.pitch), sizeof(inCamera.pitch));
+	file.write(reinterpret_cast<const char*>(&inCamera.yaw), sizeof(inCamera.yaw));
+
+	file.write(reinterpret_cast<const char*>(&inCamera.lastX), sizeof(inCamera.lastX));
+	file.write(reinterpret_cast<const char*>(&inCamera.lastY), sizeof(inCamera.lastY));
+
+	// Doubles
+	file.write(reinterpret_cast<const char*>(&inCamera.xPos), sizeof(inCamera.xPos));
+	file.write(reinterpret_cast<const char*>(&inCamera.yPos), sizeof(inCamera.yPos));
+
+	// Bool
 	file.write(reinterpret_cast<const char*>(&inCamera.freeMovementEnabled), sizeof(inCamera.freeMovementEnabled));
 }
 
 inline void readCameraData(std::ifstream& file, FileCamera& outVec) {
 	file.read(reinterpret_cast<char*>(&outVec), sizeof(outVec));
 
+	// Vec3s
 	file.read(reinterpret_cast<char*>(&outVec.cameraPos), sizeof(outVec.cameraPos));
 	file.read(reinterpret_cast<char*>(&outVec.cameraFront), sizeof(outVec.cameraFront));
 	file.read(reinterpret_cast<char*>(&outVec.cameraFocus), sizeof(outVec.cameraFocus));
 
+	// Floats
+	file.read(reinterpret_cast<char*>(&outVec.radius), sizeof(outVec.radius));
+	file.read(reinterpret_cast<char*>(&outVec.theta), sizeof(outVec.theta));
+	file.read(reinterpret_cast<char*>(&outVec.phi), sizeof(outVec.phi));
+
+	file.read(reinterpret_cast<char*>(&outVec.pitch), sizeof(outVec.pitch));
+	file.read(reinterpret_cast<char*>(&outVec.yaw), sizeof(outVec.yaw));
+
+	file.read(reinterpret_cast<char*>(&outVec.lastX), sizeof(outVec.lastX));
+	file.read(reinterpret_cast<char*>(&outVec.lastY), sizeof(outVec.lastY));
+
+	// Doubles
+	file.read(reinterpret_cast<char*>(&outVec.xPos), sizeof(outVec.xPos));
+	file.read(reinterpret_cast<char*>(&outVec.yPos), sizeof(outVec.yPos));
+
+	// Bool
 	file.read(reinterpret_cast<char*>(&outVec.freeMovementEnabled), sizeof(outVec.freeMovementEnabled));
 }
 
 class SaveFile {
 public:
-	/*SaveFile(std::string name, int age, std::vector<glm::vec3> pos, std::vector<glm::vec3> color, std::vector<float> strength) : m_name(name), m_age(age),
-		m_pos(pos), m_color(color), m_strength(strength) {}*/
 	SaveFile(std::vector<FileLights> lightData, std::vector<MaterialPaths> pathNames, 
 		std::vector<FileModels> fileMeshes, FileCamera fileCamera, std::string backgroundTextPath, std::string hdriPath)
 		: m_lightData(lightData), m_pathNames(pathNames), m_fileModels(fileMeshes), m_fileCamera(fileCamera),

@@ -21,6 +21,8 @@ public:
 		m_models = meshes;
 		m_materials = material;
 		m_lights = lights;
+
+
 	}
 
 	~Scene() {
@@ -41,6 +43,7 @@ private:
 	std::vector<Model*> m_models;
 	std::vector<FileLights> m_lights;
 	std::vector<Material*> m_materials;
+	FileCamera* cameraData;
 	Camera* m_camera;
 
 	Material* m_defaultMaterial;

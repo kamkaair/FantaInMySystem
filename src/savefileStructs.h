@@ -42,9 +42,14 @@ struct FileModels {
 };
 
 struct FileCamera {
-	glm::vec3 cameraPos;
-	glm::vec3 cameraFront;
-	glm::vec3 cameraFocus;
+	glm::vec3 cameraPos = { 0.0f, 0.5f, 1.0f };
+	glm::vec3 cameraFront = { 0.0f, 0.0f, -1.0f };
+	glm::vec3 cameraFocus = { 0.0f, 0.0f, 0.0f };
+
+	float radius = 10.0f, theta = 0.0f, phi = 3.14159265359f / 4.0f;
+	float pitch = 0.0f, yaw = -90.0;
+	float lastX = 800.0f / 2.0, lastY = 600.0 / 2.0;
+	double xPos = 0.0f, yPos = 0.0f;
 
 	bool freeMovementEnabled = false;
 };

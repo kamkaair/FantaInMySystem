@@ -37,6 +37,8 @@ void ResourceManager::fileLoad(std::string file, HDRI* hdri) {
 	// Set up lights and color
 	m_scene->getLights() = restored.getLightData();
 
+	loadCameraOrientation(m_scene->getCamera(), restored.getFileCamera());
+
 	m_scene->constructScene(models, materials, restored.getLightData());
 }
 
@@ -91,11 +93,7 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 	}
 	std::cout << "Background tex path: " << hdri->getBackgroundTexture()->getFilePath() << std::endl;
 	
-	Camera* camera = m_scene->getCamera();
-	fileCamera.cameraFocus = camera->getCameraFocus();
-	fileCamera.cameraFront = camera->getCameraFront();
-	fileCamera.cameraPos = camera->getCameraPos();
-	fileCamera.freeMovementEnabled = camera->getIsMovementOrbit();
+	saveCameraOrientation(m_scene->getCamera(), fileCamera);
 
 	// Create and serialize an object
 	SaveFile original(m_scene->getLights(), materialPath, fileModels, fileCamera, hdri->getBackgroundTexture()->getFilePath(), hdri->getHDRI_Path());
@@ -137,6 +135,49 @@ void ResourceManager::clearUnusedTextures() { // Probably unnecessarily mega exp
 	// Erase from the list
 	for (const auto& deleteTex : tbd)
 		getTrackedTextures().erase(deleteTex);
+}
+
+void ResourceManager::saveCameraOrientation(Camera* camera, FileCamera& fileCamera) { // At this point might be more suitable to create a .cpp for this class
+	fileCamera.cameraFocus = camera->getCameraFocus();
+	fileCamera.cameraFront = camera->getCameraFront();
+	fileCamera.cameraPos = camera->getCameraPos();
+
+	fileCamera.radius = camera->getRadius();
+	fileCamera.radius = camera->getRadius();
+	fileCamera.theta = camera->getTheta();
+	fileCamera.phi = camera->getPhi();
+
+	fileCamera.pitch = camera->getPitch();
+	fileCamera.yaw = camera->getYaw();
+
+	fileCamera.lastX = camera->getLastX();
+	fileCamera.lastY = camera->getLastY();
+
+	fileCamera.xPos = camera->getPosX();
+	fileCamera.yPos = camera->getPosY();
+
+	fileCamera.freeMovementEnabled = camera->getIsMovementFree();
+}
+
+void ResourceManager::loadCameraOrientation(Camera* camera, FileCamera& fileCamera) {
+	camera->getCameraPos() = fileCamera.cameraPos;
+	camera->getCameraFront() = fileCamera.cameraFront;
+	camera->getCameraFocus() = fileCamera.cameraFocus;
+
+	camera->getRadius() = fileCamera.radius;
+	camera->getTheta() = fileCamera.theta;
+	camera->getPhi() = fileCamera.phi;
+
+	camera->getPitch() = fileCamera.pitch;
+	camera->getYaw() = fileCamera.yaw;
+
+	camera->getLastX() = fileCamera.lastX;
+	camera->getLastY() = fileCamera.lastY;
+
+	camera->getPosX() = fileCamera.xPos;
+	camera->getPosY() = fileCamera.yPos;
+
+	camera->getIsMovementFree() = fileCamera.freeMovementEnabled;
 }
 
 void ResourceManager::cleanResourceManager(HDRI* hdri) {

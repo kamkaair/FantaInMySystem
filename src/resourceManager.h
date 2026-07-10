@@ -10,6 +10,9 @@ public:
 	void fileSave(std::string saveName, HDRI* hdri);
 	void cleanResourceManager(HDRI* hdri);
 
+	void saveCameraOrientation(Camera* camera, FileCamera& fileCamera);
+	void loadCameraOrientation(Camera* camera, FileCamera& fileCamera);
+
 	void replaceMaterials(Material* oldMat, Material* newMat);
 	void clearUnusedTextures();
 
