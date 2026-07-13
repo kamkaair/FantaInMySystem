@@ -15,14 +15,15 @@
 	uniform sampler2D uBackgroundTex;
 	
 	uniform int backgroundMode;
+	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f;
 	uniform mat4 invProjection;
 	uniform mat4 invView;
 	
 	uniform bool useRoughnessMask;
 	
 	vec3 gammaCorrect(vec3 color){
-		color = color / (color + vec3(1.0));
-		color = pow(color, vec3(1.0 / 2.2));
+		color = color / (color + vec3(1.0)) * HdrExposure;
+		color = pow(color, vec3(1.0 / HdrContrast));
 		
 		return color;
 	}

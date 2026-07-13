@@ -30,6 +30,8 @@ struct SettingsMaterial {
 
 class ScreenSpace;
 
+
+
 class UI : public kgfw::Object
 {
 public:
@@ -59,8 +61,10 @@ public:
 
 	SettingsMaterial getSettingsMaterial() { return m_settingsCreateMat; }
 
-	void shaderSet(const char* uniform, float value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
-	void shaderSet(const char* uniform, bool value) { m_GBuffer->getCurrentShader()->setUniform(uniform, value); }
+	template<typename T> void shaderSet(const char* uniform, T value) {
+		m_GBuffer->getCurrentShader()->setUniform(uniform, value);
+	}
+
 	void shaderBind() { m_GBuffer->getCurrentShader()->bind(); }
 
 	void setWindowInteract(bool newBool) { windowDisabled = newBool; }
@@ -100,6 +104,7 @@ private:
 
 	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
 		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
+	glm::vec3 HueChanges = {1.0f, 1.0f, 1.0f};
 
 	int backgroundMode = 0;
 	

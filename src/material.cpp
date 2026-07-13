@@ -2,8 +2,8 @@
 
 //Material::Material(const std::vector<GLuint>& textures) : m_texturesC(textures) {}
 
-Material::Material(const std::vector<GLuint>& textures, const std::string& name, const int materialIndex) 
-    : m_materialTextures(textures), m_displayName(name), m_materialIndex(materialIndex) {}
+Material::Material(const std::vector<GLuint>& textures, const std::string& name, const int materialIndex, alphaModes inAlpha)
+    : m_materialTextures(textures), m_displayName(name), m_materialIndex(materialIndex), currentAlphaMode(inAlpha) {}
 
 Material::~Material() {
     m_materialTextures.clear();

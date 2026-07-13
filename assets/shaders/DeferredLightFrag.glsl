@@ -20,7 +20,8 @@
 	uniform bool aoTone = false;
 	uniform bool useSSAO = true;
 	// General ImGui uniforms
-	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f, HueChange, aoStrength = 10.0f;
+	uniform float aoStrength = 10.0f;
+	uniform vec3 HueChanges = vec3(1.0f);
 	
 	uniform mat4 inverseView;
 	const float PI = 3.14159265359;
@@ -180,10 +181,9 @@
 		
 		// Hue change for the diffuse color
 		float originalHue = atan(albedo.b, albedo.g);
-		float finalHue = originalHue + HueChange;
 		float chroma = sqrt(albedo.b*albedo.b+albedo.g*albedo.g);
 		
-		vec3 diffuse      = irradiance * vec3(albedo.r, chroma * cos(finalHue), chroma * sin(finalHue));
+		vec3 diffuse      = irradiance * vec3(albedo.r * HueChanges.r, albedo.g * HueChanges.g, albedo.b * HueChanges.b);
 		
 		// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
 		//MAX_REFLECTION_LOD = 3.0; is quite nice :3
