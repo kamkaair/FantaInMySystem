@@ -45,7 +45,7 @@ public:
 	std::string& getFolderSearchPath() { return m_folderSearchPath; }
 
 private:
-	void checkDuplicateTextures(std::vector<GLuint>& textureIDs, std::vector<std::pair<std::string, bool>> maps);
+	void checkDuplicateTextures(std::vector<GLuint>& textureIDs, const std::vector<std::string> maps);
 	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
 	void processNodeAutoTexture(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
 
@@ -53,7 +53,7 @@ private:
 	//std::vector<Texture*> m_textures;
 	std::unordered_map<GLuint, Texture*> m_textureMap;
 	std::string emptyNormalPath = "/textures/EmptyNormal.png";
-	std::string m_folderSearchPath = ASSET_DIR + std::string("/textures");
+	std::string m_folderSearchPath = std::string("/textures/");
 
 	Scene* m_scene;
 };

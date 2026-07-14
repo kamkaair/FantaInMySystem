@@ -38,16 +38,34 @@ inline void readString(std::ifstream& file, std::string& stringCache) {
 	stringCache = outString;
 }
 
+inline void writeStringOption(std::ofstream& file, const std::optional<std::string> inString) {
+	size_t nameLength = inString.value().size();
+	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+	file.write(inString.value().c_str(), nameLength);
+}
+
+inline void readStringOption(std::ifstream& file, std::optional<std::string>& stringCache) {
+	// Read 8 bytes from the file and copy into memory
+	size_t nameLength;
+	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+
+	// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
+	std::string outString(nameLength, '\0');
+	file.read(&outString[0], nameLength);
+	stringCache = outString;
+}
+
 inline void writeStringVector(std::ofstream& file, const std::vector<MaterialPaths>& inVec) {
 	size_t size = inVec.size();
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
 	for (size_t i = 0; i < inVec.size(); i++) {
 		writeString(file, inVec[i].materialName);
-		writeString(file, inVec[i].diffuse.path);
-		writeString(file, inVec[i].metallic.path);
-		writeString(file, inVec[i].roughness.path);
-		writeString(file, inVec[i].normalPath);
+		writeStringOption(file, inVec[i].diffuse.path);
+		writeStringOption(file, inVec[i].metallic.path);
+		writeStringOption(file, inVec[i].roughness.path);
+
+		writeStringOption(file, inVec[i].normalPath.path);
 	}
 }
 
@@ -59,10 +77,10 @@ inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& in
 
 	for (size_t i = 0; i < inVec.size(); i++) {
 		readString(file, inVec[i].materialName);
-		readString(file, inVec[i].diffuse.path);
-		readString(file, inVec[i].metallic.path);
-		readString(file, inVec[i].roughness.path);
-		readString(file, inVec[i].normalPath);
+		readStringOption(file, inVec[i].diffuse.path);
+		readStringOption(file, inVec[i].metallic.path);
+		readStringOption(file, inVec[i].roughness.path);
+		readStringOption(file, inVec[i].normalPath.path);
 	}
 }
 
@@ -73,19 +91,16 @@ inline void writeMaterialVector(std::ofstream& file, const std::vector<MaterialP
 	for (size_t i = 0; i < inVec.size(); i++) {
 		writeString(file, inVec[i].materialName);
 
-		writeString(file, inVec[i].diffuse.path);
-		file.write(reinterpret_cast<const char*>(&inVec[i].diffuse.useMap), sizeof(inVec[i].diffuse.useMap));
+		writeStringOption(file, inVec[i].diffuse.path);
 		file.write(reinterpret_cast<const char*>(&inVec[i].diffuse.value), sizeof(inVec[i].diffuse.value));
 
-		writeString(file, inVec[i].metallic.path);
-		file.write(reinterpret_cast<const char*>(&inVec[i].metallic.useMap), sizeof(inVec[i].metallic.useMap));
+		writeStringOption(file, inVec[i].metallic.path);
 		file.write(reinterpret_cast<const char*>(&inVec[i].metallic.value), sizeof(inVec[i].metallic.value));
 
-		writeString(file, inVec[i].roughness.path);
-		file.write(reinterpret_cast<const char*>(&inVec[i].roughness.useMap), sizeof(inVec[i].roughness.useMap));
+		writeStringOption(file, inVec[i].roughness.path);
 		file.write(reinterpret_cast<const char*>(&inVec[i].roughness.value), sizeof(inVec[i].roughness.value));
 
-		writeString(file, inVec[i].normalPath);
+		writeStringOption(file, inVec[i].normalPath.path);
 	}
 }
 
@@ -98,19 +113,16 @@ inline void readMaterialVector(std::ifstream& file, std::vector<MaterialPaths>& 
 	for (size_t i = 0; i < inVec.size(); i++) {
 		readString(file, inVec[i].materialName);
 
-		readString(file, inVec[i].diffuse.path);
-		file.read(reinterpret_cast<char*>(&inVec[i].diffuse.useMap), sizeof(inVec[i].diffuse.useMap));
+		readStringOption(file, inVec[i].diffuse.path);
 		file.read(reinterpret_cast<char*>(&inVec[i].diffuse.value), sizeof(inVec[i].diffuse.value));
 
-		readString(file, inVec[i].metallic.path);
-		file.read(reinterpret_cast<char*>(&inVec[i].metallic.useMap), sizeof(inVec[i].metallic.useMap));
+		readStringOption(file, inVec[i].metallic.path);
 		file.read(reinterpret_cast<char*>(&inVec[i].metallic.value), sizeof(inVec[i].metallic.value));
 
-		readString(file, inVec[i].roughness.path);
-		file.read(reinterpret_cast<char*>(&inVec[i].roughness.useMap), sizeof(inVec[i].roughness.useMap));
+		readStringOption(file, inVec[i].roughness.path);
 		file.read(reinterpret_cast<char*>(&inVec[i].roughness.value), sizeof(inVec[i].roughness.value));
 
-		readString(file, inVec[i].normalPath);
+		readStringOption(file, inVec[i].normalPath.path);
 	}
 }
 

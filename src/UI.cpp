@@ -762,11 +762,18 @@ void UI::ImGuiDraw()
 						normalMapName = m_materialFileNames[currentItem[3]];
 
 					// Set the default material
-					m_resoManager->createMaterial(MaterialPaths{ std::string(materialName),
+					/*m_resoManager->createMaterial(MaterialPaths{std::string(materialName),
 						std::string("/textures/" + m_materialFileNames[currentItem[0]]), SetMat.useDiffuseTexture, SetMat.diffuseColor,		// Diffuse
 						std::string("/textures/" + m_materialFileNames[currentItem[1]]), SetMat.useMetallicTexture, SetMat.metallic,		// Metallic
 						std::string("/textures/" + m_materialFileNames[currentItem[2]]), SetMat.useRoughnessTexture, SetMat.roughness,		// Roughness
-						std::string("/textures/" + normalMapName) }); // Add the default material
+						std::string("/textures/" + normalMapName) });*/ // Add the default material
+
+					// Set the default material
+					m_resoManager->createMaterial(MaterialPaths{ std::string(materialName),
+						useTexture<glm::vec3>("/textures/" + m_materialFileNames[currentItem[0]], SetMat.diffuseColor),		// Diffuse
+						useTexture<float>("/textures/" + m_materialFileNames[currentItem[1]], SetMat.metallic),	// Metallic
+						useTexture<float>("/textures/" + m_materialFileNames[currentItem[2]], SetMat.roughness),	// Roughness
+						useTexture<std::string>("/textures/" + normalMapName) }); // Add the default material
 
 					for (const auto& texture : m_resoManager->getTrackedTextures())
 						std::cout << "Current textures: " << texture.first << std::endl;
@@ -834,11 +841,17 @@ void UI::ImGuiDraw()
 							normalMapName = m_materialFileNames[comboBoxSelection[3]];
 
 						// Use the selected options from "renderMaterialOptions" to create a new MaterialPaths
-						MaterialPaths newMaterialParams = { std::string(materials[select]->getName()),
+						/*MaterialPaths newMaterialParams = {std::string(materials[select]->getName()),
 							std::string("/textures/" + m_materialFileNames[comboBoxSelection[0]]), SetMat.useDiffuseTexture, SetMat.diffuseColor,	// Diffuse
 							std::string("/textures/" + m_materialFileNames[comboBoxSelection[1]]), SetMat.useMetallicTexture, SetMat.metallic,		// Metallic
 							std::string("/textures/" + m_materialFileNames[comboBoxSelection[2]]), SetMat.useRoughnessTexture, SetMat.roughness,	// Roughness
-							std::string("/textures/" + normalMapName) };																			// Normal
+							std::string("/textures/" + normalMapName) };*/																	// Normal
+
+						MaterialPaths newMaterialParams = { std::string(materials[select]->getName()),
+							useTexture<glm::vec3>("/textures/" + m_materialFileNames[comboBoxSelection[0]], SetMat.diffuseColor),	// Diffuse
+							useTexture<float>("/textures/" + m_materialFileNames[comboBoxSelection[1]], SetMat.metallic),		// Metallic
+							useTexture<float>("/textures/" + m_materialFileNames[comboBoxSelection[2]], SetMat.roughness),	// Roughness
+							useTexture<std::string>("/textures/" + normalMapName) };
 
 						// Material to be edited and the parameters
 						m_resoManager->editMaterial(materials[select], newMaterialParams);

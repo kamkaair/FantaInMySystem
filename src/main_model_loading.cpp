@@ -125,7 +125,7 @@ public:
 
 		std::vector<MaterialPaths> materialPath; // Path, use map and value
 
-		materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
+		/*materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
 			std::string("/textures/checkerboard.png"), true, glm::vec3(0),	// Diffuse
 			std::string("/textures/checkerboard.png"), true, 0.0f,			// Metallic
 			std::string("/textures/checkerboard.png"), true, 0.0f,			// Roughness
@@ -141,7 +141,25 @@ public:
 			std::string("/textures/Barrel/Barrel_Diffuse.png"), true, glm::vec3(0),
 			std::string("/textures/Barrel/Barrel_Metallic.png"), true, 0.0f,
 			std::string("/textures/Barrel/Barrel_Roughness.png"), true, 0.0f,
-			std::string("/textures/Barrel/Barrel_Normal.png") });
+			std::string("/textures/Barrel/Barrel_Normal.png") });*/
+
+		materialPath.push_back(MaterialPaths{ std::string("CheckerboardFloor"),
+			useTexture<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
+			useTexture<float>("/textures/checkerboard.png"),			// Metallic
+			useTexture<float>("/textures/checkerboard.png"),			// Roughness
+			useTexture<std::string>("/textures/checkerboardNormal.png") });
+
+		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
+			useTexture<glm::vec3>("/textures/MP18/Metallic_Diffuse.png"),
+			useTexture<float>("/textures/MP18/Metallic_Metallic.png"),
+			useTexture<float>("/textures/MP18/Metallic_Roughness.png"),
+			useTexture<std::string>("/textures/MP18/Metallic_Normal.png") });
+
+		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
+			useTexture<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
+			useTexture<float>("/textures/Barrel/Barrel_Metallic.png"),
+			useTexture<float>("/textures/Barrel/Barrel_Roughness.png"),
+			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png") });
 
 		std::vector<FileModels> fileModels;
 		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });

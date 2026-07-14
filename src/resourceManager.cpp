@@ -9,10 +9,10 @@ ResourceManager::ResourceManager() {
 
 	// Set the default material
 	m_scene->setDefaultMaterial(createMaterial(MaterialPaths{ std::string("Checkerboard"),
-		std::string("/textures/checkerboard.png"), true, glm::vec3(0),	// Diffuse
-		std::string("/textures/checkerboard.png"), true, 0.0f,			// Metallic
-		std::string("/textures/checkerboard.png"), true, 0.0f,			// Roughness
-		std::string("/textures/checkerboardNormal.png") })); // Add the default material
+		useTexture<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
+		useTexture<float>("/textures/checkerboard.png"),			// Metallic
+		useTexture<float>("/textures/checkerboard.png"),			// Roughness
+		useTexture<std::string>("/textures/checkerboardNormal.png") })); // Add the default material
 }
 
 void ResourceManager::fileLoad(std::string file, HDRI* hdri) {
@@ -73,10 +73,10 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 				std::cout << glm::to_string(mesh->getMaterial()->diffuseColor) << std::endl;
 
 				materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
-				filePaths[0], mesh->getMaterial()->useDiffuseTexture, mesh->getMaterial()->diffuseColor,
-				filePaths[1], mesh->getMaterial()->useMetallicTexture, mesh->getMaterial()->metallic,
-				filePaths[2], mesh->getMaterial()->useRoughnessTexture, mesh->getMaterial()->roughness,
-				filePaths[3] });
+				useTexture<glm::vec3>(filePaths[0], mesh->getMaterial()->diffuseColor),
+				useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
+				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
+				useTexture<std::string>(filePaths[3], "emptyNormal")});
 				texIndex++;
 			}
 

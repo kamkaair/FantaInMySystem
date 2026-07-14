@@ -2,6 +2,7 @@
 #include <string>
 #include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 #include <glad/gl.h>		// Include glad
+#include <optional>
 
 struct FileLights {
 	glm::vec3 pos;
@@ -9,21 +10,45 @@ struct FileLights {
 	float strength;
 };
 
-template <typename T> 
+/*template <typename T>
 struct MaterialParam {
 	std::string path;
 	bool useMap;
 	T value;
+};*/
+
+template <typename T>
+struct MaterialParam {
+	T value{}; // Self initializing
+	std::optional<std::string> path; // std::optional seems neat, just use std::nullopt when the value is not needed!
 };
+
+// MaterialPaths helpers functions/templates
+template<typename T>
+MaterialParam<T> useValue(T value) { // Only value, no path included
+	return MaterialParam<T>({ value, std::nullopt});
+}
+
+template<typename T>
+MaterialParam<T> useTexture(std::string path, T defaultValue = {}) { // Includes a default value as a backup, but primarily uses a texture
+	return MaterialParam<T>({ defaultValue, path });
+}
 
 struct MaterialPaths {
 	std::string materialName;
 
-	MaterialParam<glm::vec3> diffuse = { "", false, glm::vec3(0) };
-	MaterialParam<float> metallic = { "", false, 0.0f };
-	MaterialParam<float> roughness = { "", false, 0.0f };
+	//MaterialParam<glm::vec3> diffuse = { "", false, glm::vec3(0) };
+	//MaterialParam<float> metallic = { "", false, 0.0f };
+	//MaterialParam<float> roughness = { "", false, 0.0f };
 
-	std::string normalPath;
+	MaterialParam<glm::vec3> diffuse;
+	MaterialParam<float> metallic;
+	MaterialParam<float> roughness;
+	//MaterialParam<float> opacity;
+	//MaterialParam<glm::vec3> emission;
+
+	MaterialParam<std::string> normalPath;
+	//std::string normalPath;
 };
 
 struct FileMeshes {

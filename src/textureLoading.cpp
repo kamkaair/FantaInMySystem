@@ -89,10 +89,10 @@ Material* TextureLoading::checkAndAddMaterial(const std::pair<std::vector<GLuint
 	return m_scene->getMaterials().back();  // Return the last added material
 }
 
-void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, const std::vector<std::pair<std::string, bool>> maps) {
+void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, const std::vector<std::string> maps) {
 	// Decide to either use an image texture or use a value for the maps
 	for (auto map : maps) {
-		if (!map.second) {
+		if (map.empty()) {
 			textureIDs.push_back(GLuint(0));
 			continue;
 		}
@@ -103,7 +103,7 @@ void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, con
 		// Find out, whether the texture has been already loaded... if so, then just use the existing textureID
 		// TODO: look for a better way, maybe...
 		for (auto tex : m_textureMap) {
-			if (tex.second->getFilePath() == map.first) {
+			if (tex.second->getFilePath() == map) {
 				textureMap = tex.second;
 				newMap = false;
 				break;
@@ -111,7 +111,7 @@ void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, con
 		}
 
 		if (newMap) {
-			textureMap = loadTexture(map.first.c_str());
+			textureMap = loadTexture(map.c_str());
 			//m_textures.push_back(textureMap);
 			if (textureMap == nullptr) { // Fallback on the default material, if loading a texture fails
 				textureIDs.push_back(m_scene->getDefaultMaterial()->getTextures()[0]);
@@ -129,11 +129,11 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	// Maps added to make the texture loading process more tidy
 	std::vector<GLuint> textureIDs;
 
-	std::vector<std::pair<std::string, bool>> maps = {
-		{materialPaths.diffuse.path, materialPaths.diffuse.useMap},
-		{materialPaths.metallic.path, materialPaths.metallic.useMap},
-		{materialPaths.roughness.path, materialPaths.roughness.useMap},
-		{materialPaths.normalPath, true} // Normal maps always use textures
+	std::vector<std::string> maps = {
+		materialPaths.diffuse.path.value_or(""),
+		materialPaths.metallic.path.value_or(""),
+		materialPaths.roughness.path.value_or(""),
+		materialPaths.normalPath.path.value_or(emptyNormalPath) // Normal maps always use textures
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -148,9 +148,9 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	newMat->metallic = materialPaths.metallic.value;
 	newMat->roughness = materialPaths.roughness.value;
 
-	newMat->useDiffuseTexture = materialPaths.diffuse.useMap;
-	newMat->useMetallicTexture = materialPaths.metallic.useMap;
-	newMat->useRoughnessTexture = materialPaths.roughness.useMap;
+	//newMat->useDiffuseTexture = materialPaths.diffuse.useMap;
+	//newMat->useMetallicTexture = materialPaths.metallic.useMap;
+	//newMat->useRoughnessTexture = materialPaths.roughness.useMap;
 
 	return newMat;
 }
@@ -159,11 +159,11 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 	// Maps added to make the texture loading process more tidy
 	std::vector<GLuint> textureIDs;
 
-	std::vector<std::pair<std::string, bool>> maps = {
-		{materialPaths.diffuse.path, materialPaths.diffuse.useMap},
-		{materialPaths.metallic.path, materialPaths.metallic.useMap},
-		{materialPaths.roughness.path, materialPaths.roughness.useMap},
-		{materialPaths.normalPath, true} // Normal maps always use textures
+	std::vector<std::string> maps = {
+		materialPaths.diffuse.path.value_or(""),
+		materialPaths.metallic.path.value_or(""),
+		materialPaths.roughness.path.value_or(""),
+		materialPaths.normalPath.path.value_or(emptyNormalPath) // Normal maps always use textures
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -177,9 +177,9 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 	editableMat->metallic = materialPaths.metallic.value;
 	editableMat->roughness = materialPaths.roughness.value;
 
-	editableMat->useDiffuseTexture = materialPaths.diffuse.useMap;
-	editableMat->useMetallicTexture = materialPaths.metallic.useMap;
-	editableMat->useRoughnessTexture = materialPaths.roughness.useMap;
+	//editableMat->useDiffuseTexture = materialPaths.diffuse.useMap;
+	//editableMat->useMetallicTexture = materialPaths.metallic.useMap;
+	//editableMat->useRoughnessTexture = materialPaths.roughness.useMap;
 }
 
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
@@ -241,16 +241,15 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 		MaterialPaths usables;
 
 		// Pointers for the maps, used in createMaterial
-		struct mapRef {
+		/*struct mapRef {
 			std::string* path;
-			bool* useMap;
-		};
+		};*/
 
-		std::vector<mapRef> maps = {
-			{&usables.diffuse.path, &usables.diffuse.useMap},
-			{&usables.metallic.path, &usables.metallic.useMap},
-			{&usables.roughness.path, &usables.roughness.useMap},
-			{&usables.normalPath, nullptr} // Normal maps always use textures
+		std::vector<std::optional<std::string>*> maps = {
+			{&usables.diffuse.path},
+			{&usables.metallic.path},
+			{&usables.roughness.path},
+			{&usables.normalPath.path} // Normal maps always use textures
 		};
 
 		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) { // Assimp error catching and Get() a material name in one
@@ -277,20 +276,17 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 
 			if (it != filenames.end()) {
 				std::cout << "Texture Found! Format: " << types[i] << std::endl;
-				*maps[i].path = std::string(getFolderSearchPath() + cutPath[nameIndex]); // includes folders and their paths (textures/coolFolder/coolTex.png)
-				if(maps[i].useMap != nullptr)
-					*maps[i].useMap = true;
+				*maps[i] = getFolderSearchPath() + cutPath[nameIndex]; // includes folders and their paths (textures/coolFolder/coolTex.png)
 			}
 			else {
 				std::cout << "ERROR: Not found! Target format: " << types[i] << std::endl;
-				*maps[i].path = "";
-				if (maps[i].useMap != nullptr)
-					*maps[i].useMap = false;
+				//*maps[i] = "";
+				*maps[i] = std::nullopt;
 			}
 		}
 
-		if (usables.normalPath.empty()) // Add the default normal path, if normal path is empty
-			usables.normalPath = emptyNormalPath;
+		if (!usables.normalPath.path.has_value()) // Add the default normal path, if normal path is empty
+			usables.normalPath.path = emptyNormalPath;
 
 		// Create a new material with the values
 		return createMaterial(usables);
