@@ -130,10 +130,10 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	std::vector<GLuint> textureIDs;
 
 	std::vector<std::string> maps = {
-		materialPaths.diffuse.path.value_or(""),
+		materialPaths.diffuse.path.value_or(""), // TODO: I've marked the empty file paths as nullopt during the deserialization (from empty to nullopt back to empty... take a look at this again)
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
-		materialPaths.normalPath.path.value_or(emptyNormalPath) // Normal maps always use textures
+		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -163,7 +163,7 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 		materialPaths.diffuse.path.value_or(""),
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
-		materialPaths.normalPath.path.value_or(emptyNormalPath) // Normal maps always use textures
+		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -329,10 +329,9 @@ Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene,
 }
 
 void setMeshDisplayName(Mesh* meshRef, const std::string& name) {
-	if (meshRef) {
+	if (meshRef)
 		meshRef->setDisplayName(name);
-		//std::cout << name << std::endl;
-	}
+
 	else { printf("Error: Mesh reference is null\n"); }
 }
 

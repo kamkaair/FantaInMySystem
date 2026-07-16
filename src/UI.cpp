@@ -313,8 +313,10 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("TRANSFORM/MATERIAL MESHES"))
 			{
 				ImGui::Text("Below is all the meshes and their transforms");
-				for (auto model : m_resoManager->getScene()->getModels()) {
-					if (ImGui::TreeNode(model->getModelPath().c_str())) {
+				std::uint16_t nameIndex = 0;
+				for (auto model : m_resoManager->getScene()->getModels()) 
+				{
+					if (ImGui::TreeNode((model->getModelPath() + ": " + std::to_string(nameIndex)).c_str())) {
 						for (size_t i = 0; i < model->getMeshes().size(); i++)
 						{
 							Mesh* meshes = model->getMeshes()[i];
@@ -377,7 +379,7 @@ void UI::ImGuiDraw()
 						}
 						ImGui::TreePop();
 					}
-
+					nameIndex++;
 				}
 				
 				ImGui::TreePop();

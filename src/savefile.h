@@ -116,15 +116,23 @@ inline void readMaterialVector(std::ifstream& file, std::vector<MaterialPaths>& 
 
 		readStringOption(file, inVec[i].diffuse.path);
 		file.read(reinterpret_cast<char*>(&inVec[i].diffuse.value), sizeof(inVec[i].diffuse.value));
+		if (inVec[i].diffuse.path.value().empty())
+			inVec[i].diffuse.path = std::nullopt;
 
 		readStringOption(file, inVec[i].metallic.path);
 		file.read(reinterpret_cast<char*>(&inVec[i].metallic.value), sizeof(inVec[i].metallic.value));
+		if (inVec[i].metallic.path.value().empty())
+			inVec[i].metallic.path = std::nullopt;
 
 		readStringOption(file, inVec[i].roughness.path);
 		file.read(reinterpret_cast<char*>(&inVec[i].roughness.value), sizeof(inVec[i].roughness.value));
+		if (inVec[i].roughness.path.value().empty())
+			inVec[i].roughness.path = std::nullopt;
 
 		readStringOption(file, inVec[i].normalPath.path);
 		readString(file, inVec[i].normalPath.value);
+		if (inVec[i].normalPath.path.value().empty())
+			inVec[i].normalPath.path = "/textures/EmptyNormal.png";
 	}
 }
 

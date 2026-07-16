@@ -125,30 +125,6 @@ public:
 
 		std::vector<MaterialPaths> materialPath; // Path, use map and value
 
-		/*materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
-			useTexture<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
-			useTexture<float>("/textures/checkerboard.png"),			// Metallic
-			useTexture<float>("/textures/checkerboard.png"),			// Roughness
-			useTexture<std::string>("/textures/checkerboardNormal.png") });
-
-		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
-			useTexture<glm::vec3>("/textures/MP18/Metallic_Diffuse.png"),
-			useTexture<float>("/textures/MP18/Metallic_Metallic.png"),
-			useTexture<float>("/textures/MP18/Metallic_Roughness.png"),
-			useTexture<std::string>("/textures/MP18/Metallic_Normal.png") });
-
-		materialPath.push_back(MaterialPaths{ std::string("Barrel_Material"),
-			useTexture<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
-			useTexture<float>("/textures/Barrel/Barrel_Metallic.png"),
-			useTexture<float>("/textures/Barrel/Barrel_Roughness.png"),
-			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png") });*/
-
-		/*materialPath.push_back(MaterialPaths{std::string("Bibinki"),
-			useTexture<glm::vec3>("", glm::vec3(1.0f, 0.0f, 0.0f)),
-			useTexture<float>("", 1.0f),
-			useTexture<float>("", 0.2f),
-			useTexture<std::string>("") });*/
-
 		materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
 			materialParam<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
 			materialParam<float>("/textures/checkerboard.png"),			// Metallic
@@ -161,11 +137,11 @@ public:
 			materialParam<float>("/textures/MP18/Metallic_Roughness.png"),
 			materialParam<std::string>("/textures/MP18/Metallic_Normal.png") });
 
-		/*materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
+		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
 			materialParam<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
 			materialParam<float>("/textures/Barrel/Barrel_Metallic.png"),
 			materialParam<float>("/textures/Barrel/Barrel_Roughness.png"),
-			materialParam<std::string>("/textures/Barrel/Barrel_Normal.png") });*/
+			materialParam<std::string>("/textures/Barrel/Barrel_Normal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("Bibinki"),
 			materialParam<glm::vec3>(glm::vec3(1.0f, 0.0f, 0.0f)),
@@ -176,8 +152,8 @@ public:
 		std::vector<FileModels> fileModels;
 		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
 		fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 1}} });
-		//fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
-		fileModels.push_back({ "/models/barrel.obj",{{"Barrel2", glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
+		fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
+		fileModels.push_back({ "/models/barrel.obj",{{"BarrelSecond", glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 3}} });
 
 		float radius = 10.0f, theta = 0.0f, phi = 3.14159265359f / 4.0f;
 		float pitch = 0.0f, yaw = -90.0, lastX = 800.0f / 2.0, lastY = 600.0 / 2.0;
