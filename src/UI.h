@@ -30,8 +30,6 @@ struct SettingsMaterial {
 
 class ScreenSpace;
 
-
-
 class UI : public kgfw::Object
 {
 public:

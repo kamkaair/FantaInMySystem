@@ -2,6 +2,7 @@
 #include <stb_image.h>
 #include <kgfw/GLUtils.h>	// Include GLUtils for checkGLError
 #include <iostream>
+#include <filesystem>
 
 Texture::Texture(int width, int height, int nrChannels, const GLubyte* data, bool generateMipmaps) : Object(__FUNCTION__) {
 	//stbi_set_flip_vertically_on_load(false);
@@ -62,11 +63,6 @@ std::string Texture::getTextureFilename() const { return m_textureFilename; }
 void Texture::setFilePath(std::string inPath) { 
 	m_filePath = inPath; // Semi-full filepath (only project path .../textures/filename.png)
 
-	std::reverse(inPath.begin(), inPath.end());
-	for (auto c : inPath) {
-		if (c == '/')
-			break;
-		m_textureFilename += c;
-	}
-	std::reverse(m_textureFilename.begin(), m_textureFilename.end()); // Contains only the filename and the extension of the texture, good enough for now
+	std::filesystem::path relative = std::filesystem::relative(ASSET_DIR + inPath, ASSET_DIR + std::string("/textures/")); // Get the path relative to the given path (cut out ASSET_DIR)
+	m_textureFilename = relative.string();
 }

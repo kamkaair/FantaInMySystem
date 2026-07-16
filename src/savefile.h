@@ -91,16 +91,17 @@ inline void writeMaterialVector(std::ofstream& file, const std::vector<MaterialP
 	for (size_t i = 0; i < inVec.size(); i++) {
 		writeString(file, inVec[i].materialName);
 
-		writeStringOption(file, inVec[i].diffuse.path);
+		writeStringOption(file, inVec[i].diffuse.path.value_or(""));
 		file.write(reinterpret_cast<const char*>(&inVec[i].diffuse.value), sizeof(inVec[i].diffuse.value));
 
-		writeStringOption(file, inVec[i].metallic.path);
+		writeStringOption(file, inVec[i].metallic.path.value_or(""));
 		file.write(reinterpret_cast<const char*>(&inVec[i].metallic.value), sizeof(inVec[i].metallic.value));
 
-		writeStringOption(file, inVec[i].roughness.path);
+		writeStringOption(file, inVec[i].roughness.path.value_or(""));
 		file.write(reinterpret_cast<const char*>(&inVec[i].roughness.value), sizeof(inVec[i].roughness.value));
 
-		writeStringOption(file, inVec[i].normalPath.path);
+		writeStringOption(file, inVec[i].normalPath.path.value_or(""));
+		writeString(file, inVec[i].normalPath.value);
 	}
 }
 
@@ -123,6 +124,7 @@ inline void readMaterialVector(std::ifstream& file, std::vector<MaterialPaths>& 
 		file.read(reinterpret_cast<char*>(&inVec[i].roughness.value), sizeof(inVec[i].roughness.value));
 
 		readStringOption(file, inVec[i].normalPath.path);
+		readString(file, inVec[i].normalPath.value);
 	}
 }
 

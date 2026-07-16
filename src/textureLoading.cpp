@@ -144,13 +144,13 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	m_scene->getMaterials().push_back(newMat);
 	m_materialIndex++;
 
+	newMat->useDiffuseTexture = textureIDs[0] != 0 ? true : false;
+	newMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
+	newMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
+
 	newMat->diffuseColor = materialPaths.diffuse.value;
 	newMat->metallic = materialPaths.metallic.value;
 	newMat->roughness = materialPaths.roughness.value;
-
-	//newMat->useDiffuseTexture = materialPaths.diffuse.useMap;
-	//newMat->useMetallicTexture = materialPaths.metallic.useMap;
-	//newMat->useRoughnessTexture = materialPaths.roughness.useMap;
 
 	return newMat;
 }
@@ -173,13 +173,13 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 		editableMat->getTextures()[i] = textureIDs[i];
 	}
 
+	editableMat->useDiffuseTexture = textureIDs[0] != 0 ? true : false;
+	editableMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
+	editableMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
+
 	editableMat->diffuseColor = materialPaths.diffuse.value;
 	editableMat->metallic = materialPaths.metallic.value;
 	editableMat->roughness = materialPaths.roughness.value;
-
-	//editableMat->useDiffuseTexture = materialPaths.diffuse.useMap;
-	//editableMat->useMetallicTexture = materialPaths.metallic.useMap;
-	//editableMat->useRoughnessTexture = materialPaths.roughness.useMap;
 }
 
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
@@ -239,11 +239,6 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
 		aiString MatName;
 		MaterialPaths usables;
-
-		// Pointers for the maps, used in createMaterial
-		/*struct mapRef {
-			std::string* path;
-		};*/
 
 		std::vector<std::optional<std::string>*> maps = {
 			{&usables.diffuse.path},
