@@ -26,6 +26,7 @@ struct SettingsMaterial {
 	bool useDiffuseTexture = true;				// Whether to use a texture or a value
 	bool useMetallicTexture = true;
 	bool useRoughnessTexture = true;
+	bool useEmissionTexture = true;
 };
 
 class ScreenSpace;

@@ -42,8 +42,8 @@ struct MaterialPaths {
 	MaterialParam<glm::vec3> diffuse;
 	MaterialParam<float> metallic;
 	MaterialParam<float> roughness;
+	MaterialParam<float> emission;
 	//MaterialParam<float> opacity;
-	//MaterialParam<glm::vec3> emission;
 
 	MaterialParam<std::string> normalPath;
 };

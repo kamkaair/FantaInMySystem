@@ -11,13 +11,13 @@
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
 	// PBR
-	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap;
+	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap, EmissionMap;
 	
 	// Use textures or basic colors/values?
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
 	
 	uniform vec3 u_DiffuseColor, objectColor, HueChanges = vec3(1.0f);
-	uniform float u_Roughness, u_Metallic;
+	uniform float u_Roughness, u_Metallic, u_emissionStrength;
 	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f;
 	uniform int NUM_POINT_LIGHTS;
 
@@ -131,10 +131,6 @@
 		albedo = (pow(texture(DiffuseMap, texCoord).rgb, vec3(2.2)));
     }
 	
-	// emissive = emissiveColor * texture.rgb * emissiveStrength
-	//vec3 emissiveColor = vec3(1.0f, 0.0f, 0.0f);
-	//albedo = albedo * 2.0f;
-	
     float roughness = u_Roughness;
     if (useRoughnessTexture) {
 		roughness = texture(RoughnessMap, texCoord).r;
@@ -216,7 +212,8 @@
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 	
-    vec3 ambient = (kD * diffuse + specular);
+	vec3 emission = texture(EmissionMap, texCoord).rgb;
+    vec3 ambient = (kD * diffuse + specular + (emission * u_emissionStrength));
 	//vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 

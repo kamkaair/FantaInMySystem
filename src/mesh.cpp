@@ -55,10 +55,12 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 		shader->setUniform("u_DiffuseColor", m_material->diffuseColor.x, m_material->diffuseColor.y, m_material->diffuseColor.z);
 		shader->setUniform("u_Roughness", m_material->roughness);
 		shader->setUniform("u_Metallic", m_material->metallic);
+		//shader->setUniform("u_Emission", m_material->emission);
 
 		shader->setUniform("useDiffuseTexture", m_material->useDiffuseTexture);
 		shader->setUniform("useMetallicTexture", m_material->useMetallicTexture);
 		shader->setUniform("useRoughnessTexture", m_material->useRoughnessTexture);
+		//shader->setUniform("useEmissionTexture", m_material->useEmissionTexture);
 
 		const std::vector<GLuint>& textureIds = m_material->getTextures();
 		// Ensure you bind the textures with the appropriate uniforms
@@ -77,6 +79,10 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, textureIds[3]);  // NormalMap
 		shader->setUniform("NormalMap", 3);
+
+		/*glActiveTexture(GL_TEXTURE4);
+		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
+		shader->setUniform("NormalMap", 4);*/
 	}
 
 	glBindVertexArray(m_VAO);
@@ -135,10 +141,12 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 		shader->setUniform("u_DiffuseColor", m_material->diffuseColor.x, m_material->diffuseColor.y, m_material->diffuseColor.z);
 		shader->setUniform("u_Roughness", m_material->roughness);
 		shader->setUniform("u_Metallic", m_material->metallic);
+		shader->setUniform("u_emissionStrength", m_material->emission);
 
 		shader->setUniform("useDiffuseTexture", m_material->useDiffuseTexture);
 		shader->setUniform("useMetallicTexture", m_material->useMetallicTexture);
 		shader->setUniform("useRoughnessTexture", m_material->useRoughnessTexture);
+		//shader->setUniform("useEmissionTexture", m_material->useEmissionTexture);
 
 		// Ensure you bind the textures with the appropriate uniforms
 		glActiveTexture(GL_TEXTURE3);
@@ -155,7 +163,11 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 
 		glActiveTexture(GL_TEXTURE6);
 		glBindTexture(GL_TEXTURE_2D, textureIds[3]);  // NormalMap
-		shader->setUniform("NormalMap", 6);
+		shader->setUniform("EmissionMap", 6);
+
+		glActiveTexture(GL_TEXTURE7);
+		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
+		shader->setUniform("NormalMap", 7);
 	}
 
 	// draw mesh

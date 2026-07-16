@@ -9,9 +9,10 @@ ResourceManager::ResourceManager() {
 
 	// Set the default material
 	m_scene->setDefaultMaterial(createMaterial(MaterialPaths{ std::string("Checkerboard"),
-		useTexture<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
-		useTexture<float>("/textures/checkerboard.png"),			// Metallic
-		useTexture<float>("/textures/checkerboard.png"),			// Roughness
+		useTexture<glm::vec3>("/textures/checkerboard.png"),			// Diffuse
+		useTexture<float>("/textures/checkerboard.png"),				// Metallic
+		useTexture<float>("/textures/checkerboard.png"),				// Roughness
+		useTexture<float>("/textures/checkerboard.png"),				// Emission
 		useTexture<std::string>("/textures/checkerboardNormal.png") })); // Add the default material
 }
 
@@ -76,6 +77,7 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 				useTexture<glm::vec3>(filePaths[0], mesh->getMaterial()->diffuseColor),
 				useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
 				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
+				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness), // TODO: FIX
 				useTexture<std::string>(filePaths[3], "emptyNormal")});
 				texIndex++;
 			}

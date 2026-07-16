@@ -125,7 +125,7 @@ public:
 
 		std::vector<MaterialPaths> materialPath; // Path, use map and value
 
-		materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
+		/*materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
 			materialParam<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
 			materialParam<float>("/textures/checkerboard.png"),			// Metallic
 			materialParam<float>("/textures/checkerboard.png"),			// Roughness
@@ -135,25 +135,27 @@ public:
 			materialParam<glm::vec3>("/textures/MP18/Metallic_Diffuse.png"),
 			materialParam<float>("/textures/MP18/Metallic_Metallic.png"),
 			materialParam<float>("/textures/MP18/Metallic_Roughness.png"),
-			materialParam<std::string>("/textures/MP18/Metallic_Normal.png") });
+			materialParam<std::string>("/textures/MP18/Metallic_Normal.png")});
 
 		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
 			materialParam<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
 			materialParam<float>("/textures/Barrel/Barrel_Metallic.png"),
 			materialParam<float>("/textures/Barrel/Barrel_Roughness.png"),
-			materialParam<std::string>("/textures/Barrel/Barrel_Normal.png") });
+			materialParam<std::string>("/textures/Barrel/Barrel_Normal.png") });*/
 
-		materialPath.push_back(MaterialPaths{ std::string("Bibinki"),
-			materialParam<glm::vec3>(glm::vec3(1.0f, 0.0f, 0.0f)),
-			materialParam<float>(1.0f),
-			materialParam<float>(0.2f),
-			materialParam<std::string>("") });
+		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
+			useTexture<glm::vec3>("/textures/OldLantern/Lantern_Diffuse.jpg"),
+			useTexture<float>("/textures/OldLantern/Lantern_Metallic.jpg"),
+			useTexture<float>("/textures/OldLantern/Lantern_Roughness.jpg"),
+			useTexture<float>("/textures/OldLantern/Lantern_Emissive.jpg", 2.0f),
+			materialParam<std::string>("/textures/OldLantern/Lantern_Normal.png") });
 
 		std::vector<FileModels> fileModels;
-		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
-		fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 1}} });
-		fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
-		fileModels.push_back({ "/models/barrel.obj",{{"BarrelSecond", glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 3}} });
+		fileModels.push_back({ "/models/old_lantern.obj",{{"OldLantern", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
+		//fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
+		//fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 1}} });
+		//fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
+		//fileModels.push_back({ "/models/barrel.obj",{{"BarrelSecond", glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 3}} });
 
 		float radius = 10.0f, theta = 0.0f, phi = 3.14159265359f / 4.0f;
 		float pitch = 0.0f, yaw = -90.0, lastX = 800.0f / 2.0, lastY = 600.0 / 2.0;
@@ -427,9 +429,6 @@ public:
 		
 		// Keeping the movement inside the update loop
 		g_input->movementControls(window, deltaTime);
-
-		// TODO: save camera position
-		//std::cout << "Camera POS: " << glm::to_string(m_camera->getCameraPos()) << " - Front: " << glm::to_string(m_camera->getCameraFront()) << std::endl;
 	}
 
 private:

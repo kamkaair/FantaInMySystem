@@ -133,6 +133,7 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 		materialPaths.diffuse.path.value_or(""), // TODO: I've marked the empty file paths as nullopt during the deserialization (from empty to nullopt back to empty... take a look at this again)
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
+		materialPaths.emission.path.value(),
 		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
@@ -147,10 +148,12 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	newMat->useDiffuseTexture = textureIDs[0] != 0 ? true : false;
 	newMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
 	newMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
+	newMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
 
 	newMat->diffuseColor = materialPaths.diffuse.value;
 	newMat->metallic = materialPaths.metallic.value;
 	newMat->roughness = materialPaths.roughness.value;
+	newMat->emission = materialPaths.emission.value;
 
 	return newMat;
 }
