@@ -759,16 +759,20 @@ void UI::ImGuiDraw()
 				if (ImGui::Button("Create a new material")) {
 					stbi_set_flip_vertically_on_load(false);
 
+					// In case, where the texture is not used ("" is handled as no texture)
+					std::string useDiffusePath = SetMat.useDiffuseTexture ? "/textures/" + m_materialFileNames[currentItem[0]] : "";
+					std::string useMetallicPath = SetMat.useMetallicTexture ? "/textures/" + m_materialFileNames[currentItem[1]] : "";
+					std::string useRoughnessPath = SetMat.useRoughnessTexture ? "/textures/" + m_materialFileNames[currentItem[2]] : "";
 					std::string normalMapName = "EmptyNormal.png";
 					if (useNormalTexture)
 						normalMapName = m_materialFileNames[currentItem[3]];
 
 					// Set the default material
 					m_resoManager->createMaterial(MaterialPaths{ std::string(materialName),
-						useTexture<glm::vec3>("/textures/" + m_materialFileNames[currentItem[0]], SetMat.diffuseColor),		// Diffuse
-						useTexture<float>("/textures/" + m_materialFileNames[currentItem[1]], SetMat.metallic),	// Metallic
-						useTexture<float>("/textures/" + m_materialFileNames[currentItem[2]], SetMat.roughness),	// Roughness
-						useTexture<std::string>("/textures/" + normalMapName) }); // Add the default material
+						useTexture<glm::vec3>(useDiffusePath, SetMat.diffuseColor),		// Diffuse
+						useTexture<float>(useMetallicPath, SetMat.metallic),			// Metallic
+						useTexture<float>(useRoughnessPath, SetMat.roughness),			// Roughness
+						useTexture<std::string>("/textures/" + normalMapName) });		// Add the default material
 
 					for (const auto& texture : m_resoManager->getTrackedTextures())
 						std::cout << "Current textures: " << texture.first << std::endl;
@@ -831,15 +835,18 @@ void UI::ImGuiDraw()
 					{
 						stbi_set_flip_vertically_on_load(false);
 
+						// In case, where the texture is not used ("" is handled as no texture)
+						std::string useDiffusePath = SetMat.useDiffuseTexture ? "/textures/" + m_materialFileNames[comboBoxSelection[0]] : "";
+						std::string useMetallicPath = SetMat.useMetallicTexture ? "/textures/" + m_materialFileNames[comboBoxSelection[1]] : "";
+						std::string useRoughnessPath = SetMat.useRoughnessTexture ? "/textures/" + m_materialFileNames[comboBoxSelection[2]] : "";
 						std::string normalMapName = "EmptyNormal.png";
 						if (useNormalTexture)
 							normalMapName = m_materialFileNames[comboBoxSelection[3]];
 
-						// TODO: useValue or useTexture
 						MaterialPaths newMaterialParams = { std::string(materials[select]->getName()),
-							useTexture<glm::vec3>("/textures/" + m_materialFileNames[comboBoxSelection[0]], SetMat.diffuseColor),	// Diffuse
-							useTexture<float>("/textures/" + m_materialFileNames[comboBoxSelection[1]], SetMat.metallic),		// Metallic
-							useTexture<float>("/textures/" + m_materialFileNames[comboBoxSelection[2]], SetMat.roughness),	// Roughness
+							useTexture<glm::vec3>(useDiffusePath, SetMat.diffuseColor),	// Diffuse
+							useTexture<float>(useMetallicPath, SetMat.metallic),		// Metallic
+							useTexture<float>(useRoughnessPath, SetMat.roughness),	// Roughness
 							useTexture<std::string>("/textures/" + normalMapName) };
 
 						// Material to be edited and the parameters

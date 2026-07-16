@@ -31,7 +31,6 @@ template<typename T>
 MaterialParam<T> materialParam(const std::string& var) {
 	return useTexture<T>(var);
 }
-
 template<typename T>
 MaterialParam<T> materialParam(const T& var) {
 	return useValue<T>(var);
