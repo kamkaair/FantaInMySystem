@@ -64,5 +64,5 @@ void Texture::setFilePath(std::string inPath) {
 	m_filePath = inPath; // Semi-full filepath (only project path .../textures/filename.png)
 
 	std::filesystem::path relative = std::filesystem::relative(ASSET_DIR + inPath, ASSET_DIR + std::string("/textures/")); // Get the path relative to the given path (cut out ASSET_DIR)
-	m_textureFilename = relative.string();
+	m_textureFilename = relative.generic_string();
 }

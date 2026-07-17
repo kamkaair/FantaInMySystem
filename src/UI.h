@@ -12,11 +12,13 @@
 #include <stb_image.h>
 #include <initializer_list>
 #include <functional>
+#include <iostream>
 
 struct SettingsMaterial {
 	glm::vec3 diffuseColor = glm::vec3(1.0f);  // Default white color
 	float roughness = 0.5f;                    // Default roughness
 	float metallic = 0.0f;                     // Default metallic value
+	float emission = 0.0f;
 
 	GLuint diffuseTexture = 0;					// OpenGL texture ID
 	GLuint metallicTexture = 0;
@@ -86,7 +88,7 @@ private:
 		fileNames = func(std::string(ASSET_DIR) + "/" + location);
 	}
 
-	void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
+	void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t currentItem[]);
 
 	SettingsMaterial m_settingsCreateMat, m_settingsEditMat;
 

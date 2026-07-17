@@ -14,7 +14,7 @@
 	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap, EmissionMap;
 	
 	// Use textures or basic colors/values?
-	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
+	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false;
 	
 	uniform vec3 u_DiffuseColor, objectColor, HueChanges = vec3(1.0f);
 	uniform float u_Roughness, u_Metallic, u_emissionStrength;
@@ -141,6 +141,11 @@
 		metallic  = texture(MetallicMap, texCoord).r;
     }
 	
+	vec3 emission = vec3(albedo * u_emissionStrength); // Kind of a dinky way of implementing a switch between (texture OR float value)
+    if (useEmissionTexture) {
+		emission = texture(EmissionMap, texCoord).rgb;
+    }
+	
 	//float distanceFactor = clamp(length(viewPos - fragPos) / 1, 0.0, 1.0);
 	//float AmbientOcclusion = texture(ssao, texCoord).r;
 	//vec3 AmbientOcclusion = texture(ssao, texCoord).rgb;
@@ -212,7 +217,6 @@
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 	
-	vec3 emission = texture(EmissionMap, texCoord).rgb;
     vec3 ambient = (kD * diffuse + specular + (emission * u_emissionStrength));
 	//vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;

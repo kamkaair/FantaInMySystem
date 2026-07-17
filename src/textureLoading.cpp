@@ -133,7 +133,7 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 		materialPaths.diffuse.path.value_or(""), // TODO: I've marked the empty file paths as nullopt during the deserialization (from empty to nullopt back to empty... take a look at this again)
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
-		materialPaths.emission.path.value(),
+		materialPaths.emission.path.value_or(""),
 		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
@@ -166,6 +166,7 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 		materialPaths.diffuse.path.value_or(""),
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
+		materialPaths.emission.path.value_or(""),
 		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
@@ -179,10 +180,12 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 	editableMat->useDiffuseTexture = textureIDs[0] != 0 ? true : false;
 	editableMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
 	editableMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
+	editableMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
 
 	editableMat->diffuseColor = materialPaths.diffuse.value;
 	editableMat->metallic = materialPaths.metallic.value;
 	editableMat->roughness = materialPaths.roughness.value;
+	editableMat->emission = materialPaths.emission.value;
 }
 
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
@@ -400,7 +403,7 @@ std::vector<std::string> TextureLoading::FileSystem(const std::string& path) {
 			continue;
 
 		std::filesystem::path relative = std::filesystem::relative(entry.path(), path); // Get the path relative to the given path (cut out ASSET_DIR)
-		filenames.push_back(relative.string());
+		filenames.push_back(relative.generic_string());
 		//filenames.push_back(entry.path().filename().string());
 	}
 
@@ -412,7 +415,7 @@ std::vector<std::string> TextureLoading::FileSystemFolders(const std::string& pa
 	for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
 		if (entry.path().extension() == "") { // Eliminate the folders (and the other files without an extension)
 			std::filesystem::path relative = std::filesystem::relative(entry.path(), path); // Get the path relative to the given path (cut out ASSET_DIR)
-			folders.push_back(relative.string());
+			folders.push_back(relative.generic_string());
 		}
 	}
 
@@ -424,7 +427,7 @@ std::vector<std::pair<std::string, std::string>> TextureLoading::FileSystemTuple
 
 	for (const auto& entry : std::filesystem::recursive_directory_iterator(path)) {
 		std::filesystem::path relative = std::filesystem::relative(entry.path(), path); // Get the path relative to the given path (cut out ASSET_DIR)
-		filenames.push_back(std::pair(entry.path().stem().string(), relative.string()));
+		filenames.push_back(std::pair(entry.path().stem().string(), relative.generic_string())); // could use relative.generic_string() to force forward slashes
 	}
 
 	return filenames;

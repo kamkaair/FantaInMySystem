@@ -146,7 +146,7 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 		shader->setUniform("useDiffuseTexture", m_material->useDiffuseTexture);
 		shader->setUniform("useMetallicTexture", m_material->useMetallicTexture);
 		shader->setUniform("useRoughnessTexture", m_material->useRoughnessTexture);
-		//shader->setUniform("useEmissionTexture", m_material->useEmissionTexture);
+		shader->setUniform("useEmissionTexture", m_material->useEmissionTexture);
 
 		// Ensure you bind the textures with the appropriate uniforms
 		glActiveTexture(GL_TEXTURE3);

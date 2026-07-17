@@ -124,7 +124,6 @@ public:
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
 		std::vector<MaterialPaths> materialPath; // Path, use map and value
-
 		/*materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
 			materialParam<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
 			materialParam<float>("/textures/checkerboard.png"),			// Metallic
