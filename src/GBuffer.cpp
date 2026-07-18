@@ -22,9 +22,10 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	gNormal = createGNormal();
 	gAlbedo = createGAlbedo();
 	gMetalRough = createGMetallicRoughness();
+	gEmission = createGEmission();
 
-	GLuint attachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-	glDrawBuffers(4, attachments);
+	GLuint attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
+	glDrawBuffers(5, attachments);
 
 	rboDepth = createDepthBuffer();
 
@@ -99,6 +100,17 @@ GLuint GBuffer::createGMetallicRoughness() {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMetalRough, 0);
 
 	return gMetalRough;
+}
+
+GLuint GBuffer::createGEmission() {
+	glGenTextures(1, &gEmission);
+	glBindTexture(GL_TEXTURE_2D, gEmission);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, gEmission, 0);
+
+	return gEmission;
 }
 
 GLuint GBuffer::createDepthBuffer() {

@@ -15,6 +15,7 @@ public:
 	GLuint createGNormal();
 	GLuint createDepthBuffer();
 	GLuint createGMetallicRoughness();
+	GLuint createGEmission();
 
 	GLuint createDiffuse();
 	GLuint createSpecular();
@@ -26,6 +27,7 @@ public:
 	GLuint getGNormal() { return gNormal; }
 	GLuint getGBuffer() { return gBuffer; }
 	GLuint getGMetallicRoughness() { return gMetalRough; }
+	GLuint getGEmission() { return gEmission; }
 	GLuint getGDepth() { return rboDepth; }
 
 	GLuint getDiffuse() { return m_lightDiff; }
@@ -76,6 +78,6 @@ private:
 		lightFBO = 0;
 
 	// Textures
-	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0,
+	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0,
 		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0;
 };

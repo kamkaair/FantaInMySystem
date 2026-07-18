@@ -4,6 +4,7 @@
 	layout (location = 1) out vec3 gNormal;
 	layout (location = 2) out vec4 gAlbedoSpec;
 	layout (location = 3) out vec2 gMetallicRoughness;
+	layout (location = 4) out vec3 gEmission;
 
 	in vec3 fragPos;
 	in vec2 texCoord;
@@ -13,12 +14,13 @@
 	uniform sampler2D DiffuseMap;
 	uniform sampler2D MetallicMap;
 	uniform sampler2D RoughnessMap;
+	uniform sampler2D EmissionMap;
 	uniform sampler2D NormalMap;
 	
 	// Texture or solid color/value usage
-	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true;
+	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false;
 	uniform vec3 u_DiffuseColor;
-	uniform float u_Roughness, u_Metallic;
+	uniform float u_Roughness, u_Metallic, u_emissionStrength;
 	
 	//Normal map function
 	vec3 getNormalFromMap()
@@ -61,5 +63,10 @@
 		gMetallicRoughness.g = u_Roughness;
 		if (useRoughnessTexture) {
 			gMetallicRoughness.g  = texture(RoughnessMap, texCoord).r;	
+		}
+		
+		gEmission.rgb = vec3(gAlbedoSpec * u_emissionStrength);
+		if(useEmissionTexture) {
+			gEmission.rgb = texture(EmissionMap, texCoord).rgb;
 		}
 	}

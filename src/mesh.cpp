@@ -55,12 +55,12 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 		shader->setUniform("u_DiffuseColor", m_material->diffuseColor.x, m_material->diffuseColor.y, m_material->diffuseColor.z);
 		shader->setUniform("u_Roughness", m_material->roughness);
 		shader->setUniform("u_Metallic", m_material->metallic);
-		//shader->setUniform("u_Emission", m_material->emission);
+		shader->setUniform("u_emissionStrength", m_material->emission);
 
 		shader->setUniform("useDiffuseTexture", m_material->useDiffuseTexture);
 		shader->setUniform("useMetallicTexture", m_material->useMetallicTexture);
 		shader->setUniform("useRoughnessTexture", m_material->useRoughnessTexture);
-		//shader->setUniform("useEmissionTexture", m_material->useEmissionTexture);
+		shader->setUniform("useEmissionTexture", m_material->useEmissionTexture);
 
 		const std::vector<GLuint>& textureIds = m_material->getTextures();
 		// Ensure you bind the textures with the appropriate uniforms
@@ -78,11 +78,11 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, textureIds[3]);  // NormalMap
-		shader->setUniform("NormalMap", 3);
+		shader->setUniform("EmissionMap", 3);
 
-		/*glActiveTexture(GL_TEXTURE4);
+		glActiveTexture(GL_TEXTURE4); 
 		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
-		shader->setUniform("NormalMap", 4);*/
+		shader->setUniform("NormalMap", 4);
 	}
 
 	glBindVertexArray(m_VAO);

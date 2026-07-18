@@ -14,7 +14,7 @@
 	uniform sampler2D brdfLUT;
 	uniform bool worldCoords = true;
 	// G-Buffer
-	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
+	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness, gEmission;
 	// SSAO
 	uniform sampler2D ssao;
 	uniform bool aoTone = false;
@@ -103,6 +103,7 @@
 		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;	
 		float roughness = texture(gMetallicRoughness, texCoord).g;
 		float metallic = texture(gMetallicRoughness, texCoord).r;
+		vec3 emission = texture(gEmission, texCoord).rgb;
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(ssao, texCoord).r;
 		
@@ -202,5 +203,5 @@
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
 		//vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
 
-		oIndirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
+		oIndirectDiff = (kD * (diffuse * ao) + emission); //kD * diffuse * albedo * ao
 	}
