@@ -456,7 +456,7 @@ void UI::ImGuiDraw()
 					// Load the selected mesh
 					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
 					std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem, true);
-
+					
 					m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
 				}
 

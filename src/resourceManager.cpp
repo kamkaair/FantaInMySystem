@@ -140,44 +140,43 @@ void ResourceManager::clearUnusedTextures() { // Probably unnecessarily mega exp
 }
 
 void ResourceManager::saveCameraOrientation(Camera* camera, FileCamera& fileCamera) { // At this point might be more suitable to create a .cpp for this class
-	fileCamera.cameraFocus = camera->getCameraFocus();
-	fileCamera.cameraFront = camera->getCameraFront();
-	fileCamera.cameraPos = camera->getCameraPos();
+	fileCamera.cameraFocus = camera->cameraFocus;
+	fileCamera.cameraFront = camera->cameraFront;
+	fileCamera.cameraPos = camera->cameraPos;
 
-	fileCamera.radius = camera->getRadius();
-	fileCamera.radius = camera->getRadius();
-	fileCamera.theta = camera->getTheta();
-	fileCamera.phi = camera->getPhi();
+	fileCamera.radius = camera->radius;
+	fileCamera.theta = camera->theta;
+	fileCamera.phi = camera->phi;
 
-	fileCamera.pitch = camera->getPitch();
-	fileCamera.yaw = camera->getYaw();
+	fileCamera.pitch = camera->pitch;
+	fileCamera.yaw = camera->yaw;
 
-	fileCamera.lastX = camera->getLastX();
-	fileCamera.lastY = camera->getLastY();
+	fileCamera.lastX = camera->lastX;
+	fileCamera.lastY = camera->lastY;
 
-	fileCamera.xPos = camera->getPosX();
-	fileCamera.yPos = camera->getPosY();
+	fileCamera.xPos = camera->xPos;
+	fileCamera.yPos = camera->yPos;
 
 	fileCamera.freeMovementEnabled = camera->getIsMovementFree();
 }
 
 void ResourceManager::loadCameraOrientation(Camera* camera, FileCamera& fileCamera) {
-	camera->getCameraPos() = fileCamera.cameraPos;
-	camera->getCameraFront() = fileCamera.cameraFront;
-	camera->getCameraFocus() = fileCamera.cameraFocus;
+	camera->cameraPos = fileCamera.cameraPos;
+	camera->cameraFront = fileCamera.cameraFront;
+	camera->cameraFocus = fileCamera.cameraFocus;
 
-	camera->getRadius() = fileCamera.radius;
-	camera->getTheta() = fileCamera.theta;
-	camera->getPhi() = fileCamera.phi;
+	camera->radius = fileCamera.radius;
+	camera->theta = fileCamera.theta;
+	camera->phi = fileCamera.phi;
 
-	camera->getPitch() = fileCamera.pitch;
-	camera->getYaw() = fileCamera.yaw;
+	camera->pitch = fileCamera.pitch;
+	camera->yaw = fileCamera.yaw;
 
-	camera->getLastX() = fileCamera.lastX;
-	camera->getLastY() = fileCamera.lastY;
+	camera->lastX = fileCamera.lastX;
+	camera->lastY = fileCamera.lastY;
 
-	camera->getPosX() = fileCamera.xPos;
-	camera->getPosY() = fileCamera.yPos;
+	camera->xPos = fileCamera.xPos;
+	camera->yPos = fileCamera.yPos;
 
 	camera->getIsMovementFree() = fileCamera.freeMovementEnabled;
 }

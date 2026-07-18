@@ -9,9 +9,7 @@ public:
         updateProjectionMatrix();
     }
 
-    ~Camera() {
-
-    }
+    ~Camera() {}
 
     const glm::mat4& getProjectionMatrix() const { return m_projection; }
     float getNear() { return m_near; }
@@ -33,35 +31,8 @@ public:
     }
 
     float getFOV() const { return m_fov; }
-
-    glm::vec3& getCameraPos() { return cameraPos; }
-    glm::vec3& getCameraFront() { return cameraFront; }
-    glm::vec3& getCameraUp() { return cameraUp; }
-    glm::vec3& getCameraFocus() { return cameraFocus; }
     
     bool& getIsMovementFree() { return m_freeMovement; }
-
-    float& getRadius() { return radius; }
-    float& getTheta() { return theta; }
-    float& getPhi() { return phi; }
-
-    float& getPitch() { return pitch; }
-    float& getYaw() { return yaw; }
-
-    float& getLastX() { return lastX; }
-    float& getLastY() { return lastY; }
-
-    double& getPosX() { return xPos; }
-    double& getPosY() { return yPos; }
-
-private:
-    glm::mat4 m_projection;
-
-    float m_fov;
-    float m_width, m_height, m_near, m_far;
-    float m_aspect;
-
-    bool m_freeMovement = false;
 
     // Camera vectors
     glm::vec3 cameraPos = glm::vec3(0.0f, 0.5f, 1.0f), cameraFront = glm::vec3(0.0f, 0.0f, -1.0f),
@@ -73,6 +44,15 @@ private:
     float pitch = 0.0f, yaw = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
     float lastX = 800.0f / 2.0, lastY = 600.0 / 2.0;
     double xPos = 0.0f, yPos = 0.0f;
+
+private:
+    glm::mat4 m_projection;
+
+    float m_fov;
+    float m_width, m_height, m_near, m_far;
+    float m_aspect;
+
+    bool m_freeMovement = false;
 
     void updateProjectionMatrix() {
         m_projection = glm::perspective(glm::radians(m_fov), m_aspect, m_near, m_far);

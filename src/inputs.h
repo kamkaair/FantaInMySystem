@@ -21,6 +21,7 @@ public:
 
 	void mousePosUpdate(GLFWwindow* window);
 	glm::vec3 calculateCameraPosition();
+	void setDeltaTime(float deltaTime) { m_deltaTime = deltaTime; }
 
 	Camera* getCamera() { return m_cam; }
 
@@ -34,8 +35,8 @@ public:
 	void toggleMovementMode(GLFWwindow* window);
 
 	void setCameraFocusPoint(glm::vec3& focusPoint);
-	void setCameraPos(glm::vec3& newPos) { m_cam->getCameraPos() = newPos; }
-	void setCameraFront(glm::vec3& newFront) { m_cam->getCameraFront() = newFront; }
+	void setCameraPos(glm::vec3& newPos) { m_cam->cameraPos = newPos; }
+	void setCameraFront(glm::vec3& newFront) { m_cam->cameraFront = newFront; }
 
 	void setImGuiInteractability(GLFWwindow* window, int cursorMode, float ImGuiAlpha, float orbitSens, float focusSens, bool WindowInteract);
 
@@ -49,7 +50,7 @@ private:
 	bool mouseEnabled = false, mouseLeftEnabled = false, mouseRightEnabled = false;
 	bool togglePressed = false, togglePressedHide = false, togglePressedMovement = false, isHidden = false;
 
-	float orbitSens = 0.0005f, focusSens = 0.004f;
+	float m_orbitSens = 0.0005f, m_focusSens = 0.004f, m_deltaTime = 0.0f;
 	const float epsilon = 0.01f;
 
 	UI* m_uiDraw;

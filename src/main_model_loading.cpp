@@ -124,37 +124,39 @@ public:
 		fileLights.push_back(FileLights{ glm::vec3(0.30f, 3.10f, -5.80f), glm::vec3(0.10f, 0.89f, 0.5f), 6.0f });
 
 		std::vector<MaterialPaths> materialPath; // Path, use map and value
-		/*materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
-			materialParam<glm::vec3>("/textures/checkerboard.png"),	// Diffuse
-			materialParam<float>("/textures/checkerboard.png"),			// Metallic
-			materialParam<float>("/textures/checkerboard.png"),			// Roughness
-			materialParam<std::string>("/textures/checkerboardNormal.png") });
-
-		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
-			materialParam<glm::vec3>("/textures/MP18/Metallic_Diffuse.png"),
-			materialParam<float>("/textures/MP18/Metallic_Metallic.png"),
-			materialParam<float>("/textures/MP18/Metallic_Roughness.png"),
-			materialParam<std::string>("/textures/MP18/Metallic_Normal.png")});
-
-		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
-			materialParam<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
-			materialParam<float>("/textures/Barrel/Barrel_Metallic.png"),
-			materialParam<float>("/textures/Barrel/Barrel_Roughness.png"),
-			materialParam<std::string>("/textures/Barrel/Barrel_Normal.png") });*/
+		materialPath.push_back(MaterialPaths{std::string("CheckerboardFloor"),
+			useTexture<glm::vec3>("/textures/checkerboard.png"),			// 1. Diffuse
+			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
+			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
+			useValue<float>(0.0f),											// 4. Emission
+			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 5. Normal
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
 			useTexture<glm::vec3>("/textures/OldLantern/Lantern_Diffuse.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Metallic.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Roughness.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Emissive.jpg", 2.0f),
-			materialParam<std::string>("/textures/OldLantern/Lantern_Normal.png") });
+			useTexture<std::string>("/textures/OldLantern/Lantern_Normal.png") });
+
+		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
+			useTexture<glm::vec3>("/textures/MP18/Metallic_Diffuse.png"),
+			useTexture<float>("/textures/MP18/Metallic_Metallic.png"),
+			useTexture<float>("/textures/MP18/Metallic_Roughness.png"),
+			useValue<float>(0.0f),
+			useTexture<std::string>("/textures/MP18/Metallic_Normal.png")});
+
+		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
+			useTexture<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
+			useTexture<float>("/textures/Barrel/Barrel_Metallic.png"),
+			useTexture<float>("/textures/Barrel/Barrel_Roughness.png"),
+			useValue<float>(0.0f),
+			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png") });
 
 		std::vector<FileModels> fileModels;
-		fileModels.push_back({ "/models/old_lantern.obj",{{"OldLantern", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
-		//fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
-		//fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 1}} });
-		//fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
-		//fileModels.push_back({ "/models/barrel.obj",{{"BarrelSecond", glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 3}} });
+		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
+		fileModels.push_back({ "/models/old_lantern.obj",{{"OldLantern", glm::vec3(0.0f, -1.0f, -3.0f), glm::vec3(5.0f),glm::vec3(0.0f), 1}} });
+		fileModels.push_back({ "/models/MP18Low.obj",{{"MP18", glm::vec3(0.0f, 1.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 2}} });
+		fileModels.push_back({ "/models/barrel.obj",{{"Barrel", glm::vec3(0.0f, 2.0f, 0.0f), glm::vec3(1.0f),glm::vec3(0.0f), 3}} });
 
 		float radius = 10.0f, theta = 0.0f, phi = 3.14159265359f / 4.0f;
 		float pitch = 0.0f, yaw = -90.0, lastX = 800.0f / 2.0, lastY = 600.0 / 2.0;
@@ -258,7 +260,7 @@ public:
 		if (!g_input->getImGuiVisibility()) {
 			//renderIcons(); // Render all the point lamp icons
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->getCameraFocus(), 1);
+			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window
 		}
 	}
@@ -304,7 +306,7 @@ public:
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->getCameraFocus(), 1);
+			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
 			m_uiDraw->ImGuiDraw();
 		}
 	}
@@ -370,8 +372,7 @@ public:
 		}
 	}
 
-	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {
-		
+	static void mouse_callback(GLFWwindow* window, double xposIn, double yposIn) {	
 		if (g_input->getMovementMode()) {
 			g_input->inputMouse(window, xposIn, yposIn);
 		}
@@ -401,6 +402,8 @@ public:
 
 	void update(float deltaTime, GLFWwindow* window) {
 		//Mesh rotation
+		g_input->setDeltaTime(deltaTime);
+
 		if (m_uiDraw->boolMeshRotation()) {
 			if (!m_uiDraw->boolDoOnce()) {
 				for (auto models : m_scene->getModels()) {
