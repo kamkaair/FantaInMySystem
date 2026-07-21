@@ -104,7 +104,7 @@ private:
 	std::string defaultFolderPath = "/textures";
 
 	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
-		HueChange = 1.0f, backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
+		backExposure = 1.0f, backContrast = 2.2f, totalScale = 0.0f;
 	glm::vec3 HueChanges = {1.0f, 1.0f, 1.0f};
 
 	int backgroundMode = 0;

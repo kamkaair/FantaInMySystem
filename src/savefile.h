@@ -1,33 +1,54 @@
 #pragma once
-#include <fstream>
 #include <iostream>
 #include <string>
 #include "savefileStructs.h"
 
+// Vectors
 template<typename T>
-void writeVector(std::ofstream& file, const std::vector<T>& vec) {
+inline void write(std::ofstream& file, const std::vector<T>& vec) {
 	size_t size = vec.size();
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 	file.write(reinterpret_cast<const char*>(vec.data()), size * sizeof(T));
 }
 
 template<typename T>
-void readVector(std::ifstream& file, std::vector<T>& vec) {
+inline void read(std::ifstream& file, std::vector<T>& vec) {
 	size_t size;
 	file.read(reinterpret_cast<char*>(&size), sizeof(size));
 	vec.resize(size);
 	file.read(reinterpret_cast<char*>(vec.data()), size * sizeof(T));
 }
 
+// Standard optional
+template<typename T>
+inline void write(std::ofstream& file, const std::optional<T> inString) {
+	size_t nameLength = inString.value().size();
+	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+	file.write(inString.value().c_str(), nameLength);
+}
+
+template<typename T>
+inline void read(std::ifstream& file, std::optional<T>& stringCache) {
+	// Read 8 bytes from the file and copy into memory
+	size_t nameLength;
+	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
+
+	// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
+	std::string outString(nameLength, '\0');
+	file.read(&outString[0], nameLength);
+	stringCache = outString;
+}
+
+// Strings
 // Inline allows multiple identical definitions (normally this would trigger an error with identical defs), when each .cpp file gets it's own copy of this function
-inline void writeString(std::ofstream& file, const std::string inString) {
+inline void write(std::ofstream& file, const std::string& inString) {
 	size_t nameLength = inString.size();
 
 	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
 	file.write(inString.c_str(), nameLength);
 }
 
-inline void readString(std::ifstream& file, std::string& stringCache) {
+inline void read(std::ifstream& file, std::string& stringCache) {
 	// Read 8 bytes from the file and copy into memory
 	size_t nameLength;
 	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
@@ -38,21 +59,17 @@ inline void readString(std::ifstream& file, std::string& stringCache) {
 	stringCache = outString;
 }
 
-inline void writeStringOption(std::ofstream& file, const std::optional<std::string> inString) {
-	size_t nameLength = inString.value().size();
-	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-	file.write(inString.value().c_str(), nameLength);
+// Generic format
+template<typename T>
+inline void write(std::ofstream& file, const T& inValue) {
+	static_assert(std::is_trivially_copyable_v<T>);
+	file.write(reinterpret_cast<const char*>(&inValue), sizeof(T));
 }
 
-inline void readStringOption(std::ifstream& file, std::optional<std::string>& stringCache) {
-	// Read 8 bytes from the file and copy into memory
-	size_t nameLength;
-	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-
-	// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
-	std::string outString(nameLength, '\0');
-	file.read(&outString[0], nameLength);
-	stringCache = outString;
+template<typename T>
+inline void read(std::ifstream& file, T& outValue) {
+	static_assert(std::is_trivially_copyable_v<T>);
+	file.read(reinterpret_cast<char*>(&outValue), sizeof(T));
 }
 
 inline void writeStringVector(std::ofstream& file, const std::vector<MaterialPaths>& inVec) {
@@ -60,12 +77,11 @@ inline void writeStringVector(std::ofstream& file, const std::vector<MaterialPat
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
 	for (size_t i = 0; i < inVec.size(); i++) {
-		writeString(file, inVec[i].materialName);
-		writeStringOption(file, inVec[i].diffuse.path);
-		writeStringOption(file, inVec[i].metallic.path);
-		writeStringOption(file, inVec[i].roughness.path);
-
-		writeStringOption(file, inVec[i].normalPath.path);
+		write(file, inVec[i].materialName);
+		write(file, inVec[i].diffuse.path);
+		write(file, inVec[i].metallic.path);
+		write(file, inVec[i].roughness.path);
+		write(file, inVec[i].normalPath.path);
 	}
 }
 
@@ -76,11 +92,11 @@ inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& in
 	std::cout << "Vector size: " << inVec.size() << std::endl;
 
 	for (size_t i = 0; i < inVec.size(); i++) {
-		readString(file, inVec[i].materialName);
-		readStringOption(file, inVec[i].diffuse.path);
-		readStringOption(file, inVec[i].metallic.path);
-		readStringOption(file, inVec[i].roughness.path);
-		readStringOption(file, inVec[i].normalPath.path);
+		read(file, inVec[i].materialName);
+		read(file, inVec[i].diffuse.path);
+		read(file, inVec[i].metallic.path);
+		read(file, inVec[i].roughness.path);
+		read(file, inVec[i].normalPath.path);
 	}
 }
 
@@ -88,24 +104,8 @@ inline void writeMaterialVector(std::ofstream& file, const std::vector<MaterialP
 	size_t size = inVec.size();
 	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
 
-	for (size_t i = 0; i < inVec.size(); i++) {
-		writeString(file, inVec[i].materialName);
-
-		writeStringOption(file, inVec[i].diffuse.path.value_or(""));
-		file.write(reinterpret_cast<const char*>(&inVec[i].diffuse.value), sizeof(inVec[i].diffuse.value));
-
-		writeStringOption(file, inVec[i].metallic.path.value_or(""));
-		file.write(reinterpret_cast<const char*>(&inVec[i].metallic.value), sizeof(inVec[i].metallic.value));
-
-		writeStringOption(file, inVec[i].roughness.path.value_or(""));
-		file.write(reinterpret_cast<const char*>(&inVec[i].roughness.value), sizeof(inVec[i].roughness.value));
-
-		writeStringOption(file, inVec[i].emission.path.value_or(""));
-		file.write(reinterpret_cast<const char*>(&inVec[i].emission.value), sizeof(inVec[i].emission.value));
-
-		writeStringOption(file, inVec[i].normalPath.path.value_or(""));
-		writeString(file, inVec[i].normalPath.value);
-	}
+	for (auto mat : inVec) 
+		mat.serialize(file, mat);
 }
 
 inline void readMaterialVector(std::ifstream& file, std::vector<MaterialPaths>& inVec) {
@@ -114,34 +114,8 @@ inline void readMaterialVector(std::ifstream& file, std::vector<MaterialPaths>& 
 	inVec.resize(size);
 	std::cout << "Vector size: " << inVec.size() << std::endl;
 
-	for (size_t i = 0; i < inVec.size(); i++) {
-		readString(file, inVec[i].materialName);
-
-		readStringOption(file, inVec[i].diffuse.path);
-		file.read(reinterpret_cast<char*>(&inVec[i].diffuse.value), sizeof(inVec[i].diffuse.value));
-		if (inVec[i].diffuse.path.value().empty())
-			inVec[i].diffuse.path = std::nullopt;
-
-		readStringOption(file, inVec[i].metallic.path);
-		file.read(reinterpret_cast<char*>(&inVec[i].metallic.value), sizeof(inVec[i].metallic.value));
-		if (inVec[i].metallic.path.value().empty())
-			inVec[i].metallic.path = std::nullopt;
-
-		readStringOption(file, inVec[i].roughness.path);
-		file.read(reinterpret_cast<char*>(&inVec[i].roughness.value), sizeof(inVec[i].roughness.value));
-		if (inVec[i].roughness.path.value().empty())
-			inVec[i].roughness.path = std::nullopt;
-
-		readStringOption(file, inVec[i].emission.path);
-		file.read(reinterpret_cast<char*>(&inVec[i].emission.value), sizeof(inVec[i].emission.value));
-		if (inVec[i].emission.path.value().empty())
-			inVec[i].emission.path = std::nullopt;
-
-		readStringOption(file, inVec[i].normalPath.path);
-		readString(file, inVec[i].normalPath.value);
-		if (inVec[i].normalPath.path.value().empty())
-			inVec[i].normalPath.path = "/textures/EmptyNormal.png";
-	}
+	for (auto& mat : inVec)
+		mat.deserialize(file, mat);
 }
 
 inline void writeFileMeshes(std::ofstream& file, std::vector<FileModels>& inVec) {
@@ -149,18 +123,18 @@ inline void writeFileMeshes(std::ofstream& file, std::vector<FileModels>& inVec)
 	file.write(reinterpret_cast<const char*>(&sizeModel), sizeof(sizeModel));
 
 	for (size_t i = 0; i < inVec.size(); i++) {
-		writeString(file, inVec[i].modelPath);
+		write(file, inVec[i].modelPath);
 
-		size_t sizeMesh = inVec[i].meshes.size();
-		file.write(reinterpret_cast<const char*>(&sizeMesh), sizeof(sizeMesh));
+		size_t sizeMesh = inVec[i].meshes.size();		
+		write(file, sizeMesh); // file.write(reinterpret_cast<const char*>(&sizeMesh), sizeof(sizeMesh));
 		for (size_t j = 0; j < inVec[i].meshes.size(); j++) {
-			writeString(file, inVec[i].meshes[j].modelName);
+			write(file, inVec[i].meshes[j].modelName);
 
-			file.write(reinterpret_cast<char*>(&inVec[i].meshes[j].pos), sizeof(inVec[i].meshes[j].pos));
-			file.write(reinterpret_cast<char*>(&inVec[i].meshes[j].scaling), sizeof(inVec[i].meshes[j].scaling));
-			file.write(reinterpret_cast<char*>(&inVec[i].meshes[j].rotation), sizeof(inVec[i].meshes[j].rotation));
+			write(file, inVec[i].meshes[j].pos);
+			write(file, inVec[i].meshes[j].scaling);
+			write(file, inVec[i].meshes[j].rotation);
 
-			file.write(reinterpret_cast<char*>(&inVec[i].meshes[j].textureID), sizeof(inVec[i].meshes[j].textureID));
+			write(file, inVec[i].meshes[j].textureID);
 		}	
 	}
 }
@@ -171,75 +145,71 @@ inline void readFileMeshes(std::ifstream& file, std::vector<FileModels>& inVec) 
 	inVec.resize(sizeModel);
 
 	for (size_t i = 0; i < inVec.size(); i++) {
-		readString(file, inVec[i].modelPath);
+		read(file, inVec[i].modelPath);
 
-		size_t sizeMesh;
-		file.read(reinterpret_cast<char*>(&sizeMesh), sizeof(sizeMesh));
+		size_t sizeMesh;	
+		read(file, sizeMesh);//file.read(reinterpret_cast<char*>(&sizeMesh), sizeof(sizeMesh));
 		inVec[i].meshes.resize(sizeMesh);
 		for (size_t j = 0; j < inVec[i].meshes.size(); j++) {
-			readString(file, inVec[i].meshes[j].modelName);
+			read(file, inVec[i].meshes[j].modelName);
 
-			file.read(reinterpret_cast<char*>(&inVec[i].meshes[j].pos), sizeof(inVec[i].meshes[j].pos));
-			file.read(reinterpret_cast<char*>(&inVec[i].meshes[j].scaling), sizeof(inVec[i].meshes[j].scaling));
-			file.read(reinterpret_cast<char*>(&inVec[i].meshes[j].rotation), sizeof(inVec[i].meshes[j].rotation));
+			read(file, inVec[i].meshes[j].pos);
+			read(file, inVec[i].meshes[j].scaling);
+			read(file, inVec[i].meshes[j].rotation);
 
-			file.read(reinterpret_cast<char*>(&inVec[i].meshes[j].textureID), sizeof(inVec[i].meshes[j].textureID));
+			read(file, inVec[i].meshes[j].textureID);
 		}
 	}
 }
 
 inline void writeCameraData(std::ofstream& file, FileCamera& inCamera) {
-	file.write(reinterpret_cast<const char*>(&inCamera), sizeof(inCamera));
-
 	// Vec3s
-	file.write(reinterpret_cast<const char*>(&inCamera.cameraPos), sizeof(inCamera.cameraPos));
-	file.write(reinterpret_cast<const char*>(&inCamera.cameraFront), sizeof(inCamera.cameraFront));
-	file.write(reinterpret_cast<const char*>(&inCamera.cameraFocus), sizeof(inCamera.cameraFocus));
+	write(file, inCamera.cameraPos);
+	write(file, inCamera.cameraFront);
+	write(file, inCamera.cameraFocus);
 
 	// Floats
-	file.write(reinterpret_cast<const char*>(&inCamera.radius), sizeof(inCamera.radius));
-	file.write(reinterpret_cast<const char*>(&inCamera.theta), sizeof(inCamera.theta));
-	file.write(reinterpret_cast<const char*>(&inCamera.phi), sizeof(inCamera.phi));
+	write(file, inCamera.radius);
+	write(file, inCamera.theta);
+	write(file, inCamera.phi);
 
-	file.write(reinterpret_cast<const char*>(&inCamera.pitch), sizeof(inCamera.pitch));
-	file.write(reinterpret_cast<const char*>(&inCamera.yaw), sizeof(inCamera.yaw));
+	write(file, inCamera.pitch);
+	write(file, inCamera.yaw);
 
-	file.write(reinterpret_cast<const char*>(&inCamera.lastX), sizeof(inCamera.lastX));
-	file.write(reinterpret_cast<const char*>(&inCamera.lastY), sizeof(inCamera.lastY));
+	write(file, inCamera.lastX);
+	write(file, inCamera.lastY);
 
 	// Doubles
-	file.write(reinterpret_cast<const char*>(&inCamera.xPos), sizeof(inCamera.xPos));
-	file.write(reinterpret_cast<const char*>(&inCamera.yPos), sizeof(inCamera.yPos));
+	write(file, inCamera.xPos);
+	write(file, inCamera.yPos);
 
 	// Bool
-	file.write(reinterpret_cast<const char*>(&inCamera.freeMovementEnabled), sizeof(inCamera.freeMovementEnabled));
+	write(file, inCamera.freeMovementEnabled);
 }
 
-inline void readCameraData(std::ifstream& file, FileCamera& outVec) {
-	file.read(reinterpret_cast<char*>(&outVec), sizeof(outVec));
-
+inline void readCameraData(std::ifstream& file, FileCamera& outCamera) {
 	// Vec3s
-	file.read(reinterpret_cast<char*>(&outVec.cameraPos), sizeof(outVec.cameraPos));
-	file.read(reinterpret_cast<char*>(&outVec.cameraFront), sizeof(outVec.cameraFront));
-	file.read(reinterpret_cast<char*>(&outVec.cameraFocus), sizeof(outVec.cameraFocus));
+	read(file, outCamera.cameraPos);
+	read(file, outCamera.cameraFront);
+	read(file, outCamera.cameraFocus);
 
 	// Floats
-	file.read(reinterpret_cast<char*>(&outVec.radius), sizeof(outVec.radius));
-	file.read(reinterpret_cast<char*>(&outVec.theta), sizeof(outVec.theta));
-	file.read(reinterpret_cast<char*>(&outVec.phi), sizeof(outVec.phi));
+	read(file, outCamera.radius);
+	read(file, outCamera.theta);
+	read(file, outCamera.phi);
 
-	file.read(reinterpret_cast<char*>(&outVec.pitch), sizeof(outVec.pitch));
-	file.read(reinterpret_cast<char*>(&outVec.yaw), sizeof(outVec.yaw));
+	read(file, outCamera.pitch);
+	read(file, outCamera.yaw);
 
-	file.read(reinterpret_cast<char*>(&outVec.lastX), sizeof(outVec.lastX));
-	file.read(reinterpret_cast<char*>(&outVec.lastY), sizeof(outVec.lastY));
+	read(file, outCamera.lastX);
+	read(file, outCamera.lastY);
 
 	// Doubles
-	file.read(reinterpret_cast<char*>(&outVec.xPos), sizeof(outVec.xPos));
-	file.read(reinterpret_cast<char*>(&outVec.yPos), sizeof(outVec.yPos));
+	read(file, outCamera.xPos);
+	read(file, outCamera.yPos);
 
 	// Bool
-	file.read(reinterpret_cast<char*>(&outVec.freeMovementEnabled), sizeof(outVec.freeMovementEnabled));
+	read(file, outCamera.freeMovementEnabled);
 }
 
 class SaveFile {
@@ -257,7 +227,7 @@ public:
 		}
 		
 		// Write lightdata
-		writeVector(file, m_lightData);
+		write(file, m_lightData);
 
 		// Write MaterialPaths
 		writeMaterialVector(file, m_pathNames);
@@ -266,10 +236,10 @@ public:
 		writeFileMeshes(file, m_fileModels);
 
 		// Write backgroundTex
-		writeString(file, m_backgroundTexPath);
+		write(file, m_backgroundTexPath);
 
 		// Write HDRI
-		writeString(file, m_hdriPath);
+		write(file, m_hdriPath);
 
 		// Write camera data
 		writeCameraData(file, m_fileCamera);
@@ -288,21 +258,20 @@ public:
 
 		// Read lights
 		std::vector<FileLights> lights;
-		readVector(file, lights);
+		read(file, lights);
 
 		// Read MaterialPaths strings
 		std::vector<MaterialPaths> materialPaths;
-		//readStringVector(file, materialPaths);
 		readMaterialVector(file, materialPaths);
 
 		std::vector<FileModels> fileModel;
 		readFileMeshes(file, fileModel);
 
 		std::string backgroundTex;
-		readString(file, backgroundTex);
+		read(file, backgroundTex);
 
 		std::string hdri;
-		readString(file, hdri);
+		read(file, hdri);
 
 		FileCamera cameraData;
 		readCameraData(file, cameraData);
@@ -312,12 +281,12 @@ public:
 		return SaveFile(lights, materialPaths, fileModel, cameraData, backgroundTex, hdri);
 	}
 	
-	std::vector<FileLights> getLightData() const { return m_lightData; }
-	std::vector<MaterialPaths> getPathNames() const { return m_pathNames; }
-	std::vector<FileModels> getFileMeshes() const { return m_fileModels; }
-	FileCamera getFileCamera() const { return m_fileCamera; }
-	std::string getBackgroundTexPath() const { return m_backgroundTexPath; }
-	std::string getHdriPath() const { return m_hdriPath; }
+	std::vector<FileLights>& getLightData() { return m_lightData; }
+	const std::vector<MaterialPaths>& getPathNames() const { return m_pathNames; }
+	const std::vector<FileModels>& getFileMeshes() const { return m_fileModels; }
+	FileCamera& getFileCamera() { return m_fileCamera; }
+	const std::string& getBackgroundTexPath() const { return m_backgroundTexPath; }
+	const std::string& getHdriPath() const { return m_hdriPath; }
 
 private:
 	std::vector<FileLights> m_lightData;

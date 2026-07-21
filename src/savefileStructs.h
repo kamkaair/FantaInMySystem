@@ -2,8 +2,7 @@
 #include <string>
 #include <kgfw/Object.h>	// Include kgfw::Object to be used as a base class
 #include <glad/gl.h>		// Include glad
-
-#include <optional>
+#include "serializer.h"
 
 struct FileLights {
 	glm::vec3 pos;
@@ -46,6 +45,56 @@ struct MaterialPaths {
 	//MaterialParam<float> opacity;
 
 	MaterialParam<std::string> normalPath;
+
+	void serialize(std::ofstream& file, const MaterialPaths& inVec) {
+		Serializer ser;
+		ser.write(file, inVec.materialName);
+
+		ser.write(file, inVec.diffuse.path.value_or(""));
+		ser.write(file, inVec.diffuse.value);
+
+		ser.write(file, inVec.metallic.path.value_or(""));
+		ser.write(file, inVec.metallic.value);
+
+		ser.write(file, inVec.roughness.path.value_or(""));
+		ser.write(file, inVec.roughness.value);
+
+		ser.write(file, inVec.emission.path.value_or(""));
+		ser.write(file, inVec.emission.value);
+
+		ser.write(file, inVec.normalPath.path.value_or(""));
+		ser.write(file, inVec.normalPath.value);
+	}
+
+	void deserialize(std::ifstream& file, MaterialPaths& inVec) {
+		Serializer ser;
+		ser.read(file, inVec.materialName);
+
+		ser.read(file, inVec.diffuse.path);
+		ser.read(file, inVec.diffuse.value);
+		if (inVec.diffuse.path.value().empty())
+			inVec.diffuse.path = std::nullopt;
+
+		ser.read(file, inVec.metallic.path);
+		ser.read(file, inVec.metallic.value);
+		if (inVec.metallic.path.value().empty())
+			inVec.metallic.path = std::nullopt;
+
+		ser.read(file, inVec.roughness.path);
+		ser.read(file, inVec.roughness.value);
+		if (inVec.roughness.path.value().empty())
+			inVec.roughness.path = std::nullopt;
+
+		ser.read(file, inVec.emission.path);
+		ser.read(file, inVec.emission.value);
+		if (inVec.emission.path.value().empty())
+			inVec.emission.path = std::nullopt;
+
+		ser.read(file, inVec.normalPath.path);
+		ser.read(file, inVec.normalPath.value);
+		if (inVec.normalPath.path.value().empty())
+			inVec.normalPath.path = "/textures/EmptyNormal.png";
+	}
 };
 
 struct FileMeshes {

@@ -619,11 +619,11 @@ void UI::ImGuiDraw()
 				if (ImGui::Button("Reset Exposure/Contrast")) {
 					HdrContrast = 2.2f;
 					HdrExposure = 1.0f;
-					HueChange = 0.0f;
+					HueChanges = glm::vec3(1.0f);
 
 					shaderSet("HdrContrast", HdrContrast);
 					shaderSet("HdrExposure", HdrExposure);
-					shaderSet("HueChange", HueChange);
+					shaderSet("HueChanges", HueChanges);
 				}
 
 				// Padding

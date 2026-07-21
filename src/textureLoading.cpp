@@ -232,7 +232,7 @@ std::vector<unsigned int> loadIndices(aiMesh* mesh) {
 
 Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
 	// Assign the preloaded material by index
-	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Normal" };
+	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Normal" };
 
 	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + getFolderSearchPath());
 	std::vector<std::string> filenames, cutPath;
@@ -250,6 +250,7 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			{&usables.diffuse.path},
 			{&usables.metallic.path},
 			{&usables.roughness.path},
+			{&usables.emission.path},
 			{&usables.normalPath.path} // Normal maps always use textures
 		};
 
@@ -281,13 +282,15 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			}
 			else {
 				std::cout << "ERROR: Not found! Target format: " << types[i] << std::endl;
-				//*maps[i] = "";
 				*maps[i] = std::nullopt;
 			}
 		}
 
 		if (!usables.normalPath.path.has_value()) // Add the default normal path, if normal path is empty
 			usables.normalPath.path = emptyNormalPath;
+
+		if(usables.emission.path.has_value())
+			usables.emission.value = 1.0f;
 
 		// Create a new material with the values
 		return createMaterial(usables);
