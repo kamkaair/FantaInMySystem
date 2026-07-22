@@ -3,213 +3,48 @@
 #include <string>
 #include "savefileStructs.h"
 
-// Vectors
-template<typename T>
-inline void write(std::ofstream& file, const std::vector<T>& vec) {
-	size_t size = vec.size();
-	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
-	file.write(reinterpret_cast<const char*>(vec.data()), size * sizeof(T));
-}
-
-template<typename T>
-inline void read(std::ifstream& file, std::vector<T>& vec) {
-	size_t size;
-	file.read(reinterpret_cast<char*>(&size), sizeof(size));
-	vec.resize(size);
-	file.read(reinterpret_cast<char*>(vec.data()), size * sizeof(T));
-}
-
-// Standard optional
-template<typename T>
-inline void write(std::ofstream& file, const std::optional<T> inString) {
-	size_t nameLength = inString.value().size();
-	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-	file.write(inString.value().c_str(), nameLength);
-}
-
-template<typename T>
-inline void read(std::ifstream& file, std::optional<T>& stringCache) {
-	// Read 8 bytes from the file and copy into memory
-	size_t nameLength;
-	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-
-	// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
-	std::string outString(nameLength, '\0');
-	file.read(&outString[0], nameLength);
-	stringCache = outString;
-}
-
-// Strings
-// Inline allows multiple identical definitions (normally this would trigger an error with identical defs), when each .cpp file gets it's own copy of this function
-inline void write(std::ofstream& file, const std::string& inString) {
-	size_t nameLength = inString.size();
-
-	file.write(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-	file.write(inString.c_str(), nameLength);
-}
-
-inline void read(std::ifstream& file, std::string& stringCache) {
-	// Read 8 bytes from the file and copy into memory
-	size_t nameLength;
-	file.read(reinterpret_cast<char*>(&nameLength), sizeof(nameLength));
-
-	// Create a string buffer with the earlier name length. Using \0 to add empty for all the characters
-	std::string outString(nameLength, '\0');
-	file.read(&outString[0], nameLength);
-	stringCache = outString;
-}
-
-// Generic format
-template<typename T>
-inline void write(std::ofstream& file, const T& inValue) {
-	static_assert(std::is_trivially_copyable_v<T>);
-	file.write(reinterpret_cast<const char*>(&inValue), sizeof(T));
-}
-
-template<typename T>
-inline void read(std::ifstream& file, T& outValue) {
-	static_assert(std::is_trivially_copyable_v<T>);
-	file.read(reinterpret_cast<char*>(&outValue), sizeof(T));
-}
-
-inline void writeStringVector(std::ofstream& file, const std::vector<MaterialPaths>& inVec) {
+inline void writeMaterials(std::ofstream& file, std::vector<MaterialPaths>& inVec) {
 	size_t size = inVec.size();
-	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
-
-	for (size_t i = 0; i < inVec.size(); i++) {
-		write(file, inVec[i].materialName);
-		write(file, inVec[i].diffuse.path);
-		write(file, inVec[i].metallic.path);
-		write(file, inVec[i].roughness.path);
-		write(file, inVec[i].normalPath.path);
-	}
+	Serializer::write(file, size);
+	
+	for (auto& mat : inVec) 
+		mat.serialize(file);
 }
 
-inline void readStringVector(std::ifstream& file, std::vector<MaterialPaths>& inVec) {
+inline void readMaterials(std::ifstream& file, std::vector<MaterialPaths>& inVec) {
 	size_t size;
-	file.read(reinterpret_cast<char*>(&size), sizeof(size));
-	inVec.resize(size);
-	std::cout << "Vector size: " << inVec.size() << std::endl;
+	Serializer::read(file, size);
 
-	for (size_t i = 0; i < inVec.size(); i++) {
-		read(file, inVec[i].materialName);
-		read(file, inVec[i].diffuse.path);
-		read(file, inVec[i].metallic.path);
-		read(file, inVec[i].roughness.path);
-		read(file, inVec[i].normalPath.path);
-	}
-}
-
-inline void writeMaterialVector(std::ofstream& file, const std::vector<MaterialPaths>& inVec) {
-	size_t size = inVec.size();
-	file.write(reinterpret_cast<const char*>(&size), sizeof(size));
-
-	for (auto mat : inVec) 
-		mat.serialize(file, mat);
-}
-
-inline void readMaterialVector(std::ifstream& file, std::vector<MaterialPaths>& inVec) {
-	size_t size;
-	file.read(reinterpret_cast<char*>(&size), sizeof(size));
 	inVec.resize(size);
 	std::cout << "Vector size: " << inVec.size() << std::endl;
 
 	for (auto& mat : inVec)
-		mat.deserialize(file, mat);
+		mat.deserialize(file);
 }
 
-inline void writeFileMeshes(std::ofstream& file, std::vector<FileModels>& inVec) {
+inline void writeModels(std::ofstream& file, std::vector<FileModels>& inVec) {
 	size_t sizeModel = inVec.size();
-	file.write(reinterpret_cast<const char*>(&sizeModel), sizeof(sizeModel));
+	Serializer::write(file, sizeModel);
 
-	for (size_t i = 0; i < inVec.size(); i++) {
-		write(file, inVec[i].modelPath);
-
-		size_t sizeMesh = inVec[i].meshes.size();		
-		write(file, sizeMesh); // file.write(reinterpret_cast<const char*>(&sizeMesh), sizeof(sizeMesh));
-		for (size_t j = 0; j < inVec[i].meshes.size(); j++) {
-			write(file, inVec[i].meshes[j].modelName);
-
-			write(file, inVec[i].meshes[j].pos);
-			write(file, inVec[i].meshes[j].scaling);
-			write(file, inVec[i].meshes[j].rotation);
-
-			write(file, inVec[i].meshes[j].textureID);
-		}	
-	}
+	for (auto& model : inVec) 
+		model.serialize(file);
 }
 
-inline void readFileMeshes(std::ifstream& file, std::vector<FileModels>& inVec) {
+inline void readModels(std::ifstream& file, std::vector<FileModels>& inVec) {
 	size_t sizeModel;
 	file.read(reinterpret_cast<char*>(&sizeModel), sizeof(sizeModel));
 	inVec.resize(sizeModel);
 
-	for (size_t i = 0; i < inVec.size(); i++) {
-		read(file, inVec[i].modelPath);
-
-		size_t sizeMesh;	
-		read(file, sizeMesh);//file.read(reinterpret_cast<char*>(&sizeMesh), sizeof(sizeMesh));
-		inVec[i].meshes.resize(sizeMesh);
-		for (size_t j = 0; j < inVec[i].meshes.size(); j++) {
-			read(file, inVec[i].meshes[j].modelName);
-
-			read(file, inVec[i].meshes[j].pos);
-			read(file, inVec[i].meshes[j].scaling);
-			read(file, inVec[i].meshes[j].rotation);
-
-			read(file, inVec[i].meshes[j].textureID);
-		}
-	}
+	for (auto& model : inVec)
+		model.deserialize(file);
 }
 
 inline void writeCameraData(std::ofstream& file, FileCamera& inCamera) {
-	// Vec3s
-	write(file, inCamera.cameraPos);
-	write(file, inCamera.cameraFront);
-	write(file, inCamera.cameraFocus);
-
-	// Floats
-	write(file, inCamera.radius);
-	write(file, inCamera.theta);
-	write(file, inCamera.phi);
-
-	write(file, inCamera.pitch);
-	write(file, inCamera.yaw);
-
-	write(file, inCamera.lastX);
-	write(file, inCamera.lastY);
-
-	// Doubles
-	write(file, inCamera.xPos);
-	write(file, inCamera.yPos);
-
-	// Bool
-	write(file, inCamera.freeMovementEnabled);
+	inCamera.serialize(file);
 }
 
 inline void readCameraData(std::ifstream& file, FileCamera& outCamera) {
-	// Vec3s
-	read(file, outCamera.cameraPos);
-	read(file, outCamera.cameraFront);
-	read(file, outCamera.cameraFocus);
-
-	// Floats
-	read(file, outCamera.radius);
-	read(file, outCamera.theta);
-	read(file, outCamera.phi);
-
-	read(file, outCamera.pitch);
-	read(file, outCamera.yaw);
-
-	read(file, outCamera.lastX);
-	read(file, outCamera.lastY);
-
-	// Doubles
-	read(file, outCamera.xPos);
-	read(file, outCamera.yPos);
-
-	// Bool
-	read(file, outCamera.freeMovementEnabled);
+	outCamera.deserialize(file);
 }
 
 class SaveFile {
@@ -227,22 +62,23 @@ public:
 		}
 		
 		// Write lightdata
-		write(file, m_lightData);
+		Serializer::write(file, m_lightData);
 
 		// Write MaterialPaths
-		writeMaterialVector(file, m_pathNames);
+		writeMaterials(file, m_pathNames);
 
 		// Write FileMeshes
-		writeFileMeshes(file, m_fileModels);
+		writeModels(file, m_fileModels);
 
 		// Write backgroundTex
-		write(file, m_backgroundTexPath);
+		Serializer::write(file, m_backgroundTexPath);
 
 		// Write HDRI
-		write(file, m_hdriPath);
+		Serializer::write(file, m_hdriPath);
 
 		// Write camera data
 		writeCameraData(file, m_fileCamera);
+
 		std::cout << std::endl;
 		std::cout << filename << " - Object serialized successfully." << std::endl;
 		file.close();
@@ -258,20 +94,20 @@ public:
 
 		// Read lights
 		std::vector<FileLights> lights;
-		read(file, lights);
+		Serializer::read(file, lights);
 
 		// Read MaterialPaths strings
 		std::vector<MaterialPaths> materialPaths;
-		readMaterialVector(file, materialPaths);
+		readMaterials(file, materialPaths);
 
 		std::vector<FileModels> fileModel;
-		readFileMeshes(file, fileModel);
+		readModels(file, fileModel);
 
 		std::string backgroundTex;
-		read(file, backgroundTex);
+		Serializer::read(file, backgroundTex);
 
 		std::string hdri;
-		read(file, hdri);
+		Serializer::read(file, hdri);
 
 		FileCamera cameraData;
 		readCameraData(file, cameraData);

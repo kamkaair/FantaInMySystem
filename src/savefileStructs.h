@@ -46,54 +46,53 @@ struct MaterialPaths {
 
 	MaterialParam<std::string> normalPath;
 
-	void serialize(std::ofstream& file, const MaterialPaths& inVec) {
-		Serializer ser;
-		ser.write(file, inVec.materialName);
+	void serialize(std::ofstream& file) {
+		Serializer::write(file, materialName);
 
-		ser.write(file, inVec.diffuse.path.value_or(""));
-		ser.write(file, inVec.diffuse.value);
+		Serializer::write(file, diffuse.path.value_or(""));
+		Serializer::write(file, diffuse.value);
 
-		ser.write(file, inVec.metallic.path.value_or(""));
-		ser.write(file, inVec.metallic.value);
+		Serializer::write(file, metallic.path.value_or(""));
+		Serializer::write(file, metallic.value);
 
-		ser.write(file, inVec.roughness.path.value_or(""));
-		ser.write(file, inVec.roughness.value);
+		Serializer::write(file, roughness.path.value_or(""));
+		Serializer::write(file, roughness.value);
 
-		ser.write(file, inVec.emission.path.value_or(""));
-		ser.write(file, inVec.emission.value);
+		Serializer::write(file, emission.path.value_or(""));
+		Serializer::write(file, emission.value);
 
-		ser.write(file, inVec.normalPath.path.value_or(""));
-		ser.write(file, inVec.normalPath.value);
+		Serializer::write(file, normalPath.path.value_or(""));
+		Serializer::write(file, normalPath.value);
 	}
 
-	void deserialize(std::ifstream& file, MaterialPaths& inVec) {
+	void deserialize(std::ifstream& file) {
 		Serializer ser;
-		ser.read(file, inVec.materialName);
+		Serializer::read(file, materialName);
 
-		ser.read(file, inVec.diffuse.path);
-		ser.read(file, inVec.diffuse.value);
-		if (inVec.diffuse.path.value().empty())
-			inVec.diffuse.path = std::nullopt;
+		Serializer::read(file, diffuse.path);
+		Serializer::read(file, diffuse.value);
+		if (diffuse.path.value().empty())
+			diffuse.path = std::nullopt;
 
-		ser.read(file, inVec.metallic.path);
-		ser.read(file, inVec.metallic.value);
-		if (inVec.metallic.path.value().empty())
-			inVec.metallic.path = std::nullopt;
+		Serializer::read(file, metallic.path);
+		Serializer::read(file, metallic.value);
+		if (metallic.path.value().empty())
+			metallic.path = std::nullopt;
 
-		ser.read(file, inVec.roughness.path);
-		ser.read(file, inVec.roughness.value);
-		if (inVec.roughness.path.value().empty())
-			inVec.roughness.path = std::nullopt;
+		Serializer::read(file, roughness.path);
+		Serializer::read(file, roughness.value);
+		if (roughness.path.value().empty())
+			roughness.path = std::nullopt;
 
-		ser.read(file, inVec.emission.path);
-		ser.read(file, inVec.emission.value);
-		if (inVec.emission.path.value().empty())
-			inVec.emission.path = std::nullopt;
+		Serializer::read(file, emission.path);
+		Serializer::read(file, emission.value);
+		if (emission.path.value().empty())
+			emission.path = std::nullopt;
 
-		ser.read(file, inVec.normalPath.path);
-		ser.read(file, inVec.normalPath.value);
-		if (inVec.normalPath.path.value().empty())
-			inVec.normalPath.path = "/textures/EmptyNormal.png";
+		Serializer::read(file, normalPath.path);
+		Serializer::read(file, normalPath.value);
+		if (normalPath.path.value().empty())
+			normalPath.path = "/textures/EmptyNormal.png";
 	}
 };
 
@@ -110,6 +109,39 @@ struct FileMeshes {
 struct FileModels {
 	std::string modelPath;
 	std::vector<FileMeshes> meshes;
+
+	void serialize(std::ofstream& file) {
+		Serializer::write(file, modelPath);
+
+		size_t sizeMesh = meshes.size();
+		Serializer::write(file, sizeMesh); // file.write(reinterpret_cast<const char*>(&sizeMesh), sizeof(sizeMesh));
+		for (size_t j = 0; j < meshes.size(); j++) {
+			Serializer::write(file, meshes[j].modelName);
+
+			Serializer::write(file, meshes[j].pos);
+			Serializer::write(file, meshes[j].scaling);
+			Serializer::write(file, meshes[j].rotation);
+
+			Serializer::write(file, meshes[j].textureID);
+		}
+	}
+
+	void deserialize(std::ifstream& file) {
+		Serializer::read(file, modelPath);
+
+		size_t sizeMesh;
+		Serializer::read(file, sizeMesh);//file.read(reinterpret_cast<char*>(&sizeMesh), sizeof(sizeMesh));
+		meshes.resize(sizeMesh);
+		for (size_t j = 0; j < meshes.size(); j++) {
+			Serializer::read(file, meshes[j].modelName);
+
+			Serializer::read(file, meshes[j].pos);
+			Serializer::read(file, meshes[j].scaling);
+			Serializer::read(file, meshes[j].rotation);
+
+			Serializer::read(file, meshes[j].textureID);
+		}
+	}
 };
 
 struct FileCamera {
@@ -123,4 +155,54 @@ struct FileCamera {
 	double xPos = 0.0f, yPos = 0.0f;
 
 	bool freeMovementEnabled = false;
+
+	void serialize(std::ofstream& file) {
+		// Vec3s
+		Serializer::write(file, cameraPos);
+		Serializer::write(file, cameraFront);
+		Serializer::write(file, cameraFocus);
+
+		// Floats
+		Serializer::write(file, radius);
+		Serializer::write(file, theta);
+		Serializer::write(file, phi);
+
+		Serializer::write(file, pitch);
+		Serializer::write(file, yaw);
+
+		Serializer::write(file, lastX);
+		Serializer::write(file, lastY);
+
+		// Doubles
+		Serializer::write(file, xPos);
+		Serializer::write(file, yPos);
+
+		// Bool
+		Serializer::write(file, freeMovementEnabled);
+	}
+
+	void deserialize(std::ifstream& file) {
+		// Vec3s
+		Serializer::read(file, cameraPos);
+		Serializer::read(file, cameraFront);
+		Serializer::read(file, cameraFocus);
+
+		// Floats
+		Serializer::read(file, radius);
+		Serializer::read(file, theta);
+		Serializer::read(file, phi);
+
+		Serializer::read(file, pitch);
+		Serializer::read(file, yaw);
+
+		Serializer::read(file, lastX);
+		Serializer::read(file, lastY);
+
+		// Doubles
+		Serializer::read(file, xPos);
+		Serializer::read(file, yPos);
+
+		// Bool
+		Serializer::read(file, freeMovementEnabled);
+	}
 };
