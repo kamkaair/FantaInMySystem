@@ -42,7 +42,7 @@ struct MaterialPaths {
 	MaterialParam<float> metallic;
 	MaterialParam<float> roughness;
 	MaterialParam<float> emission;
-	//MaterialParam<float> opacity;
+	MaterialParam<float> opacity;
 
 	MaterialParam<std::string> normalPath;
 
@@ -60,6 +60,9 @@ struct MaterialPaths {
 
 		Serializer::write(file, emission.path.value_or(""));
 		Serializer::write(file, emission.value);
+
+		Serializer::write(file, opacity.path.value_or(""));
+		Serializer::write(file, opacity.value);
 
 		Serializer::write(file, normalPath.path.value_or(""));
 		Serializer::write(file, normalPath.value);
@@ -88,6 +91,11 @@ struct MaterialPaths {
 		Serializer::read(file, emission.value);
 		if (emission.path.value().empty())
 			emission.path = std::nullopt;
+
+		Serializer::read(file, opacity.path);
+		Serializer::read(file, opacity.value);
+		if (opacity.path.value().empty())
+			opacity.path = std::nullopt;
 
 		Serializer::read(file, normalPath.path);
 		Serializer::read(file, normalPath.value);

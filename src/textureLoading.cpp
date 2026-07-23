@@ -134,6 +134,7 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
 		materialPaths.emission.path.value_or(""),
+		materialPaths.opacity.path.value_or(""),
 		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
@@ -149,11 +150,13 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	newMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
 	newMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
 	newMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
+	newMat->useOpacityTexture = textureIDs[4] != 0 ? true : false;
 
 	newMat->diffuseColor = materialPaths.diffuse.value;
 	newMat->metallic = materialPaths.metallic.value;
 	newMat->roughness = materialPaths.roughness.value;
 	newMat->emission = materialPaths.emission.value;
+	newMat->opacity = materialPaths.opacity.value;
 
 	return newMat;
 }
@@ -167,6 +170,7 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
 		materialPaths.emission.path.value_or(""),
+		materialPaths.opacity.path.value_or(""),
 		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
@@ -181,11 +185,13 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 	editableMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
 	editableMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
 	editableMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
+	editableMat->useOpacityTexture = textureIDs[4] != 0 ? true : false;
 
 	editableMat->diffuseColor = materialPaths.diffuse.value;
 	editableMat->metallic = materialPaths.metallic.value;
 	editableMat->roughness = materialPaths.roughness.value;
 	editableMat->emission = materialPaths.emission.value;
+	editableMat->opacity = materialPaths.opacity.value;
 }
 
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
@@ -218,6 +224,7 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			{&usables.metallic.path},
 			{&usables.roughness.path},
 			{&usables.emission.path},
+			{&usables.opacity.path},
 			{&usables.normalPath.path} // Normal maps always use textures
 		};
 
@@ -258,6 +265,9 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 
 		if(usables.emission.path.has_value())
 			usables.emission.value = 1.0f;
+
+		if (!usables.opacity.path.has_value())
+			usables.opacity.value = 1.0f;
 
 		// Create a new material with the values
 		return createMaterial(usables);

@@ -13,17 +13,25 @@ Texture::Texture(int width, int height, int nrChannels, const GLubyte* data, boo
 	glBindTexture(GL_TEXTURE_2D, m_textureId);
 	checkGLError();
 
-	if (nrChannels == 4) {
+	switch (nrChannels) {
+	case 4:
 		// set the texture data as RGBA
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-	}
-	else if (nrChannels == 3) {
+		break;
+	case 3:
 		// set the texture data as RGB
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-	}
-	else if (nrChannels == 1) {
+		break;
+	case 2:
+		// set the texture data as RED and GREEN
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RG8, width, height, 0, GL_RG, GL_UNSIGNED_BYTE, data);
+		break;
+	case 1:
 		// set the texture data as RED (for grayscale)
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, data);
+		break;
+	default:
+		printf("ERROR: unknown texture nrChannel!\n");
 	}
 	checkGLError();
 

@@ -11,13 +11,13 @@
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
 	// PBR
-	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap, EmissionMap;
+	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap, EmissionMap, OpacityMap;
 	
 	// Use textures or basic colors/values?
-	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false;
+	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false;
 	
 	uniform vec3 u_DiffuseColor, objectColor, HueChanges = vec3(1.0f);
-	uniform float u_Roughness, u_Metallic, u_emissionStrength;
+	uniform float u_Roughness, u_Metallic, u_emissionStrength, u_opacity;
 	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f;
 	uniform int NUM_POINT_LIGHTS;
 

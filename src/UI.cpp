@@ -109,6 +109,21 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t curr
 
 	ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
+	// ComboBox for Normals
+	ImGui::Checkbox("Use Opacity Texture", &SetMat.useOpacityTexture);
+	if (SetMat.useOpacityTexture) {
+		if (ImGui::BeginCombo("Opacity Texture", materialFileNames[currentItem[3]]))
+		{
+			displayMatList(3, currentItem, materialFileNames);
+			ImGui::EndCombo();
+		}
+	}
+	else {
+		ImGui::SliderFloat("Opacity Value", &SetMat.opacity, 0.0f, 10.0f);
+	}
+
+	ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
 	// ComboBox for Normal (only texture currently)
 	ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
 	if (useNormalTexture) {
@@ -764,7 +779,7 @@ void UI::ImGuiDraw()
 		{
 			if (ImGui::TreeNode("ADD MATERIAL"))
 			{
-				static std::int8_t currentItem[5] = { 0, 0, 0, 0, 0 }; // One for each texture type
+				static std::int8_t currentItem[6] = { 0, 0, 0, 0, 0, 0 }; // One for each texture type
 				static char materialName[128] = ""; // Input field for material name
 				SettingsMaterial& SetMat = m_settingsCreateMat;
 
@@ -779,9 +794,10 @@ void UI::ImGuiDraw()
 					std::string useMetallicPath = SetMat.useMetallicTexture ? "/textures/" + m_materialFileNames[currentItem[1]] : "";
 					std::string useRoughnessPath = SetMat.useRoughnessTexture ? "/textures/" + m_materialFileNames[currentItem[2]] : "";
 					std::string useEmissionPath = SetMat.useEmissionTexture ? "/textures/" + m_materialFileNames[currentItem[3]] : "";
+					std::string useOpacityPath = SetMat.useOpacityTexture ? "/textures/" + m_materialFileNames[currentItem[4]] : "";
 					std::string normalMapName = "EmptyNormal.png";
 					if (useNormalTexture)
-						normalMapName = m_materialFileNames[currentItem[4]];
+						normalMapName = m_materialFileNames[currentItem[5]];
 
 					// Set the default material
 					m_resoManager->createMaterial(MaterialPaths{ std::string(materialName),
@@ -789,6 +805,7 @@ void UI::ImGuiDraw()
 						useTexture<float>(useMetallicPath, SetMat.metallic),			// Metallic
 						useTexture<float>(useRoughnessPath, SetMat.roughness),			// Roughness
 						useTexture<float>(useEmissionPath, SetMat.emission),			// Emission
+						useTexture<float>(useOpacityPath, SetMat.opacity),				// Opacity
 						useTexture<std::string>("/textures/" + normalMapName) });		// Add the default material
 
 					for (const auto& texture : m_resoManager->getTrackedTextures())
@@ -803,7 +820,7 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("EDIT MATERIALS"))
 			{
 				static std::int8_t select = 0;
-				static std::int8_t comboBoxSelection[5] = { 0, 0, 0, 0, 0 }; // One for each texture type
+				static std::int8_t comboBoxSelection[6] = { 0, 0, 0, 0, 0, 0 }; // One for each texture type
 				const std::int8_t comboBoxSize = sizeof(comboBoxSelection) / sizeof(comboBoxSelection[0]);
 
 				std::vector<Material*>& materials = m_resoManager->getScene()->getMaterials();
@@ -838,11 +855,13 @@ void UI::ImGuiDraw()
 								SetMat.metallic = materials[select]->metallic;
 								SetMat.roughness = materials[select]->roughness;
 								SetMat.emission = materials[select]->emission;
+								SetMat.opacity = materials[select]->opacity;
 
 								SetMat.useDiffuseTexture = materials[select]->useDiffuseTexture;
 								SetMat.useMetallicTexture = materials[select]->useMetallicTexture;
 								SetMat.useRoughnessTexture = materials[select]->useRoughnessTexture;
 								SetMat.useEmissionTexture = materials[select]->useEmissionTexture;
+								SetMat.useOpacityTexture = materials[select]->useOpacityTexture;
 							}
 							if (isSelected)
 								ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
@@ -861,15 +880,17 @@ void UI::ImGuiDraw()
 						std::string useMetallicPath = SetMat.useMetallicTexture ? "/textures/" + m_materialFileNames[comboBoxSelection[1]] : "";
 						std::string useRoughnessPath = SetMat.useRoughnessTexture ? "/textures/" + m_materialFileNames[comboBoxSelection[2]] : "";
 						std::string useEmissionPath = SetMat.useEmissionTexture ? "/textures/" + m_materialFileNames[comboBoxSelection[3]] : "";
+						std::string useOpacityPath = SetMat.useOpacityTexture ? "/textures/" + m_materialFileNames[comboBoxSelection[4]] : "";
 						std::string normalMapName = "EmptyNormal.png";
 						if (useNormalTexture)
-							normalMapName = m_materialFileNames[comboBoxSelection[3]];
+							normalMapName = m_materialFileNames[comboBoxSelection[5]];
 
 						MaterialPaths newMaterialParams = { std::string(materials[select]->getName()),
 							useTexture<glm::vec3>(useDiffusePath, SetMat.diffuseColor),	// Diffuse
 							useTexture<float>(useMetallicPath, SetMat.metallic),		// Metallic
 							useTexture<float>(useRoughnessPath, SetMat.roughness),		// Roughness
 							useTexture<float>(useEmissionPath, SetMat.emission),		// Emission
+							useTexture<float>(useOpacityPath, SetMat.opacity),
 							useTexture<std::string>("/textures/" + normalMapName) };
 
 						// Material to be edited and the parameters

@@ -129,13 +129,15 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 5. Normal
+			useValue<float>(1.0f),											// 5. Opacity
+			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
 			useTexture<glm::vec3>("/textures/OldLantern/Lantern_Diffuse.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Metallic.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Roughness.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Emissive.jpg", 2.0f),
+			useValue<float>(1.0f),
 			useTexture<std::string>("/textures/OldLantern/Lantern_Normal.png") });
 
 		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
@@ -143,6 +145,7 @@ public:
 			useTexture<float>("/textures/MP18/Metallic_Metallic.png"),
 			useTexture<float>("/textures/MP18/Metallic_Roughness.png"),
 			useValue<float>(0.0f),
+			useValue<float>(0.7f), // Tiny bit transparent
 			useTexture<std::string>("/textures/MP18/Metallic_Normal.png")});
 
 		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
@@ -150,6 +153,7 @@ public:
 			useTexture<float>("/textures/Barrel/Barrel_Metallic.png"),
 			useTexture<float>("/textures/Barrel/Barrel_Roughness.png"),
 			useValue<float>(0.0f),
+			useValue<float>(0.3f), // A bitt transparnet hege
 			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png") });
 
 		std::vector<FileModels> fileModels;

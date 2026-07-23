@@ -13,6 +13,7 @@ ResourceManager::ResourceManager() {
 		useTexture<float>("/textures/checkerboard.png"),				// Metallic
 		useTexture<float>("/textures/checkerboard.png"),				// Roughness
 		useTexture<float>("/textures/checkerboard.png"),				// Emission
+		useValue<float>(1.0f),											// Emission
 		useTexture<std::string>("/textures/checkerboardNormal.png") })); // Add the default material
 }
 
@@ -78,7 +79,8 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 				useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
 				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
 				useTexture<float>(filePaths[3], mesh->getMaterial()->emission),
-				useTexture<std::string>(filePaths[4], "emptyNormal")});
+				useTexture<float>(filePaths[4], mesh->getMaterial()->opacity),
+				useTexture<std::string>(filePaths[5], "emptyNormal")});
 				texIndex++;
 			}
 
