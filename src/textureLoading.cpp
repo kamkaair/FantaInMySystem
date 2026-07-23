@@ -197,39 +197,6 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 	return matVec;
 }
 
-std::vector<Vertex> loadVertexData(aiMesh* mesh) {
-	// Load vertex data
-	std::vector<Vertex> vertices;
-
-	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
-		Vertex vertex; //temporable container for the data of each loop
-		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
-		vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-
-		if (mesh->HasTextureCoords(0)) {
-			vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-		}
-		else {
-			vertex.texCoords = glm::vec2(0.0f, 0.0f); // Set default texture coordinates
-		}
-		vertices.push_back(vertex);
-	}
-	return vertices;
-}
-
-std::vector<unsigned int> loadIndices(aiMesh* mesh) {
-	// Retrieve the corresponding vertex indices
-	std::vector<unsigned int> indices;
-
-	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-		aiFace face = mesh->mFaces[i];
-		for (unsigned int j = 0; j < face.mNumIndices; j++) {
-			indices.push_back(face.mIndices[j]);
-		}
-	}
-	return indices;
-}
-
 Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
 	// Assign the preloaded material by index
 	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Normal" };
@@ -298,17 +265,50 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 	return nullptr;
 }
 
-Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path) {
+std::vector<Vertex> loadVertexData(aiMesh* mesh) {
 	// Load vertex data
-	std::vector<Vertex> vertices = loadVertexData(mesh);
+	std::vector<Vertex> vertices;
 
-	// Load/retrieve the indices of the vertices
-	std::vector<unsigned int> indices = loadIndices(mesh);
+	for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
+		Vertex vertex; //temporable container for the data of each loop
+		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+		vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
 
-	// Assign the preloaded material by index
-	Material* meshMaterial = nullptr;
-	if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size()) {
-		meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
+		if (mesh->HasTextureCoords(0)) {
+			vertex.texCoords = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+		}
+		else {
+			vertex.texCoords = glm::vec2(0.0f, 0.0f); // Set default texture coordinates
+		}
+		vertices.push_back(vertex);
+	}
+	return vertices;
+}
+
+std::vector<unsigned int> loadIndices(aiMesh* mesh) {
+	// Retrieve the corresponding vertex indices
+	std::vector<unsigned int> indices;
+
+	for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
+		aiFace face = mesh->mFaces[i];
+		for (unsigned int j = 0; j < face.mNumIndices; j++) {
+			indices.push_back(face.mIndices[j]);
+		}
+	}
+	return indices;
+}
+
+Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std::string path, bool autoTexture) {	
+	std::vector<Vertex> vertices = loadVertexData(mesh); // Load vertex data
+	std::vector<unsigned int> indices = loadIndices(mesh); // Load/retrieve the indices of the vertices
+	Material* meshMaterial = nullptr; // Assign the preloaded material by index
+
+	if (autoTexture) {
+		meshMaterial = findTexturesWithPath(path, scene, mesh); // Find materials
+	}
+	else {
+		if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size())
+			meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
 	}
 
 	// Create the Mesh object with the vertices, indices, and preloaded material
@@ -322,21 +322,6 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	return newMesh;
 }
 
-Mesh* TextureLoading::processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path) {
-	std::vector<Vertex> vertices = loadVertexData(mesh); // Load vertex data
-	std::vector<unsigned int> indices = loadIndices(mesh); // Load/retrieve the indices of the vertices
-	Material* meshMaterial = findTexturesWithPath(path, scene, mesh); // Find materials
-
-	// Create the Mesh object with the vertices, indices, and preloaded material
-	Mesh* newMesh = new Mesh(vertices, indices);
-	newMesh->setMaterial(meshMaterial);
-
-	// Push back all the model's vertex amounts
-	newMesh->getVertices() = vertices.size();
-
-	return newMesh;
-}
-
 void setMeshDisplayName(Mesh* meshRef, const std::string& name) {
 	if (meshRef)
 		meshRef->setDisplayName(name);
@@ -344,36 +329,19 @@ void setMeshDisplayName(Mesh* meshRef, const std::string& name) {
 	else { printf("Error: Mesh reference is null\n"); }
 }
 
-// TODO: a function should be a parameter (processMesh or processMeshAutoTexture)
-void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path) {
+void TextureLoading::processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path, bool autoTexture) {
 	// process each mesh located at the current node
 	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
 		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
 		// the node object only contains indices to index the actual objects in the scene.
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes->push_back(processMesh(mesh, scene, path));	
+		meshes->push_back(processMesh(mesh, scene, path, autoTexture));	
 		setMeshDisplayName(meshes->back(), node->mName.C_Str());
 	}
 
 	// after we've processed all of the meshes (if any) we then recursively process each of the children nodes
 	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		processNode(meshes, node->mChildren[i], scene, path);
-	}
-}
-
-void TextureLoading::processNodeAutoTexture(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path) {
-	// process each mesh located at the current node
-	for (unsigned int i = 0; i < node->mNumMeshes; i++) {
-		// the scene contains all the data, node is just to keep stuff organized (like relations between nodes).
-		// the node object only contains indices to index the actual objects in the scene.
-		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		meshes->push_back(processMeshAutoTexture(mesh, scene, path));
-		setMeshDisplayName(meshes->back(), node->mName.C_Str());
-	}
-
-	// after we've processed all of the meshes (if any) we then recursively process each of the children nodes
-	for (unsigned int i = 0; i < node->mNumChildren; i++) {
-		processNodeAutoTexture(meshes, node->mChildren[i], scene, path);
+		processNode(meshes, node->mChildren[i], scene, path, autoTexture);
 	}
 }
 
@@ -391,10 +359,7 @@ std::vector<Mesh*> TextureLoading::processMeshes(const std::string& path, bool a
 	}
 
 	// Process Assimp's root node recursively
-	if(!autoTexture)
-		processNode(&meshes, scene->mRootNode, scene, path);	
-	else
-		processNodeAutoTexture(&meshes, scene->mRootNode, scene, path); // TODO add a new node
+	processNode(&meshes, scene->mRootNode, scene, path, autoTexture);
 
 	return meshes;
 }

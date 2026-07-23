@@ -30,8 +30,7 @@ public:
 	std::vector<Material*> MaterialsPushback(const std::vector<MaterialPaths>& materialList);
 	void editMaterial(Material* editableMat, const MaterialPaths& materialPaths);
 
-	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::string path);
-	Mesh* processMeshAutoTexture(aiMesh* mesh, const aiScene* scene, const std::string path);
+	Mesh* processMesh(aiMesh* mesh, const aiScene* scene, const std::string path, bool autoTexture = false);
 	std::vector<Mesh*> processMeshes(const std::string& path, bool autoTexture = false);
 	void loadMeshes(std::vector<Model*>& model, std::vector<FileModels> fileModels);
 
@@ -46,8 +45,7 @@ public:
 
 private:
 	void checkDuplicateTextures(std::vector<GLuint>& textureIDs, const std::vector<std::string> maps);
-	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
-	void processNodeAutoTexture(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path);
+	void processNode(std::vector<Mesh*>* meshes, aiNode* node, const aiScene* scene, const std::string path, bool autoTexture = false);
 
 	unsigned int m_materialIndex = 0;
 	//std::vector<Texture*> m_textures;

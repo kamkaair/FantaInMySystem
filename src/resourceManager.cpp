@@ -77,8 +77,8 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 				useTexture<glm::vec3>(filePaths[0], mesh->getMaterial()->diffuseColor),
 				useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
 				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
-				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness), // TODO: FIX
-				useTexture<std::string>(filePaths[3], "emptyNormal")});
+				useTexture<float>(filePaths[3], mesh->getMaterial()->emission),
+				useTexture<std::string>(filePaths[4], "emptyNormal")});
 				texIndex++;
 			}
 
@@ -101,6 +101,15 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 	SaveFile original(m_scene->getLights(), materialPath, fileModels, fileCamera, hdri->getBackgroundTexture()->getFilePath(), hdri->getHDRI_Path());
 	original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 }
+
+/*MaterialPaths createMaterialPaths(std::vector<std::string>& filePaths, Mesh* mesh) {
+	return MaterialPaths{ mesh->getDisplayName(),
+		useTexture<glm::vec3>(filePaths[0], mesh->getMaterial()->diffuseColor),
+		useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
+		useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
+		useTexture<float>(filePaths[3], mesh->getMaterial()->emission),
+		useTexture<std::string>(filePaths[4], "emptyNormal") };
+}*/
 
 void ResourceManager::replaceMaterials(Material* oldMat, Material* newMat) {
 	for (auto& model : m_scene->getModels())
