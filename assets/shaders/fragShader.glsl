@@ -126,6 +126,14 @@
 	void main()
 	{
 	
+	float opacity = u_opacity; // Kind of a dinky way of implementing a switch between (texture OR float value)
+    if (useOpacityTexture) {
+		opacity = texture(OpacityMap, texCoord).a;
+    }
+	if(opacity < 0.1) {
+		discard;
+	}
+	
 	vec3 albedo = u_DiffuseColor;
     if (useDiffuseTexture) {
 		albedo = (pow(texture(DiffuseMap, texCoord).rgb, vec3(2.2)));
@@ -229,7 +237,7 @@
 	color = pow(color, vec3(1.0 / HdrContrast));
 	
 	//Color out
-	FragColor = vec4(color, 1.0);
+	FragColor = vec4(color, opacity);
 	//FragColor = vec4(normalize(R) * 0.5 + 0.5, 1.0);
 	
 	//FragColor = vec4(V * 0.5 + 0.5, 1.0);

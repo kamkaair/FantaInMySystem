@@ -129,7 +129,7 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			useValue<float>(1.0f),											// 5. Opacity
+			useTexture<float>("/textures/blending_window.png"),				// 5. Opacity
 			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),

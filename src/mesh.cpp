@@ -141,7 +141,7 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 		shader->setUniform("u_DiffuseColor", m_material->diffuseColor.x, m_material->diffuseColor.y, m_material->diffuseColor.z);
 		shader->setUniform("u_Roughness", m_material->roughness);
 		shader->setUniform("u_Metallic", m_material->metallic);
-		shader->setUniform("u_missionStrength", m_material->emission);
+		shader->setUniform("u_emissionStrength", m_material->emission);
 		shader->setUniform("u_opacity", m_material->opacity);
 
 		shader->setUniform("useDiffuseTexture", m_material->useDiffuseTexture);

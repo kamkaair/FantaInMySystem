@@ -125,6 +125,20 @@ void TextureLoading::checkDuplicateTextures(std::vector<GLuint>& textureIDs, con
 	}
 }
 
+void setMaterialParams(Material* setMat, const MaterialPaths& materialPaths, std::vector<GLuint>& textureIDs) {
+	setMat->useDiffuseTexture = textureIDs[0] != 0 ? true : false;
+	setMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
+	setMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
+	setMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
+	setMat->useOpacityTexture = textureIDs[4] != 0 ? true : false;
+
+	setMat->diffuseColor = materialPaths.diffuse.value;
+	setMat->metallic = materialPaths.metallic.value;
+	setMat->roughness = materialPaths.roughness.value;
+	setMat->emission = materialPaths.emission.value;
+	setMat->opacity = materialPaths.opacity.value;
+}
+
 Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	// Maps added to make the texture loading process more tidy
 	std::vector<GLuint> textureIDs;
@@ -146,17 +160,7 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 	m_scene->getMaterials().push_back(newMat);
 	m_materialIndex++;
 
-	newMat->useDiffuseTexture = textureIDs[0] != 0 ? true : false;
-	newMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
-	newMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
-	newMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
-	newMat->useOpacityTexture = textureIDs[4] != 0 ? true : false;
-
-	newMat->diffuseColor = materialPaths.diffuse.value;
-	newMat->metallic = materialPaths.metallic.value;
-	newMat->roughness = materialPaths.roughness.value;
-	newMat->emission = materialPaths.emission.value;
-	newMat->opacity = materialPaths.opacity.value;
+	setMaterialParams(newMat, materialPaths, textureIDs); // Set all material parameters
 
 	return newMat;
 }
@@ -181,17 +185,7 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 		editableMat->getTextures()[i] = textureIDs[i];
 	}
 
-	editableMat->useDiffuseTexture = textureIDs[0] != 0 ? true : false;
-	editableMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
-	editableMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
-	editableMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
-	editableMat->useOpacityTexture = textureIDs[4] != 0 ? true : false;
-
-	editableMat->diffuseColor = materialPaths.diffuse.value;
-	editableMat->metallic = materialPaths.metallic.value;
-	editableMat->roughness = materialPaths.roughness.value;
-	editableMat->emission = materialPaths.emission.value;
-	editableMat->opacity = materialPaths.opacity.value;
+	setMaterialParams(editableMat, materialPaths, textureIDs); // Set all material parameters
 }
 
 std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<MaterialPaths>& materialList) {
