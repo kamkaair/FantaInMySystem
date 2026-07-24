@@ -251,15 +251,35 @@ public:
 		}
 		glEnable(GL_DEPTH_TEST);
 
+		// Find the distance of all the objects, store them
+		std::vector<std::pair<float, Mesh*>> sortedMeshes;
+		for (Model* models : m_scene->getModels()) {
+			for (Mesh* mesh : models->getMeshes()) {
+				float distance = glm::length(m_camera->getPosition() - mesh->getPosition());
+				sortedMeshes.push_back( std::make_pair(distance, mesh) );
+			}
+		}
+
+		// Sort the order
+		std::sort(sortedMeshes.begin(), sortedMeshes.end(), std::greater<std::pair<float, Mesh*>>());
+
 		if (!m_scene->getModels().empty()) {
 			// Forward rendering
-			for (Model* models : m_scene->getModels()) {
-				for (Mesh* mesh : models->getMeshes()) {
-					m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-					mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
-				}
-			}	
+			for (auto mesh : sortedMeshes) {
+				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
+				mesh.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
+			}
 		}
+
+		//if (!m_scene->getModels().empty()) {
+		//	// Forward rendering
+		//	for (Model* models : m_scene->getModels()) {
+		//		for (Mesh* mesh : models->getMeshes()) {
+		//			m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
+		//			mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
+		//		}
+		//	}	
+		//}
 
 		if (!g_input->getImGuiVisibility()) {
 			//renderIcons(); // Render all the point lamp icons
