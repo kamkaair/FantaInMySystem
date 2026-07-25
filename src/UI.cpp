@@ -112,14 +112,14 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t curr
 	// ComboBox for Normals
 	ImGui::Checkbox("Use Opacity Texture", &SetMat.useOpacityTexture);
 	if (SetMat.useOpacityTexture) {
-		if (ImGui::BeginCombo("Opacity Texture", materialFileNames[currentItem[3]]))
+		if (ImGui::BeginCombo("Opacity Texture", materialFileNames[currentItem[4]]))
 		{
-			displayMatList(3, currentItem, materialFileNames);
+			displayMatList(4, currentItem, materialFileNames);
 			ImGui::EndCombo();
 		}
 	}
 	else {
-		ImGui::SliderFloat("Opacity Value", &SetMat.opacity, 0.0f, 10.0f);
+		ImGui::SliderFloat("Opacity Value", &SetMat.opacity, 0.0f, 1.0f);
 	}
 
 	ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -127,9 +127,9 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t curr
 	// ComboBox for Normal (only texture currently)
 	ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
 	if (useNormalTexture) {
-		if (ImGui::BeginCombo("Normal Texture", materialFileNames[currentItem[4]]))
+		if (ImGui::BeginCombo("Normal Texture", materialFileNames[currentItem[5]]))
 		{
-			displayMatList(4, currentItem, materialFileNames);
+			displayMatList(5, currentItem, materialFileNames);
 			ImGui::EndCombo();
 		}
 	}

@@ -86,8 +86,8 @@ public:
 		glDepthFunc(GL_LEQUAL);
 		
 		//Back face culling
-		//glEnable(GL_CULL_FACE);
-		glCullFace(GL_BACK);	
+		glEnable(GL_CULL_FACE);
+		//glCullFace(GL_BACK);
 	}
 
 	~Application() {

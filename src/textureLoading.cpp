@@ -199,7 +199,7 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 
 Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
 	// Assign the preloaded material by index
-	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Normal" };
+	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Opacity", "_Normal" };
 
 	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + getFolderSearchPath());
 	std::vector<std::string> filenames, cutPath;

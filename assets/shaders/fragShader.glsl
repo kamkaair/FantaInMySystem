@@ -128,7 +128,7 @@
 	
 	float opacity = u_opacity; // Kind of a dinky way of implementing a switch between (texture OR float value)
     if (useOpacityTexture) {
-		opacity = texture(OpacityMap, texCoord).a;
+		opacity = texture(OpacityMap, texCoord).r;
     }
 	if(opacity < 0.1) {
 		discard;

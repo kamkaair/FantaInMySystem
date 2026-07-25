@@ -21,8 +21,6 @@ public:
 		m_models = meshes;
 		m_materials = material;
 		m_lights = lights;
-
-
 	}
 
 	~Scene() {
