@@ -192,6 +192,9 @@ public:
 		m_resoManager->loadMeshes(models, restored.getFileMeshes());
 		m_scene->getModels() = models;
 
+		// Update the mesh order after loading the models and materials
+		m_scene->updateMeshList();
+
 		// Set the camera values
 		m_resoManager->loadCameraOrientation(m_scene->getCamera(), restored.getFileCamera());
 
@@ -251,51 +254,21 @@ public:
 		}
 		glEnable(GL_DEPTH_TEST);
 
-		// Find the distance of all the objects, store them
-		std::vector<std::pair<float, Mesh*>> transparentMeshes;
-		std::vector<Mesh*> opaqueMeshes;
-		for (Model* models : m_scene->getModels()) {
-			for (Mesh* mesh : models->getMeshes()) {
-				if (mesh->getMaterial()->currentAlphaMode != Material::alphaModes::blend) {
-					opaqueMeshes.push_back(mesh);
-					continue;
-				}
-				float distance = glm::length(m_camera->getPosition() - mesh->getPosition());
-				transparentMeshes.push_back( std::make_pair(distance, mesh) );
-			}
-		}
-
-		// Sort the order
-		std::sort(transparentMeshes.begin(), transparentMeshes.end(), std::greater<std::pair<float, Mesh*>>());
-
-		//if (!m_scene->getModels().empty()) {
-		//	// Forward rendering
-		//	for (auto mesh : sortedMeshes) {
-		//		m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-		//		mesh.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
-		//	}
-		//}
-
 		if (!m_scene->getModels().empty()) {
-			// Forward rendering
-			/*for (Model* models : m_scene->getModels()) {
-				for (Mesh* mesh : models->getMeshes()) {
-					m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-					mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
-				}
-			}*/
-			for (Mesh* mesh : opaqueMeshes) {
+			m_scene->sortTransparentMeshes();
+			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
 				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
-			for (auto& trans : transparentMeshes) {
+
+			for (auto& trans : m_scene->getTransparentMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
 				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
 		}
 
 		if (!g_input->getImGuiVisibility()) {
-			//renderIcons(); // Render all the point lamp icons
+			// Render all the point lamp icons
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
 			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
 			m_uiDraw->ImGuiDraw(); // Render the ImGui window

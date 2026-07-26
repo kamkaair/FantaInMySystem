@@ -9,11 +9,11 @@ ResourceManager::ResourceManager() {
 
 	// Set the default material
 	m_scene->setDefaultMaterial(createMaterial(MaterialPaths{ std::string("Checkerboard"),
-		useTexture<glm::vec3>("/textures/checkerboard.png"),			// Diffuse
+		useValue<glm::vec3>(glm::vec3(1.0f, 0.0f, 1.0f)),				// Diffuse
 		useTexture<float>("/textures/checkerboard.png"),				// Metallic
 		useTexture<float>("/textures/checkerboard.png"),				// Roughness
-		useTexture<float>("/textures/checkerboard.png"),				// Emission
-		useValue<float>(1.0f),											// Emission
+		useTexture<float>("/textures/checkerboard.png", 1.0f),			// Emission
+		useValue<float>(1.0f),											// Opacity
 		useTexture<std::string>("/textures/checkerboardNormal.png") })); // Add the default material
 }
 
@@ -104,14 +104,30 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 	original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 }
 
-/*MaterialPaths createMaterialPaths(std::vector<std::string>& filePaths, Mesh* mesh) {
-	return MaterialPaths{ mesh->getDisplayName(),
-		useTexture<glm::vec3>(filePaths[0], mesh->getMaterial()->diffuseColor),
-		useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
-		useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
-		useTexture<float>(filePaths[3], mesh->getMaterial()->emission),
-		useTexture<std::string>(filePaths[4], "emptyNormal") };
-}*/
+MaterialPaths ResourceManager::createMaterialPaths(const std::string& matName, const std::string usePaths[], SettingsMaterial& SetMat) {
+	return MaterialPaths{ matName,
+		useTexture<glm::vec3>(usePaths[0], SetMat.diffuseColor),
+		useTexture<float>(usePaths[1], SetMat.metallic),
+		useTexture<float>(usePaths[2], SetMat.roughness),
+		useTexture<float>(usePaths[3], SetMat.emission),
+		useTexture<float>(usePaths[4], SetMat.opacity),
+		useTexture<std::string>(usePaths[5], "emptyNormal") };
+}
+
+void ResourceManager::setMaterialParams(SettingsMaterial& SetMat, Material*& material) {
+	// Set material properties and bools
+	SetMat.diffuseColor = material->diffuseColor;
+	SetMat.metallic = material->metallic;
+	SetMat.roughness = material->roughness;
+	SetMat.emission = material->emission;
+	SetMat.opacity = material->opacity;
+
+	SetMat.useDiffuseTexture = material->useDiffuseTexture;
+	SetMat.useMetallicTexture = material->useMetallicTexture;
+	SetMat.useRoughnessTexture = material->useRoughnessTexture;
+	SetMat.useEmissionTexture = material->useEmissionTexture;
+	SetMat.useOpacityTexture = material->useOpacityTexture;
+}
 
 void ResourceManager::replaceMaterials(Material* oldMat, Material* newMat) {
 	for (auto& model : m_scene->getModels())

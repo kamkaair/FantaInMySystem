@@ -14,25 +14,6 @@
 #include <functional>
 #include <iostream>
 
-struct SettingsMaterial {
-	glm::vec3 diffuseColor = glm::vec3(1.0f);  // Default white color
-	float roughness = 0.5f;                    // Default roughness
-	float metallic = 0.0f;                     // Default metallic value
-	float emission = 0.0f;
-	float opacity = 1.0f;
-
-	GLuint diffuseTexture = 0;					// OpenGL texture ID
-	GLuint metallicTexture = 0;
-	GLuint roughnessTexture = 0;
-	GLuint normalTexture = 0;
-
-	bool useDiffuseTexture = true;				// Whether to use a texture or a value
-	bool useMetallicTexture = true;
-	bool useRoughnessTexture = true;
-	bool useEmissionTexture = false;
-	bool useOpacityTexture = false;
-};
-
 class ScreenSpace;
 
 class UI : public kgfw::Object
