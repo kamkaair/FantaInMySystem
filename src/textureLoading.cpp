@@ -137,6 +137,11 @@ void setMaterialParams(Material* setMat, const MaterialPaths& materialPaths, std
 	setMat->roughness = materialPaths.roughness.value;
 	setMat->emission = materialPaths.emission.value;
 	setMat->opacity = materialPaths.opacity.value;
+
+	if (setMat->opacity < 1.0f)
+		setMat->currentAlphaMode = Material::alphaModes::blend;
+	else
+		setMat->currentAlphaMode = Material::alphaModes::opaque;
 }
 
 Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {

@@ -8,7 +8,7 @@
 class Material {
 public:
     enum class alphaModes { // Not currently used
-        opaque, Mask, blend
+        opaque, mask, blend
     };
 
     Material(const std::vector<GLuint>& textures, const std::string& name, const int materialIndex, alphaModes inAlpha = alphaModes::opaque);
