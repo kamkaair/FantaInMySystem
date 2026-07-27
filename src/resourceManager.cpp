@@ -13,8 +13,8 @@ ResourceManager::ResourceManager() {
 		useTexture<float>("/textures/checkerboard.png"),				// Metallic
 		useTexture<float>("/textures/checkerboard.png"),				// Roughness
 		useTexture<float>("/textures/checkerboard.png", 1.0f),			// Emission
-		useValue<float>(1.0f),											// Opacity
-		useTexture<std::string>("/textures/checkerboardNormal.png") })); // Add the default material
+		useTexture<std::string>("/textures/checkerboardNormal.png"),	// Add the default material
+		useValue<float>(1.0f) }));										// Opacity
 }
 
 void ResourceManager::fileLoad(std::string file, HDRI* hdri) {
@@ -79,8 +79,8 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 				useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
 				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
 				useTexture<float>(filePaths[3], mesh->getMaterial()->emission),
-				useTexture<float>(filePaths[4], mesh->getMaterial()->opacity),
-				useTexture<std::string>(filePaths[5], "emptyNormal")});
+				useTexture<std::string>(filePaths[5], "emptyNormal"),
+				useTexture<float>(filePaths[4], mesh->getMaterial()->opacity)});
 				texIndex++;
 			}
 
@@ -110,8 +110,8 @@ MaterialPaths ResourceManager::createMaterialPaths(const std::string& matName, c
 		useTexture<float>(usePaths[1], SetMat.metallic),
 		useTexture<float>(usePaths[2], SetMat.roughness),
 		useTexture<float>(usePaths[3], SetMat.emission),
-		useTexture<float>(usePaths[4], SetMat.opacity),
-		useTexture<std::string>(usePaths[5], "emptyNormal") };
+		useTexture<std::string>(usePaths[5], "emptyNormal"),
+		useTexture<float>(usePaths[4], SetMat.opacity) };
 }
 
 void ResourceManager::setMaterialParams(SettingsMaterial& SetMat, Material*& material) {

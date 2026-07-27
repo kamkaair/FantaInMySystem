@@ -11,7 +11,7 @@
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
 	// PBR
-	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, NormalMap, EmissionMap, OpacityMap;
+	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, EmissionMap, NormalMap, OpacityMap;
 	
 	// Use textures or basic colors/values?
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false;
@@ -229,7 +229,7 @@
 	//vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 
-	vec4 sharpening = sharpen(DiffuseMap, texCoord, texCoord) * 0.2; // Sharpening to FragColor
+	//vec4 sharpening = sharpen(DiffuseMap, texCoord, texCoord) * 0.2; // Sharpening to FragColor
 	vec3 color = ambient + Lo; 	//Ambient + point lights
 
 	// HDR tonemapping and gamma correct

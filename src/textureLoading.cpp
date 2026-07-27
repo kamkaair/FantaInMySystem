@@ -130,7 +130,7 @@ void setMaterialParams(Material* setMat, const MaterialPaths& materialPaths, std
 	setMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
 	setMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
 	setMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
-	setMat->useOpacityTexture = textureIDs[4] != 0 ? true : false;
+	setMat->useOpacityTexture = textureIDs[5] != 0 ? true : false;
 
 	setMat->diffuseColor = materialPaths.diffuse.value;
 	setMat->metallic = materialPaths.metallic.value;
@@ -153,8 +153,8 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
 		materialPaths.emission.path.value_or(""),
-		materialPaths.opacity.path.value_or(""),
-		materialPaths.normalPath.path.value() // Normal maps always use textures
+		materialPaths.normalPath.path.value(), // Normal maps always use textures
+		materialPaths.opacity.path.value_or("")
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -179,8 +179,8 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
 		materialPaths.emission.path.value_or(""),
-		materialPaths.opacity.path.value_or(""),
-		materialPaths.normalPath.path.value() // Normal maps always use textures
+		materialPaths.normalPath.path.value(), // Normal maps always use textures
+		materialPaths.opacity.path.value_or("")
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -223,8 +223,8 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			{&usables.metallic.path},
 			{&usables.roughness.path},
 			{&usables.emission.path},
-			{&usables.opacity.path},
-			{&usables.normalPath.path} // Normal maps always use textures
+			{&usables.normalPath.path}, // Normal maps always use textures
+			{&usables.opacity.path}
 		};
 
 		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) { // Assimp error catching and Get() a material name in one

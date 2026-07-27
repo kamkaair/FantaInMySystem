@@ -27,7 +27,7 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	GLuint attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
 	glDrawBuffers(5, attachments);
 
-	rboDepth = createDepthBuffer();
+	gDepthTexture = createDepthBuffer();
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -114,16 +114,16 @@ GLuint GBuffer::createGEmission() {
 }
 
 GLuint GBuffer::createDepthBuffer() {
-	glGenTextures(1, &rboDepth);
-	glBindTexture(GL_TEXTURE_2D, rboDepth);
+	glGenTextures(1, &gDepthTexture);
+	glBindTexture(GL_TEXTURE_2D, gDepthTexture);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH32F_STENCIL8, width, height, 0, GL_DEPTH_STENCIL, GL_FLOAT_32_UNSIGNED_INT_24_8_REV, 0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, rboDepth, 0);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, gDepthTexture, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer not complete!" << std::endl;
 
-	return rboDepth;
+	return gDepthTexture;
 }
 
 GLuint GBuffer::createDiffuse() {
@@ -187,7 +187,7 @@ void GBuffer::CleanUpGBuffer() {
 	if (gNormal != 0) { glDeleteTextures(1, &gNormal); gNormal = 0; }
 	if (gAlbedo != 0) { glDeleteTextures(1, &gAlbedo); gAlbedo = 0; }
 	if (gMetalRough != 0) { glDeleteTextures(1, &gMetalRough); gMetalRough = 0; }
-	if (rboDepth != 0) { glDeleteRenderbuffers(1, &rboDepth); rboDepth = 0; }
+	if (gDepthTexture != 0) { glDeleteTextures(1, &gDepthTexture); gDepthTexture = 0; }
 
 	if (m_lightDiff != 0) { glDeleteTextures(1, &m_lightDiff); m_lightDiff = 0; }
 	if (m_lightingSpec != 0) { glDeleteTextures(1, &m_lightingSpec); m_lightingSpec = 0; }
@@ -203,6 +203,7 @@ void GBuffer::updateResolution() {
 
 
 void GBuffer::constructDeferredShaders() {
+	glDisable(GL_BLEND);
 	if (m_geometryPass == 0)
 		m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl");
 	
@@ -219,6 +220,7 @@ void GBuffer::constructDeferredShaders() {
 
 void GBuffer::constructForwardShaders() {
 	if (m_shader == 0) {
+		glEnable(GL_BLEND);
 		setCurrentShader(0);
 		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl"); 
 		setCurrentShader(m_shader);

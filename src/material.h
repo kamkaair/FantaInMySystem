@@ -7,7 +7,7 @@
 
 class Material {
 public:
-    enum class alphaModes { // Not currently used
+    enum class alphaModes {
         opaque, mask, blend
     };
 
@@ -22,15 +22,13 @@ public:
     float emission = 0.0f;
     float opacity = 1.0f;
 
-    float alphaCutoff = 0.5; // Not currently used
-
     bool useDiffuseTexture = true;
     bool useMetallicTexture = true;
     bool useRoughnessTexture = true;
     bool useEmissionTexture = false;
     bool useOpacityTexture = false;
 
-    alphaModes currentAlphaMode; // Not currently used
+    alphaModes currentAlphaMode;
 
     std::vector<GLuint>& getTextures();
     const std::string& getName() const;

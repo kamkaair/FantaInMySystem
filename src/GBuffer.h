@@ -28,7 +28,7 @@ public:
 	GLuint getGBuffer() { return gBuffer; }
 	GLuint getGMetallicRoughness() { return gMetalRough; }
 	GLuint getGEmission() { return gEmission; }
-	GLuint getGDepth() { return rboDepth; }
+	GLuint getGDepth() { return gDepthTexture; }
 
 	GLuint getDiffuse() { return m_lightDiff; }
 	GLuint getSpecular() { return m_lightingSpec; }
@@ -74,10 +74,9 @@ private:
 	Shader* m_currentShader = 0;
 
 	// FBOs
-	GLuint gBuffer = 0, ssaoFBO = 0, rboDepth = 0, 
-		lightFBO = 0;
+	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0;
 
 	// Textures
-	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0,
+	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0, gDepthTexture = 0,
 		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0;
 };

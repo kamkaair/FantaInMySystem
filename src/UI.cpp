@@ -105,7 +105,7 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t curr
 	// ComboBox for Normals
 	ImGui::Checkbox("Use Opacity Texture", &SetMat.useOpacityTexture);
 	if (SetMat.useOpacityTexture) {
-		createComboBox("Opacity Texture", materialFileNames, currentItem, 4);
+		createComboBox("Opacity Texture", materialFileNames, currentItem, 5); // HOX: was 4, due to MaterialPaths ordering is 5
 	}
 	else {
 		ImGui::SliderFloat("Opacity Value", &SetMat.opacity, 0.0f, 1.0f);
@@ -116,7 +116,7 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t curr
 	// ComboBox for Normal (only texture currently)
 	ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
 	if (useNormalTexture) {
-		createComboBox("Normal Texture", materialFileNames, currentItem, 5);
+		createComboBox("Normal Texture", materialFileNames, currentItem, 4); // Was 5
 	}
 
 	ImGui::Dummy(ImVec2(0.0, 4.0f));
@@ -270,13 +270,9 @@ void UI::ImGuiDraw()
 	}
 
 	if(deferredRendering) {
-		glDisable(GL_BLEND);
 		if(ImGui::Button("Set Resolution")) {
 			m_SSAO->recreateColorBuffer();
 		}
-	}
-	else {
-		glEnable(GL_BLEND);
 	}
 
 	if (ImGui::Checkbox("Wireframe mode", &wireFrame))

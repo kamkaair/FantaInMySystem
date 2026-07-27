@@ -129,32 +129,34 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			useTexture<float>("/textures/blending_window.png"),				// 5. Opacity
-			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
+			useTexture<std::string>("/textures/checkerboardNormal.png"),	// 5. Normal
+			useTexture<float>("/textures/blending_window.png") });			// 6. Opacity
+			 
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
 			useTexture<glm::vec3>("/textures/OldLantern/Lantern_Diffuse.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Metallic.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Roughness.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Emissive.jpg", 2.0f),
-			useValue<float>(1.0f),
-			useTexture<std::string>("/textures/OldLantern/Lantern_Normal.png") });
+			useTexture<std::string>("/textures/OldLantern/Lantern_Normal.png"),
+			useValue<float>(1.0f) });	 
 
 		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
 			useTexture<glm::vec3>("/textures/MP18/Metallic_Diffuse.png"),
 			useTexture<float>("/textures/MP18/Metallic_Metallic.png"),
 			useTexture<float>("/textures/MP18/Metallic_Roughness.png"),
 			useValue<float>(0.0f),
-			useValue<float>(0.7f), // Tiny bit transparent
-			useTexture<std::string>("/textures/MP18/Metallic_Normal.png")});
+			useTexture<std::string>("/textures/MP18/Metallic_Normal.png"),
+			useValue<float>(0.7f) }); // Tiny bit transparent
+			
 
 		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
 			useTexture<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
 			useTexture<float>("/textures/Barrel/Barrel_Metallic.png"),
 			useTexture<float>("/textures/Barrel/Barrel_Roughness.png"),
 			useValue<float>(0.0f),
-			useValue<float>(0.3f), // A bitt transparnet hege
-			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png") });
+			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png"),
+			useValue<float>(0.3f) }); // A bitt transparnet hege 
 
 		std::vector<FileModels> fileModels;
 		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
@@ -261,10 +263,12 @@ public:
 				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
 
+			glDepthMask(GL_FALSE); // Disabled depth mask, the results look pretty cool
 			for (auto& trans : m_scene->getTransparentMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
 				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
+			glDepthMask(GL_TRUE);
 		}
 
 		if (!g_input->getImGuiVisibility()) {
@@ -291,11 +295,20 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		// Render meshes
-		for (Model* models : m_scene->getModels()) {
+		/*for (Model* models : m_scene->getModels()) {
 			for (Mesh* mesh : models->getMeshes()) {
 				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
 			}
+		}*/
+
+		if (!m_scene->getModels().empty()) {
+			m_scene->sortTransparentMeshes();
+			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
+				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
+			}
 		}
+
+		/*TODO: Depth issue, maybe add one more framebuffer??*/
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -312,6 +325,18 @@ public:
 
 		// 5. Render the final image
 		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw);
+
+		if (!m_scene->getModels().empty()) {
+			glEnable(GL_BLEND);
+			glDepthMask(GL_FALSE);
+			m_scene->sortTransparentMeshes();
+			for (auto& trans : m_scene->getTransparentMeshes()) {
+				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
+				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
+			}
+			glDepthMask(GL_TRUE);
+			glDisable(GL_BLEND);
+		}
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {

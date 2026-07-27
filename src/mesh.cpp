@@ -169,11 +169,11 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
-		shader->setUniform("OpacityMap", 7);
+		shader->setUniform("NormalMap", 7);
 
 		glActiveTexture(GL_TEXTURE8);
 		glBindTexture(GL_TEXTURE_2D, textureIds[5]);  // NormalMap
-		shader->setUniform("NormalMap", 8);
+		shader->setUniform("OpacityMap", 8);
 	}
 
 	// draw mesh
