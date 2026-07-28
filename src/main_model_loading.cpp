@@ -147,8 +147,7 @@ public:
 			useTexture<float>("/textures/MP18/Metallic_Roughness.png"),
 			useValue<float>(0.0f),
 			useTexture<std::string>("/textures/MP18/Metallic_Normal.png"),
-			useValue<float>(0.7f) }); // Tiny bit transparent
-			
+			useValue<float>(1.0f) }); // Tiny bit transparent	
 
 		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
 			useTexture<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
@@ -156,7 +155,7 @@ public:
 			useTexture<float>("/textures/Barrel/Barrel_Roughness.png"),
 			useValue<float>(0.0f),
 			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png"),
-			useValue<float>(0.3f) }); // A bitt transparnet hege 
+			useValue<float>(1.0f) }); // A bitt transparnet hege 
 
 		std::vector<FileModels> fileModels;
 		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });

@@ -18,7 +18,7 @@
 	
 	uniform vec3 u_DiffuseColor, objectColor, HueChanges = vec3(1.0f);
 	uniform float u_Roughness, u_Metallic, u_emissionStrength, u_opacity;
-	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f;
+	uniform float HdrExposure = 1.0f, HdrContrast = 1.0f;
 	uniform int NUM_POINT_LIGHTS;
 
 	// Point light structure in GLSL
@@ -225,21 +225,20 @@
     vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
     vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 	
-    vec3 ambient = (kD * diffuse + specular + (emission * u_emissionStrength));
+    vec3 ambient = (kD * diffuse + specular) * HdrExposure;
+	ambient = ambient / (ambient + vec3(1.0)); // Ambient lighting tone mapping 
+	ambient = pow(ambient, vec3(1.0 / HdrContrast));
 	//vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
 	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 
 	//vec4 sharpening = sharpen(DiffuseMap, texCoord, texCoord) * 0.2; // Sharpening to FragColor
-	vec3 color = ambient + Lo; 	//Ambient + point lights
+	vec3 color = ambient + Lo + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
 
 	// HDR tonemapping and gamma correct
-	color = color / (color + vec3(1.0)) * HdrExposure;
-	color = pow(color, vec3(1.0 / HdrContrast));
+	//color = color / (color + vec3(1.0)) * HdrExposure;
+	color = color / (color + vec3(1.0)) * 1.0f;
+	color = pow(color, vec3(1.0 / 2.2f));
 	
 	//Color out
 	FragColor = vec4(color, opacity);
-	//FragColor = vec4(normalize(R) * 0.5 + 0.5, 1.0);
-	
-	//FragColor = vec4(V * 0.5 + 0.5, 1.0);
-	//FragColor = sharpen(DiffuseMap, texCoord, vec2(HueChange, HueChange));
 	};
