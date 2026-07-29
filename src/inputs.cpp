@@ -12,33 +12,43 @@ void Inputs::setImGuiInteractability(GLFWwindow* window, int cursorMode, float I
 	m_uiDraw->setWindowInteract(WindowInteract);
 }
 
+void Inputs::minimizeWindow(GLFWwindow* window) {
+	setImGuiInteractability(window, GLFW_CURSOR_DISABLED, 0.3f, 0.05f, 0.2f, true);
+}
+
+void Inputs::maximizeWindow(GLFWwindow* window) {
+	setImGuiInteractability(window, GLFW_CURSOR_NORMAL, 0.9f, 0.0f, 0.0f, false);
+}
+
 void Inputs::inputFocus(GLFWwindow* window) {
 	// Toggle mouse cursor with 'E'
-	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !togglePressed && !ImGui::GetIO().WantTextInput) {
-		togglePressed = true;
+	static bool toggleInputFocus = false;
+	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS && !toggleInputFocus && !ImGui::GetIO().WantTextInput) {
+		toggleInputFocus = true;
 		mouseEnabled = !mouseEnabled; // Set mouseEnabled to what it's not
 
-		if (mouseEnabled) { setImGuiInteractability(window, GLFW_CURSOR_NORMAL, 0.9f, 0.0f, 0.0f, false); }
+		if (mouseEnabled) { 
+			maximizeWindow(window);
+		}
 		else {
 			firstMouse = true;
-			setImGuiInteractability(window, GLFW_CURSOR_DISABLED, 0.3f, 0.0005f, 0.004f, true);
+			minimizeWindow(window);
 		}
 	}
 	// Using GLFW_RELEASE to avoid detecting multiple presses for the toggle
 	else if (glfwGetKey(window, GLFW_KEY_E) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
-		togglePressed = false;
+		toggleInputFocus = false;
 }
 
 void Inputs::inputHide(GLFWwindow* window) {
 	// Flip-flop for setting ImGui window hidden
+	static bool togglePressedHide = false;
 	if (glfwGetKey(window, GLFW_KEY_H) == GLFW_PRESS && !togglePressedHide && !ImGui::GetIO().WantTextInput) {
 		togglePressedHide = true;
-		//m_uiDraw->toggleIsHidden();
 		isHidden = !isHidden;
 	}
 	else if (glfwGetKey(window, GLFW_KEY_H) == GLFW_RELEASE && !ImGui::GetIO().WantTextInput)
 		togglePressedHide = false;
-	//return isHidden;
 }
 
 void Inputs::inputScrollFOV(GLFWwindow* window, double xoffset, double yoffset, float fov)
@@ -95,7 +105,7 @@ void Inputs::inputMouse(GLFWwindow* window, double xposIn, double yposIn)
 		m_cam->lastY = ypos;
 
 		//Mouse sensitivity
-		float sensitivity = 4.00f * m_deltaTime;
+		float sensitivity = 2.00f * m_deltaTime;
 		xoffset *= sensitivity;
 		yoffset *= sensitivity;
 
@@ -126,7 +136,7 @@ void Inputs::orbitCursorLeft(GLFWwindow* window, double xposIn, double yposIn) {
 		float dx = float(xposIn - m_cam->xPos);
 		float dy = float(yposIn - m_cam->yPos);
 		
-		float orbitSens = 50 * m_orbitSens * m_deltaTime;
+		float orbitSens = m_orbitSens * m_deltaTime;
 
 		m_cam->theta -= dx * orbitSens;
 		m_cam->phi += dy * orbitSens;
@@ -156,7 +166,7 @@ void Inputs::orbitCursorRight(GLFWwindow* window, double xposIn, double yposIn) 
 		glm::vec3 cameraUpAdjust = glm::normalize(glm::cross(cameraRight, m_cam->cameraFront));
 
 		// Added times cameraRight for the X-axis to make the cameraFocus transforming according to camera's view
-		float focusSens = 50 * m_focusSens * m_deltaTime;
+		float focusSens = m_focusSens * m_deltaTime;
 		m_cam->cameraFocus += cameraRight * dx * focusSens;
 		m_cam->cameraFocus += cameraUpAdjust * -dy * focusSens;
 	}
@@ -199,6 +209,7 @@ void Inputs::updateCameraVectors() {
 }
 
 void Inputs::toggleMovementMode(GLFWwindow* window) {
+	static bool togglePressedMovement = false;
 	if (glfwGetKey(window, GLFW_KEY_V) == GLFW_PRESS && !togglePressedMovement && !ImGui::GetIO().WantTextInput) {
 		if (!m_cam->getIsMovementFree()) {
 			togglePressedMovement = true;

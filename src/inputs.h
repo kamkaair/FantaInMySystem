@@ -2,7 +2,6 @@
 #include "gameobject.h"     // Include base class
 #include "UI.h"
 #include "camera.h"
-#include <iostream> // KILL
 
 class Inputs : public kgfw::Object {
 public:
@@ -39,18 +38,18 @@ public:
 	void setCameraFront(glm::vec3& newFront) { m_cam->cameraFront = newFront; }
 
 	void setImGuiInteractability(GLFWwindow* window, int cursorMode, float ImGuiAlpha, float orbitSens, float focusSens, bool WindowInteract);
+	void minimizeWindow(GLFWwindow* window);
+	void maximizeWindow(GLFWwindow* window);
 
 private:
 	void movementFreeMode(GLFWwindow* window, float deltaTime);
 	void movementOrbitMode(GLFWwindow* window);
 	void updateCameraVectors();
 
-	// Is mouse active?
-	bool firstMouse = true;
-	bool mouseEnabled = false, mouseLeftEnabled = false, mouseRightEnabled = false;
-	bool togglePressed = false, togglePressedHide = false, togglePressedMovement = false, isHidden = false;
+	bool firstMouse = true; // Is mouse active?
+	bool mouseEnabled = false, mouseLeftEnabled = false, mouseRightEnabled = false, isHidden = false;
 
-	float m_orbitSens = 0.0005f, m_focusSens = 0.004f, m_deltaTime = 0.0f;
+	float m_orbitSens = 1.0f, m_focusSens = 1.0f, m_deltaTime = 0.0f;
 	const float epsilon = 0.01f;
 
 	UI* m_uiDraw;

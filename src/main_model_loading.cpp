@@ -538,7 +538,7 @@ int main(void) {
 	g_app = new Application();
 
 	if (!g_input->getMouseEnabled())
-		g_input->setImGuiInteractability(window, GLFW_CURSOR_DISABLED, 0.3f, 0.0005f, 0.004f, true);
+		g_input->minimizeWindow(window);
 
 	// Disable cursor
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
