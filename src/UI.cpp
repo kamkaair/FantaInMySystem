@@ -36,6 +36,57 @@ void displayMatList(int item, static std::int8_t currentItem[], std::vector<cons
 	}
 }
 
+void UI::useAutomaticTextureFinding(const static std::uint8_t& currentItem) {
+	// Section for the targeted file searching from a folder
+	if (ImGui::Checkbox("Use a Specific Folder Search", &useFolderFiltering))
+		m_resoManager->setFolderSearchPath(defaultFolderPath); // Let it be default value
+
+	if (useFolderFiltering) {
+		static int currentFolder = 0;
+
+		ImGui::Text(("Current folder path: " + m_resoManager->getFolderSearchPath()).c_str());
+		if (ImGui::BeginCombo("Available folders", m_folderNames[currentFolder].c_str())) // Should make a method for Combo Boxes
+		{
+			for (size_t i = 0; i < m_folderNames.size(); i++) {
+				bool foundSelected = (currentFolder == i);
+				if (ImGui::Selectable(m_folderNames[i].c_str(), foundSelected)) {
+					currentFolder = i;
+					m_resoManager->setFolderSearchPath(std::string("/textures/") + m_folderNames[currentFolder] + "/"); // Let it be default value
+				}
+				if (foundSelected)
+					ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+			}
+
+			ImGui::EndCombo();
+		}
+
+		if (ImGui::Button("Reset folder search path")) {
+			m_resoManager->setFolderSearchPath(defaultFolderPath); // Let it be default value
+		}
+	}
+
+	if (ImGui::Button("Add mesh with automatic textures")) {
+		// Load the selected mesh
+		std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
+		std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem, true);
+
+		m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
+		m_resoManager->getScene()->updateMeshList();
+	}
+}
+
+void UI:: useRegularModelLoading(const static std::uint8_t currentItem) {
+	// Load selected HDR file and generate the maps for them
+	if (ImGui::Button("Add new mesh")) {
+		// Load the selected mesh
+		std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
+		std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem);
+
+		m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
+		m_resoManager->getScene()->updateMeshList();
+	}
+}
+
 void createComboBox(const char* comboName, std::vector<const char*>& materialFileNames, static std::int8_t currentItem[], const std::int8_t boxIndex) {
 	// ComboBox for Diffuse
 	if (ImGui::BeginCombo(comboName, materialFileNames[currentItem[boxIndex]]))
@@ -275,9 +326,9 @@ void UI::ImGuiDraw()
 		}
 	}
 
-	if (ImGui::Checkbox("Wireframe mode", &wireFrame))
+	if (ImGui::Checkbox("Wireframe mode", &m_wireFrame))
 	{
-		wireFrame ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+		m_wireFrame ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	
 	ImGui::Dummy(ImVec2(0.0f, 2.0f));
@@ -404,7 +455,7 @@ void UI::ImGuiDraw()
 				ImGui::Text("Supports at least .obj and .fbx");
 				ImGui::Text("File path: ../FantaInMySystem/assets/models");
 
-				static int currentItem = 0;
+				static std::uint8_t currentItem = 0;
 				// Create a combo box with available mesh files
 				if (ImGui::BeginCombo("Available models", meshFileNames[currentItem].c_str()))
 				{
@@ -420,56 +471,8 @@ void UI::ImGuiDraw()
 					ImGui::EndCombo();
 				}
 
-				// Section for the targeted file searching from a folder
-				if (ImGui::Checkbox("Use a Specific Folder Search", &useFolderFiltering))
-					m_resoManager->setFolderSearchPath(defaultFolderPath); // Let it be default value
-
-				if (useFolderFiltering) {
-					static int currentFolder = 0;
-					
-					ImGui::Text(("Current folder path: " + m_resoManager->getFolderSearchPath()).c_str());
-					if (ImGui::BeginCombo("Available folders", m_folderNames[currentFolder].c_str())) // Should make a method for Combo Boxes
-					{
-						for (size_t i = 0; i < m_folderNames.size(); i++) {
-							bool foundSelected = (currentFolder == i);
-							if (ImGui::Selectable(m_folderNames[i].c_str(), foundSelected)) {
-								currentFolder = i;
-								m_resoManager->setFolderSearchPath(std::string("/textures/") + m_folderNames[currentFolder] + "/"); // Let it be default value
-							}
-							if (foundSelected)
-								ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
-						}
-
-						ImGui::EndCombo();
-					}
-
-					if (ImGui::Button("Reset folder search path")) {
-						m_resoManager->setFolderSearchPath(defaultFolderPath); // Let it be default value
-					}
-				}
-
-				if (ImGui::Button("Add mesh with automatic textures")) {
-					// Load the selected mesh
-					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
-					std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem, true);
-					
-					m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
-					m_resoManager->getScene()->updateMeshList();
-				}
-
-				// Load selected HDR file and generate the maps for them
-				if (ImGui::Button("Add new mesh")) {
-					// Load the selected mesh
-					std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
-					std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem);
-
-					m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
-
-					for (auto& mesh : newMeshes) {
-						mesh->setMaterial(m_resoManager->getScene()->getDefaultMaterial()); // Set the default material
-					}
-					m_resoManager->getScene()->updateMeshList();
-				}
+				ImGui::Checkbox("Use automatic texture finding", &m_useAutomaticTextures);
+				m_useAutomaticTextures ? useAutomaticTextureFinding(currentItem) : useRegularModelLoading(currentItem);
 
 				// For selecting and removing meshes
 				if (ImGui::TreeNode("Loaded Meshes"))
@@ -615,7 +618,7 @@ void UI::ImGuiDraw()
 
 				// Load selected HDR file and generate the maps for them
 				if (ImGui::Button("Reset Exposure/Contrast")) {
-					HdrContrast = 2.2f;
+					HdrContrast = 1.0f;
 					HdrExposure = 1.0f;
 					HueChanges = glm::vec3(1.0f);
 

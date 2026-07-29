@@ -204,7 +204,7 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 
 Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
 	// Assign the preloaded material by index
-	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Opacity", "_Normal" };
+	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Normal", "_Opacity"  };
 
 	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + getFolderSearchPath());
 	std::vector<std::string> filenames, cutPath;
@@ -217,6 +217,10 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 		aiMaterial* Mat = scene->mMaterials[mesh->mMaterialIndex];
 		aiString MatName;
 		MaterialPaths usables;
+
+		// Set the default values
+		usables.metallic.value = 0.0f;
+		usables.roughness.value = 1.0f;
 
 		std::vector<std::optional<std::string>*> maps = {
 			{&usables.diffuse.path},
@@ -312,13 +316,7 @@ Mesh* TextureLoading::processMesh(aiMesh* mesh, const aiScene* scene, const std:
 	std::vector<unsigned int> indices = loadIndices(mesh); // Load/retrieve the indices of the vertices
 	Material* meshMaterial = nullptr; // Assign the preloaded material by index
 
-	if (autoTexture) {
-		meshMaterial = findTexturesWithPath(path, scene, mesh); // Find materials
-	}
-	else {
-		if (mesh->mMaterialIndex >= 0 && mesh->mMaterialIndex < m_scene->getMaterials().size())
-			meshMaterial = m_scene->getMaterials()[mesh->mMaterialIndex];
-	}
+	meshMaterial = autoTexture ? findTexturesWithPath(path, scene, mesh) : m_scene->getDefaultMaterial();
 
 	// Create the Mesh object with the vertices, indices, and preloaded material
 	Mesh* newMesh = new Mesh(vertices, indices);

@@ -29,13 +29,16 @@ public:
 	void ImGuiStyleSetup();
 	void ImGuiDraw();
 
+	void useAutomaticTextureFinding(const static std::uint8_t& currentItem);
+	void useRegularModelLoading(const static std::uint8_t currentItem);
+
 	// Gets and Sets
 	void toggleMeshRotation() { meshRotationEnabled = !meshRotationEnabled; }
 	bool boolMeshRotation() const { return meshRotationEnabled; }
 	void toggleDoOnce() { doOnce = !doOnce; }
 	bool boolDoOnce() const { return doOnce; }
 
-	void toggleWireframe() { wireFrame = !wireFrame; }
+	void toggleWireframe() { m_wireFrame = !m_wireFrame; }
 	void setImGuiAlpha(float alpha) { ImGuiAlpha = alpha; }
 
 	bool getRenderMode() { return deferredRendering; }
@@ -95,8 +98,11 @@ private:
 	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
 	const std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
 
-	bool meshRotationEnabled = false, doOnce = true, wireFrame = false, scaleLock = false, meshHide = false, 
+	bool meshRotationEnabled = false, doOnce = true,  scaleLock = false, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true, useFolderFiltering = false;
+
+	// UI settings
+	bool m_useAutomaticTextures = false, m_wireFrame = false;
 
 	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };
