@@ -1,6 +1,7 @@
 #pragma once
 #include "savefileStructs.h"
 #include "models.h"
+#include "HDRI.h"
 #include <algorithm>
 
 class Scene {
@@ -10,6 +11,8 @@ public:
 			delete model;
 		}
 		m_models.clear();
+		m_opaqueMeshes.clear();
+		m_transparentMeshes.clear();
 
 		for (auto mat : m_materials) {
 			delete mat;
@@ -56,8 +59,13 @@ public:
 
 	std::vector<Material*>& getMaterials() { return m_materials; }
 	std::vector<FileLights>& getLights() { return m_lights; }
+
 	Material* getDefaultMaterial() { return m_defaultMaterial; }
 	Camera* getCamera() { return m_camera; }
+	HDRI* getHDRI() { return m_HDRI; }
+	HDRI* createHDRI(Shader* cubemapShader, Shader* backgroundShader, Shader* irradianceShader, Shader* prefilter, Shader* brdf) {
+		return m_HDRI = new HDRI(cubemapShader, backgroundShader, irradianceShader, prefilter, brdf);
+	}
 
 	void setDefaultMaterial(Material* inDefaultMat) { m_defaultMaterial = inDefaultMat; }
 	void setActiveCamera(Camera* cam) { m_camera = cam; }
@@ -71,6 +79,7 @@ private:
 	std::vector<Material*> m_materials;
 	FileCamera* cameraData;
 	Camera* m_camera;
+	HDRI* m_HDRI;
 
 	Material* m_defaultMaterial;
 };

@@ -272,8 +272,8 @@ void UI::ImGuiDraw()
 						std::cout << "Opened " + std::string(files) + "\n";
 
 						// Clean up the whole scene
-						m_resoManager->cleanResourceManager(m_HDRI);
-						m_resoManager->fileLoad(files, m_HDRI);
+						m_resoManager->cleanResourceManager();
+						m_resoManager->fileLoad(files);
 					}
 				}
 				ImGui::EndMenu();
@@ -283,7 +283,7 @@ void UI::ImGuiDraw()
 
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
-				m_resoManager->fileSave(saveName, m_HDRI);	
+				m_resoManager->fileSave(saveName);	
 				updateFiles(m_saveFiles, "Saves/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));

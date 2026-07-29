@@ -17,34 +17,38 @@ ResourceManager::ResourceManager() {
 		useValue<float>(1.0f) }));										// Opacity
 }
 
-void ResourceManager::fileLoad(std::string file, HDRI* hdri) {
+void ResourceManager::fileLoad(std::string file) {
 	// Deserialize the object
 	SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/" + file);
 
+	// Create materials and their textures
 	std::vector<Material*> materials = MaterialsPushback(restored.getPathNames());
 	m_scene->getMaterials() = materials;
 
+	// Create models and assign materials
 	std::vector<Model*> models;
 	loadMeshes(models, restored.getFileMeshes()); // Preset modes from 0 - 3
 	m_scene->getModels() = models;
 
-	std::cout << "Background tex load: " << restored.getBackgroundTexPath() << std::endl;
+	// Update the mesh order after loading the models and materials
+	m_scene->updateMeshList();
 
+	// Set the camera values
+	loadCameraOrientation(m_scene->getCamera(), restored.getFileCamera());
+
+	// stbi_set_flip_vertically_on_load(true);
+	// Load the texture for the background texture
 	Texture* backgroundImage = loadTexture(restored.getBackgroundTexPath());
-	hdri->setBackgroundTexture(backgroundImage);
+	m_scene->getHDRI()->setBackgroundTexture(backgroundImage);
 
 	// Load the HDR texture and create all the HDRI maps
-	hdri->ProcessHDRI(restored.getHdriPath().c_str());
+	m_scene->getHDRI()->ProcessHDRI(restored.getHdriPath().c_str());
 
 	// Set up lights and color
 	m_scene->getLights() = restored.getLightData();
-
-	loadCameraOrientation(m_scene->getCamera(), restored.getFileCamera());
-
-	m_scene->constructScene(models, materials, restored.getLightData());
 }
 
-void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
+void ResourceManager::fileSave(std::string saveName) {
 	// And all the meshes and materials
 	std::unordered_map<Material*, int> checkedMap;
 	std::vector<FileModels> fileModels;
@@ -70,17 +74,14 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 						filePaths.push_back("");
 					
 				}
-				std::cout << filePaths[0] << std::endl;
-				std::cout << mesh->getMaterial()->useDiffuseTexture << std::endl;
-				std::cout << glm::to_string(mesh->getMaterial()->diffuseColor) << std::endl;
 
 				materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
 				useTexture<glm::vec3>(filePaths[0], mesh->getMaterial()->diffuseColor),
 				useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
 				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
 				useTexture<float>(filePaths[3], mesh->getMaterial()->emission),
-				useTexture<std::string>(filePaths[5], "emptyNormal"),
-				useTexture<float>(filePaths[4], mesh->getMaterial()->opacity)});
+				useTexture<std::string>(filePaths[4], "emptyNormal"),
+				useTexture<float>(filePaths[5], mesh->getMaterial()->opacity)});
 				texIndex++;
 			}
 
@@ -95,12 +96,12 @@ void ResourceManager::fileSave(std::string saveName, HDRI* hdri) {
 
 		fileModels.push_back(FileModels{ model->getModelPath(), fileMeshes });
 	}
-	std::cout << "Background tex path: " << hdri->getBackgroundTexture()->getFilePath() << std::endl;
+	std::cout << "Background tex path: " << m_scene->getHDRI()->getBackgroundTexture()->getFilePath() << std::endl;
 	
 	saveCameraOrientation(m_scene->getCamera(), fileCamera);
 
 	// Create and serialize an object
-	SaveFile original(m_scene->getLights(), materialPath, fileModels, fileCamera, hdri->getBackgroundTexture()->getFilePath(), hdri->getHDRI_Path());
+	SaveFile original(m_scene->getLights(), materialPath, fileModels, fileCamera, m_scene->getHDRI()->getBackgroundTexture()->getFilePath(), m_scene->getHDRI()->getHDRI_Path());
 	original.serialize(std::string(ASSET_DIR) + "/Saves/" + saveName + ".bin");
 }
 
@@ -208,10 +209,10 @@ void ResourceManager::loadCameraOrientation(Camera* camera, FileCamera& fileCame
 	camera->getIsMovementFree() = fileCamera.freeMovementEnabled;
 }
 
-void ResourceManager::cleanResourceManager(HDRI* hdri) {
+void ResourceManager::cleanResourceManager() {
 	// Clean up the whole scene
 	m_scene->cleanupScene();
 	cleanupTextures();
-	hdri->cleanUpHDRI();
-	hdri->cleanBackgroundTexture();
+	m_scene->getHDRI()->cleanUpHDRI();
+	m_scene->getHDRI()->cleanBackgroundTexture();
 }

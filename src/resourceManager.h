@@ -20,9 +20,9 @@ class ResourceManager : public TextureLoading {
 public:
 	ResourceManager();
 
-	void fileLoad(std::string file, HDRI* hdri);
-	void fileSave(std::string saveName, HDRI* hdri);
-	void cleanResourceManager(HDRI* hdri);
+	void fileLoad(std::string file);
+	void fileSave(std::string saveName);
+	void cleanResourceManager();
 
 	void saveCameraOrientation(Camera* camera, FileCamera& fileCamera);
 	void loadCameraOrientation(Camera* camera, FileCamera& fileCamera);

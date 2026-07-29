@@ -38,10 +38,6 @@ public:
 		// Creates GBuffer
 		m_GBuffer = new GBuffer(width, height);
 
-		// Loads and computes all the HDRI maps
-		// TODO: move HDRI shaders into HDRI class
-		m_HDRI = new HDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
-
 		// Screen Spaced Ambient Occlusion initialization
 		m_ssaoClass = new ScreenSpace(m_GBuffer, width, height);
 
@@ -51,6 +47,10 @@ public:
 		// Resource manager
 		m_resoManager = new ResourceManager();
 		m_scene = m_resoManager->getScene();
+
+		// Loads and computes all the HDRI maps
+		// TODO: move HDRI shaders into HDRI class
+		m_HDRI = m_scene->createHDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
 		// the UI class, contains ImGui and such
 		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_ssaoClass, m_resoManager);
@@ -68,7 +68,7 @@ public:
 
 		// Setup the default save, load the scene from a file
 		setupDefaultSave();
-		setupScene();
+		m_resoManager->fileLoad("village.bin");
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);
@@ -175,40 +175,6 @@ public:
 		// Create and serialize an object
 		SaveFile original(fileLights, materialPath, fileModels, fileCamera, backgroundTex, hdriPath);
 		original.serialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
-	}
-
-	void setupScene() {
-		// Deserialize the object
-		SaveFile restored = SaveFile::deserialize(std::string(ASSET_DIR) + "/Saves/demoScene.bin");
-
-		// Test the  deserialized object
-		std::cout << "Deserialized Object:\n";
-
-		// Create materials and their textures
-		std::vector<Material*> materials = m_resoManager->MaterialsPushback(restored.getPathNames());
-		m_scene->getMaterials() = materials;
-
-		// Create models and assign materials
-		std::vector<Model*> models;
-		m_resoManager->loadMeshes(models, restored.getFileMeshes());
-		m_scene->getModels() = models;
-
-		// Update the mesh order after loading the models and materials
-		m_scene->updateMeshList();
-
-		// Set the camera values
-		m_resoManager->loadCameraOrientation(m_scene->getCamera(), restored.getFileCamera());
-
-		// stbi_set_flip_vertically_on_load(true);
-		// Load the texture for the background texture
-		Texture* backgroundImage = m_resoManager->loadTexture(restored.getBackgroundTexPath());
-		m_HDRI->setBackgroundTexture(backgroundImage);
-
-		// Load the HDR texture and create all the HDRI maps
-		m_HDRI->ProcessHDRI(restored.getHdriPath().c_str());
-
-		// Set up lights and color
-		m_scene->getLights() = restored.getLightData();
 	}
 
 	void bindShaders() {
