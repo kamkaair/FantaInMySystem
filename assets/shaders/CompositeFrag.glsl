@@ -13,6 +13,7 @@
 	uniform sampler2D uDepth;
 	uniform samplerCube uSkybox;
 	uniform sampler2D uBackgroundTex;
+	uniform sampler2D uTransTex;
 	
 	uniform int backgroundMode;
 	uniform float HdrExposure = 1.0f, HdrContrast = 2.2f;
@@ -68,10 +69,14 @@
 		vec3 indirectDiffuse = texture(uIndirectDiffuse, texCoords).rgb;
 		vec3 fallbackSpec = texture(uIndirectSpecFallback, texCoords).rgb;
 		
+		vec4 transparentObjects = texture(uTransTex, texCoords).rgba;
+		
 		vec3 indirectSpecular = mix(fallbackSpec.rgb, ssr.rgb, ssr.a);
 		//vec3 indirectSpecular = ssr.rgb + fallbackSpec * (1.0 - ssr.a);
 		
 		vec3 color = directDiffuse + directSpecular + indirectDiffuse + indirectSpecular;
+		//color = color + transparentObjects;
+		color = mix(color.rgb, transparentObjects.rgb, transparentObjects.a);
 		//vec3 color = indirectSpecular;
 		
 		FragColor = vec4(gammaCorrect(color), 1.0);

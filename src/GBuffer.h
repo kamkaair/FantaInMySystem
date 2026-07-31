@@ -10,6 +10,7 @@ public:
 	GBuffer(int inWidth, int inHeight);
 	~GBuffer();
 
+	// TODO: make a master creation method, there's way too much useless repetition
 	GLuint createGPosition();
 	GLuint createGAlbedo();
 	GLuint createGNormal();
@@ -36,6 +37,8 @@ public:
 	GLuint getIndirectSpecular() { return m_lightingIndirectSpec; }
 
 	GLuint getLightingFBO() { return lightFBO; }
+	GLuint getTransFBO() { return m_transFBO; }
+	GLuint getTransBuffer() { return m_transBuffer; }
 
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }
@@ -74,9 +77,9 @@ private:
 	Shader* m_currentShader = 0;
 
 	// FBOs
-	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0;
+	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0;
 
 	// Textures
 	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0, gDepthTexture = 0,
-		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0;
+		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0, m_transBuffer = 0;
 };

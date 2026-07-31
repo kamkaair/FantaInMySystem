@@ -289,7 +289,7 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	// -------------------------------
 	// SSR Composite - Final Image
 	// -------------------------------
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glDisable(GL_DEPTH_TEST);
 
 	m_GBuffer->getCompositeShader()->bind();
@@ -329,12 +329,17 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
 	m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);
 
+	glActiveTexture(GL_TEXTURE8);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getTransBuffer());
+	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 8);
+
 	m_GBuffer->getCompositeShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
 	m_GBuffer->getCompositeShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 	m_GBuffer->getCompositeShader()->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
 
 	m_meshRender->renderQuad();
 
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glEnable(GL_DEPTH_TEST);
 }
 

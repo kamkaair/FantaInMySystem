@@ -239,6 +239,10 @@
 	color = color / (color + vec3(1.0)) * 1.0f;
 	color = pow(color, vec3(1.0 / 2.2f));
 	
+	// Fun things
+	//color = vec3(1.0) - color; // inverted colors
+	//color = vec3((color.r + color.g + color.b) / 3.0f); // Black and white with average
+	
 	//Color out
 	FragColor = vec4(color, opacity);
 	};

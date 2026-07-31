@@ -202,8 +202,8 @@ public:
 		framebuffer_size_callback(window, width, height);
 
 		// Setup the opengl wiewport (specify area to draw)
-		glViewport(0, 0, width, height);
-		checkGLError();
+		//glViewport(0, 0, width, height);
+		//checkGLError();
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -249,31 +249,24 @@ public:
 		m_camera->setAspectRatio(width, height);
 		m_GBuffer->setResolution(width, height);
 		framebuffer_size_callback(window, width, height);
-		glViewport(0, 0, width, height);
+		//glViewport(0, 0, width, height);
 		checkGLError();
 
-		// Clear everything
+
+		// Clear everything from the default fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glEnable(GL_DEPTH_TEST);
 
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Render meshes
-		/*for (Model* models : m_scene->getModels()) {
-			for (Mesh* mesh : models->getMeshes()) {
-				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
-			}
-		}*/
-
 		if (!m_scene->getModels().empty()) {
-			m_scene->sortTransparentMeshes();
+			//m_scene->sortTransparentMeshes();
 			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
 				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
 			}
 		}
-
-		/*TODO: Depth issue, maybe add one more framebuffer??*/
 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -286,22 +279,29 @@ public:
 
 		// 4. Screen Space Reflection pass
 		if (m_ssaoClass->getSSR_Settings().useSSR)
-			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
+			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);		
 
-		// 5. Render the final image
-		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw);
-
+		// x. Transparent meshes
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getTransFBO());
+		glClear(GL_COLOR_BUFFER_BIT);
 		if (!m_scene->getModels().empty()) {
 			glEnable(GL_BLEND);
 			glDepthMask(GL_FALSE);
+
 			m_scene->sortTransparentMeshes();
 			for (auto& trans : m_scene->getTransparentMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
 				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
+
 			glDepthMask(GL_TRUE);
 			glDisable(GL_BLEND);
 		}
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+		// 5. Render the final image
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw);	
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
@@ -314,7 +314,8 @@ public:
 	void deferredLightPass() {
 		// Get baked lighting
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
 
 		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
 
@@ -361,7 +362,7 @@ public:
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
-
+		glEnable(GL_DEPTH_TEST);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
@@ -497,6 +498,7 @@ int main(void) {
 
 	// Set current context
 	glfwMakeContextCurrent(window);
+
 	// Load GL functions using glad
 	gladLoadGL(glfwGetProcAddress);
 
