@@ -41,18 +41,6 @@
 	//float LampStrength = 0.8;
 	float exposure = 1.5;
 	
-	vec4 sharpen(in sampler2D tex, in vec2 coords, in vec2 renderSize) {
-	  float dx = 1.0 / renderSize.x;
-	  float dy = 1.0 / renderSize.y;
-	  vec4 sum = vec4(0.0);
-	  sum += -1. * texture2D(tex, coords + vec2( -1.0 * dx , 0.0 * dy));
-	  sum += -1. * texture2D(tex, coords + vec2( 0.0 * dx , -1.0 * dy));
-	  sum += 5. * texture2D(tex, coords + vec2( 0.0 * dx , 0.0 * dy));
-	  sum += -1. * texture2D(tex, coords + vec2( 0.0 * dx , 1.0 * dy));
-	  sum += -1. * texture2D(tex, coords + vec2( 1.0 * dx , 0.0 * dy));
-	  return sum;
-	}
-	
 	//Normal map function
 	vec3 getNormalFromMap()
 	{
@@ -228,10 +216,7 @@
     vec3 ambient = (kD * diffuse + specular) * HdrExposure;
 	ambient = ambient / (ambient + vec3(1.0)); // Ambient lighting tone mapping 
 	ambient = pow(ambient, vec3(1.0 / HdrContrast));
-	//vec3 ambient = (kD * (diffuse * AmbientOcclusion) + specular);
-	//vec3 ambient = ((kD * diffuse) + (specular * 0.1)) * ao;
 
-	//vec4 sharpening = sharpen(DiffuseMap, texCoord, texCoord) * 0.2; // Sharpening to FragColor
 	vec3 color = ambient + Lo + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
 
 	// HDR tonemapping and gamma correct

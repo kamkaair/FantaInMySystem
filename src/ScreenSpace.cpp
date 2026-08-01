@@ -300,7 +300,7 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer); //getSSRHistoryRead
 	glBindTexture(GL_TEXTURE_2D, ssrSelect);
 	m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
-
+	
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getDiffuse());
 	m_GBuffer->getCompositeShader()->setUniform("uDirectDiffuse", 1);
@@ -332,6 +332,10 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	glActiveTexture(GL_TEXTURE8);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getTransBuffer());
 	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 8);
+
+	glActiveTexture(GL_TEXTURE9);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGEmission());
+	m_GBuffer->getCompositeShader()->setUniform("gEmission", 9);
 
 	m_GBuffer->getCompositeShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
 	m_GBuffer->getCompositeShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));

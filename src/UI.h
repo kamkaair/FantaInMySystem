@@ -89,7 +89,7 @@ private:
 	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames, m_materialFileNames, m_folderNames;
 	std::string defaultFolderPath = "/textures";
 
-	float HdrContrast = 2.2f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f, 
+	float HdrContrast = 1.0f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f,
 		backExposure = 1.0f, backContrast = 1.0f, totalScale = 0.0f;
 	glm::vec3 HueChanges = {1.0f, 1.0f, 1.0f};
 

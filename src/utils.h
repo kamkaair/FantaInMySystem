@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <filesystem>
+#include <string>
 
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>
@@ -41,12 +42,13 @@ namespace utils {
 		return new Shader(vertexShaderSource, fragmentShaderSource);
 	}
 
-	// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
-	// Was unsafe...
-	//auto deleteObject = [](auto*& ptr) {
-	//	delete ptr;
-	//	ptr = 0;
-	//};
+	static void bindTexture(Shader* inShader, GLuint colorBuffer, int glTexture, std::string name, int value, int type = GL_TEXTURE_2D) {
+		int GL_TEX_INDEX = glTexture - 33984; // 33984 is the integer number of the lowest GL_TEX (this is slightly crazy)
+
+		glActiveTexture(glTexture);
+		glBindTexture(type, colorBuffer);
+		inShader->setUniform(name, GL_TEX_INDEX);
+	}
 
 	// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
 	template<typename T>

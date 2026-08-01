@@ -593,6 +593,8 @@ void UI::ImGuiDraw()
 					if (deferredRendering) { // Temporary if else check for now, due to lack of better system of hopping between forward frag, deferred frag and composite
 						m_GBuffer->getCompositeShader()->bind();
 						m_GBuffer->getCompositeShader()->setUniform("HdrExposure", HdrExposure);
+						m_GBuffer->getForwardShader()->bind();
+						m_GBuffer->getForwardShader()->setUniform("HdrExposure", HdrExposure);
 					}
 					else {
 						m_GBuffer->getCurrentShader()->bind();
@@ -604,6 +606,8 @@ void UI::ImGuiDraw()
 					if (deferredRendering) { // Temporary
 						m_GBuffer->getCompositeShader()->bind();
 						m_GBuffer->getCompositeShader()->setUniform("HdrContrast", HdrContrast);
+						m_GBuffer->getForwardShader()->bind();
+						m_GBuffer->getForwardShader()->setUniform("HdrExposure", HdrExposure);
 					}
 					else {
 						m_GBuffer->getCurrentShader()->bind();
