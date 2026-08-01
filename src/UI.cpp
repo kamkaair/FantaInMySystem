@@ -311,7 +311,7 @@ void UI::ImGuiDraw()
 
 	ImGui::Checkbox("Enable rotation", &meshRotationEnabled);
 
-	shaderBind();
+	shaderBind(); // Bind the current shader
 
 	if (ImGui::Checkbox("Deferred Rendering", &deferredRendering)) {
 		if (deferredRendering)

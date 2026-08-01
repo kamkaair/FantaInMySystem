@@ -44,11 +44,10 @@
 	void main()
 	{
 		vec4 transparentObjects = texture(uTransTex, texCoords).rgba;
-	
 		float depth = texture(uDepth, texCoords).r;
 		
 		// Depth check for rendering the cubemap background.
-		if(depth >= 0.9999 && transparentObjects.a <= alphaThreshold) {  // Added alpha threshold to further select between background and transparent objects + eliminate those a != 0.0 pixels!
+		if(depth >= 0.9999 && transparentObjects.a < alphaThreshold) {  // Added alpha threshold to further select between background and transparent objects + eliminate those a != 0.0 pixels!
 			vec3 dir, sky;
 			switch (backgroundMode) {
 			case 0:
@@ -62,13 +61,11 @@
 				dir = reconstructViewDir(texCoords, depth);
 				sky = texture(uSkybox, dir).rgb;
 			}		
-			FragColor = vec4(gammaCorrect(sky, 1.0f, 1.0f), 1.0);
+			FragColor = vec4(gammaCorrect(sky, 1.0f, 2.2f), 1.0);
 			return;		
 		}
 		
 		vec4 ssr = texture(uSSR, texCoords);
-		float metallic = 1.0;
-		float roughness = 0.0;
 
 		vec3 directDiffuse  = texture(uDirectDiffuse, texCoords).rgb;
 		vec3 directSpecular = texture(uDirectSpec, texCoords).rgb;
@@ -80,15 +77,12 @@
 		//vec3 indirectSpecular = ssr.rgb + fallbackSpec * (1.0 - ssr.a);
 		
 		vec3 directLight = directDiffuse + directSpecular;
-		vec3 inDirectLight = gammaCorrect((indirectDiffuse + indirectSpecular) * HdrExposure, 1.0f, 2.2f);
+		vec3 inDirectLight = gammaCorrect((indirectDiffuse + indirectSpecular) * HdrExposure, 1.0f, HdrContrast);
 		
 		//vec3 color = (gammaCorrect(directLight, 1.0f, 1.0f)) + (gammaCorrect(inDirectLight, HdrExposure, HdrContrast)); 
-		vec3 color = directLight + inDirectLight; 
+		vec3 color = gammaCorrect(directLight + inDirectLight, 1.0f, 2.2f) + emission; 
+		//vec3 outColor = mix(color.rgb, transparentObjects.rgb, transparentObjects.a);
+		vec3 outColor = color.rgb * (1.0 - transparentObjects.a) + transparentObjects.rgb;
 		
-		//color = gammaCorrect(color); // Gamma correction before mixing transparent objects. The fragShader already has gamma correction
-		
-		vec3 outColor = (mix(color.rgb, transparentObjects.rgb, transparentObjects.a)) + emission;
-		//vec3 color = indirectSpecular;
-		
-		FragColor = vec4(gammaCorrect(outColor, 1.0f, HdrContrast), 1.0);
+		FragColor = vec4(outColor, 1.0);
 	}

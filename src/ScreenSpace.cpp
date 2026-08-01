@@ -53,6 +53,7 @@ void ScreenSpace::constructSSR() {
 
 void ScreenSpace::constructDeferredRendering() {
 	glUseProgram(0); // Unbind any active shader
+	glDisable(GL_BLEND);
 	m_GBuffer->constructDeferredShaders();
 	//m_GBuffer->deconstructForwardShaders();
 	constructSSAO();
@@ -61,10 +62,12 @@ void ScreenSpace::constructDeferredRendering() {
 
 void ScreenSpace::constructForwardRendering() {
 	glUseProgram(0); // Unbind any active shader
+	glEnable(GL_BLEND);
 	deconstructSSAO();
 	deconstructSSR();
-	m_GBuffer->constructForwardShaders();
-	//m_GBuffer->deconstructDeferredShaders();
+	m_GBuffer->setCurrentShader(m_GBuffer->getForwardShader());
+	//m_GBuffer->constructForwardShaders();
+	m_GBuffer->deconstructDeferredShaders();
 }
 
 void ScreenSpace::setupSSAO() {

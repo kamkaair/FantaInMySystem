@@ -68,7 +68,7 @@ public:
 
 		// Setup the default save, load the scene from a file
 		setupDefaultSave();
-		m_resoManager->fileLoad("village.bin");
+		m_resoManager->fileLoad("demoScene.bin");
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);

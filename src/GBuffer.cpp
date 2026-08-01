@@ -233,7 +233,6 @@ void GBuffer::updateResolution() {
 
 
 void GBuffer::constructDeferredShaders() {
-	glDisable(GL_BLEND);
 	if (m_geometryPass == 0)
 		m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl");
 	
@@ -250,7 +249,6 @@ void GBuffer::constructDeferredShaders() {
 
 void GBuffer::constructForwardShaders() {
 	if (m_shader == 0) {
-		glEnable(GL_BLEND);
 		setCurrentShader(0);
 		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl"); 
 		setCurrentShader(m_shader);
