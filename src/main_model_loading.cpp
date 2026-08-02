@@ -252,7 +252,6 @@ public:
 		//glViewport(0, 0, width, height);
 		checkGLError();
 
-
 		// Clear everything from the default fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
@@ -279,14 +278,17 @@ public:
 
 		// 4. Screen Space Reflection pass
 		if (m_ssaoClass->getSSR_Settings().useSSR)
-			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);		
+			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
+
+		deferredSkyBox(); // pipipi
+		checkGLError();
 
 		// x. Transparent meshes
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getTransFBO());
 		glClear(GL_COLOR_BUFFER_BIT);
 		if (!m_scene->getModels().empty()) {
 			glEnable(GL_BLEND);
-			glDepthMask(GL_FALSE);
+			//glDepthMask(GL_FALSE);
 
 			m_scene->sortTransparentMeshes();
 			for (auto& trans : m_scene->getTransparentMeshes()) {
@@ -294,7 +296,7 @@ public:
 				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
 
-			glDepthMask(GL_TRUE);
+			//glDepthMask(GL_TRUE);
 			glDisable(GL_BLEND);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -309,6 +311,34 @@ public:
 			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
 			m_uiDraw->ImGuiDraw();
 		}
+	}
+
+	void deferredSkyBox() {
+		// Get baked lighting
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getSkyBoxFBO());
+		//glClear(GL_COLOR_BUFFER_BIT);
+		glDisable(GL_DEPTH_TEST);
+
+		m_GBuffer->getSkyBoxShader()->bind();
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDRI->getCubemapTexture());
+		glActiveTexture(GL_TEXTURE2);
+		glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
+
+		m_GBuffer->getSkyBoxShader()->setUniform("uDepth", 0);
+		m_GBuffer->getSkyBoxShader()->setUniform("uSkybox", 1);
+		m_GBuffer->getSkyBoxShader()->setUniform("uBackgroundTex", 2);
+
+		m_GBuffer->getSkyBoxShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
+		m_GBuffer->getSkyBoxShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
+		m_GBuffer->getSkyBoxShader()->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
+
+		// Render quad, applies the lighting pass
+		m_meshRender->renderQuad();
+		glEnable(GL_DEPTH_TEST);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void deferredLightPass() {

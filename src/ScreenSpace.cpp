@@ -320,29 +320,33 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
 	m_GBuffer->getCompositeShader()->setUniform("uIndirectSpecFallback", 4);
 
+	//glActiveTexture(GL_TEXTURE5);
+	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
+	//m_GBuffer->getCompositeShader()->setUniform("uDepth", 5);
+
+	//glActiveTexture(GL_TEXTURE6);
+	//glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDRI->getCubemapTexture());
+	//m_GBuffer->getCompositeShader()->setUniform("uSkybox", 6);
+
+	//glActiveTexture(GL_TEXTURE7);
+	//glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
+	//m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);
+
 	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
-	m_GBuffer->getCompositeShader()->setUniform("uDepth", 5);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getTransBuffer());
+	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 5);
 
 	glActiveTexture(GL_TEXTURE6);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDRI->getCubemapTexture());
-	m_GBuffer->getCompositeShader()->setUniform("uSkybox", 6);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGEmission());
+	m_GBuffer->getCompositeShader()->setUniform("gEmission", 6);
 
 	glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSkyBoxBuffer());
 	m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);
 
-	glActiveTexture(GL_TEXTURE8);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getTransBuffer());
-	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 8);
-
-	glActiveTexture(GL_TEXTURE9);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGEmission());
-	m_GBuffer->getCompositeShader()->setUniform("gEmission", 9);
-
-	m_GBuffer->getCompositeShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
+	/*m_GBuffer->getCompositeShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
 	m_GBuffer->getCompositeShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
-	m_GBuffer->getCompositeShader()->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
+	m_GBuffer->getCompositeShader()->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));*/
 
 	m_meshRender->renderQuad();
 

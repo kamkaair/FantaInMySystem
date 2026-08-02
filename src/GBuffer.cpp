@@ -44,13 +44,6 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	m_lightingIndirectDiff = createIndirectDiffuse();
 	m_lightingIndirectSpec = createIndirectSpecular();
 
-	glFramebufferTexture2D(
-		GL_FRAMEBUFFER,
-		GL_DEPTH_ATTACHMENT,
-		GL_TEXTURE_2D,
-		gDepthTexture,
-		0);
-
 	GLuint lightAttachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
 	glDrawBuffers(4, lightAttachments);
 
@@ -61,6 +54,13 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Transparent 
+	createTransparentPass();
+
+	// Sky box
+	createSkyBoxPass();
+}
+
+void GBuffer::createTransparentPass() {
 	glGenFramebuffers(1, &m_transFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_transFBO);
 
@@ -72,7 +72,6 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_transBuffer, 0);
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_transBuffer, 0);
 
 	glFramebufferTexture2D(
 		GL_FRAMEBUFFER,
@@ -83,6 +82,38 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+void GBuffer::createSkyBoxPass() {
+	glGenFramebuffers(1, &m_skyBoxFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_skyBoxFBO);
+
+	glGenTextures(1, &m_skyBoxTexture);
+	glBindTexture(GL_TEXTURE_2D, m_skyBoxTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_skyBoxTexture, 0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+/*GLuint GBuffer::createColorBuffer(int colorType, int colorChannels, int texDataType = GL_FLOAT, int colorAttachment = GL_COLOR_ATTACHMENT0) {
+	// position color buffer
+	GLuint newColorBuffer;
+
+	glGenTextures(1, &newColorBuffer);
+	glBindTexture(GL_TEXTURE_2D, newColorBuffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, colorType, width, height, 0, colorChannels, texDataType, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, colorAttachment, GL_TEXTURE_2D, newColorBuffer, 0);
+
+	return newColorBuffer;
+}*/
 
 GLuint GBuffer::createGPosition() {
 	// position color buffer
@@ -236,12 +267,14 @@ void GBuffer::constructDeferredShaders() {
 	if (m_geometryPass == 0)
 		m_geometryPass = utils::makeShader("GeometryPassVert.glsl", "GeometryPassFrag.glsl");
 	
-	if (m_lightPass == 0)
-	{
+	if (m_lightPass == 0) {
 		setCurrentShader(0);
 		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl");
 		setCurrentShader(m_lightPass);
 	}
+
+	if (m_skyBoxPass == 0)
+		m_skyBoxPass = utils::makeShader("SSAO-Vert.glsl", "DeferredSkyFrag.glsl");
 	
 	if (m_compositePass == 0)
 		m_compositePass = utils::makeShader("SSAO-Vert.glsl", "CompositeFrag.glsl");
@@ -258,6 +291,7 @@ void GBuffer::constructForwardShaders() {
 void GBuffer::deconstructDeferredShaders() {
 	if (m_geometryPass != 0) { utils::deleteObject(m_geometryPass); }
 	if (m_lightPass != 0) { utils::deleteObject(m_lightPass); }
+	if (m_skyBoxPass != 0) { utils::deleteObject(m_skyBoxPass); }
 	if (m_compositePass != 0) { utils::deleteObject(m_compositePass); }
 }
 

@@ -23,6 +23,11 @@ public:
 	GLuint createIndirectDiffuse();
 	GLuint createIndirectSpecular();
 
+	void createTransparentPass();
+	void createSkyBoxPass();
+
+	GLuint createColorBuffer(int colorType, int colorChannels, int texDataType = GL_FLOAT, int colorAttachment = GL_COLOR_ATTACHMENT0);
+
 	GLuint getGPosition() { return gPosition; }
 	GLuint getGAlbedo() { return gAlbedo; }
 	GLuint getGNormal() { return gNormal; }
@@ -39,6 +44,9 @@ public:
 	GLuint getLightingFBO() { return lightFBO; }
 	GLuint getTransFBO() { return m_transFBO; }
 	GLuint getTransBuffer() { return m_transBuffer; }
+
+	GLuint getSkyBoxBuffer() { return m_skyBoxTexture; }
+	GLuint getSkyBoxFBO() { return m_skyBoxFBO; }
 
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }
@@ -58,6 +66,7 @@ public:
 	Shader* getLightPass() { return m_lightPass; }
 	Shader* getGeometryPass() { return m_geometryPass; }
 	Shader* getCurrentShader() { return m_currentShader; }
+	Shader* getSkyBoxShader() { return m_skyBoxPass; }
 	Shader* getCompositeShader() { return m_compositePass; }
 
 	void setCurrentShader(Shader* inShader) { m_currentShader = inShader; } // Used for setting (and the other for getting) lighting shaders in the UI
@@ -71,15 +80,17 @@ private:
 	Shader* m_lightPass = 0; // Not used: separated into "direct" and "indirect" shaders
 	Shader* m_directPass = 0;
 	Shader* m_indirectPass = 0;
+	Shader* m_skyBoxPass = 0;
 	Shader* m_compositePass = 0;
 
 	Shader* m_geometryPass = 0;
 	Shader* m_currentShader = 0;
 
 	// FBOs
-	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0;
+	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0, m_skyBoxFBO = 0;
 
 	// Textures
 	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0, gDepthTexture = 0,
-		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0, m_transBuffer = 0;
+		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0, m_transBuffer = 0, m_geometryMask = 0;
+	GLuint m_skyBoxTexture = 0;
 };
