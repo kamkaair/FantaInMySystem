@@ -2,10 +2,10 @@
 	#version 330 core
 	//out vec4 FragColor;
 	
-	layout (location = 0) out vec3 oDirectDiff;
-	layout (location = 1) out vec3 oDirectSpec;
-	layout (location = 2) out vec3 oIndirectDiff;
-	layout (location = 3) out vec3 oIndirectSpec;
+	layout (location = 0) out vec3 oLightPass;
+	//layout (location = 1) out vec3 oDirectSpec;
+	//layout (location = 2) out vec3 oIndirectDiff;
+	//layout (location = 3) out vec3 oIndirectSpec;
 
 	in vec2 texCoord;
 	
@@ -91,7 +91,14 @@
 	vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 	{
 		return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
-	}  
+	}
+	
+	vec3 gammaCorrect(vec3 color, float exposure, float contrast){
+		color = color / (color + vec3(1.0)) * exposure;
+		color = pow(color, vec3(1.0 / contrast));
+		
+		return color;
+	}
 	
 	void main()
 	{             
@@ -106,7 +113,7 @@
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(ssao, texCoord).r;
 		
-		float ssrStrength = 1.0 - smoothstep(0.1, 0.9, roughness); // Blends the SSR based on the material's roughness
+		//float ssrStrength = 1.0 - smoothstep(0.1, 0.9, roughness); // Blends the SSR based on the material's roughness
 		
 		// PBR	
 		// View direction
@@ -129,8 +136,8 @@
 
 		// Direct lighting loop
 		//vec3 Lo = vec3(0.0);
-		oDirectDiff = vec3(0.0);
-		oDirectSpec = vec3(0.0);
+		vec3 directDiff = vec3(0.0);
+		vec3 directSpec = vec3(0.0);
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
 			// calculate per-light radiance - light calculations
@@ -165,8 +172,8 @@
 
 			//Lo += (kD * diffuse / PI + specular) * radiance * NdotL;
 			//oDirectDiff += kD * diffuse / PI * radiance * NdotL;
-			oDirectDiff += kD * albedo / PI * radiance * NdotL;
-			oDirectSpec += specular * radiance * NdotL;
+			directDiff += kD * albedo / PI * radiance * NdotL;
+			directSpec += specular * radiance * NdotL;
 		}
 		
 		// ambient lighting (we now use IBL as the ambient term)
@@ -192,7 +199,7 @@
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
-		oIndirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
+		vec3 indirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
 		float ao = 1.0f;
 		if(useSSAO){ 
@@ -202,5 +209,11 @@
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
 		//vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
 
-		oIndirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
+		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
+		
+		/*vec3 directLight = directDiffuse + directSpecular;
+		vec3 inDirectLight = gammaCorrect((indirectDiffuse + indirectSpecular) * HdrExposure, 1.0f, HdrContrast);
+		vec3 color = (gammaCorrect(directLight + inDirectLight, 1.0f, 2.2f)) + emission;	*/
+		vec3 finalColor = (directDiff + directSpec) + (indirectDiff + indirectSpec);
+		oLightPass = gammaCorrect(finalColor, 1.0f, 2.2f);
 	}

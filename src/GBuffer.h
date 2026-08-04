@@ -18,10 +18,17 @@ public:
 	GLuint createGMetallicRoughness();
 	GLuint createGEmission();
 
-	GLuint createDiffuse();
-	GLuint createSpecular();
-	GLuint createIndirectDiffuse();
-	GLuint createIndirectSpecular();
+	void createLightPassBuffer();
+
+	//GLuint createDiffuse();
+	//GLuint createSpecular();
+	//GLuint createIndirectDiffuse();
+	//GLuint createIndirectSpecular();
+
+	//GLuint getDiffuse() { return m_lightDiff; }
+	//GLuint getSpecular() { return m_lightingSpec; }
+	//GLuint getIndirectDiffuse() { return m_lightingIndirectDiff; }
+	//GLuint getIndirectSpecular() { return m_lightingIndirectSpec; }
 
 	void createTransparentPass();
 	void createSkyBoxPass();
@@ -36,12 +43,9 @@ public:
 	GLuint getGEmission() { return gEmission; }
 	GLuint getGDepth() { return gDepthTexture; }
 
-	GLuint getDiffuse() { return m_lightDiff; }
-	GLuint getSpecular() { return m_lightingSpec; }
-	GLuint getIndirectDiffuse() { return m_lightingIndirectDiff; }
-	GLuint getIndirectSpecular() { return m_lightingIndirectSpec; }
-
 	GLuint getLightingFBO() { return lightFBO; }
+	GLuint getLightPassBuffer() { return m_LightPassTexture; }
+
 	GLuint getTransFBO() { return m_transFBO; }
 	GLuint getTransBuffer() { return m_transBuffer; }
 
@@ -63,7 +67,7 @@ public:
 	void deconstructForwardShaders();
 
 	Shader* getForwardShader() { return m_shader; }
-	Shader* getLightPass() { return m_lightPass; }
+	Shader* getLightPass() { return m_lightPass; } // TODO: Rename to hint the returning object to be a shader!!
 	Shader* getGeometryPass() { return m_geometryPass; }
 	Shader* getCurrentShader() { return m_currentShader; }
 	Shader* getSkyBoxShader() { return m_skyBoxPass; }
@@ -90,7 +94,7 @@ private:
 	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0, m_skyBoxFBO = 0;
 
 	// Textures
-	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0, gDepthTexture = 0,
-		m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0, m_transBuffer = 0, m_geometryMask = 0;
+	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0, gDepthTexture = 0, m_transBuffer = 0, m_geometryMask = 0;
+	GLuint m_LightPassTexture = 0; //m_lightDiff = 0, m_lightingSpec = 0, m_lightingIndirectDiff = 0, m_lightingIndirectSpec = 0;
 	GLuint m_skyBoxTexture = 0;
 };

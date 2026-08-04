@@ -255,6 +255,7 @@ public:
 		// Clear everything from the default fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glEnable(GL_DEPTH_TEST);
+		glDepthMask(GL_TRUE);
 
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
@@ -276,16 +277,10 @@ public:
 		// 3. Lighting pass
 		deferredLightPass();
 
-		// 4. Screen Space Reflection pass
-		if (m_ssaoClass->getSSR_Settings().useSSR)
-			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
-
-		deferredSkyBox(); // pipipi
-		checkGLError();
-
+		// TRANSPARENCY
 		// x. Transparent meshes
-		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getTransFBO());
-		glClear(GL_COLOR_BUFFER_BIT);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
+		//glClear(GL_COLOR_BUFFER_BIT);
 		if (!m_scene->getModels().empty()) {
 			glEnable(GL_BLEND);
 			//glDepthMask(GL_FALSE);
@@ -301,9 +296,17 @@ public:
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+		// 4. Screen Space Reflection pass
+		if (m_ssaoClass->getSSR_Settings().useSSR)
+			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
+
+
+		//deferredSkyBox(); // Skybox
+		//checkGLError();
+
 		// 5. Render the final image
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw);	
+		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw);
 
 		// 6. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
@@ -317,19 +320,20 @@ public:
 		// Get baked lighting
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getSkyBoxFBO());
 		//glClear(GL_COLOR_BUFFER_BIT);
+
 		glDisable(GL_DEPTH_TEST);
+		//glEnable(GL_DEPTH_TEST);
+		//glDepthFunc(GL_LEQUAL);
+		//glDepthMask(GL_FALSE);
 
 		m_GBuffer->getSkyBoxShader()->bind();
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
-		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDRI->getCubemapTexture());
-		glActiveTexture(GL_TEXTURE2);
+		glActiveTexture(GL_TEXTURE1);
 		glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
 
-		m_GBuffer->getSkyBoxShader()->setUniform("uDepth", 0);
-		m_GBuffer->getSkyBoxShader()->setUniform("uSkybox", 1);
-		m_GBuffer->getSkyBoxShader()->setUniform("uBackgroundTex", 2);
+		m_GBuffer->getSkyBoxShader()->setUniform("uSkybox", 0);
+		m_GBuffer->getSkyBoxShader()->setUniform("uBackgroundTex", 1);
 
 		m_GBuffer->getSkyBoxShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
 		m_GBuffer->getSkyBoxShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
@@ -337,7 +341,11 @@ public:
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
+
 		glEnable(GL_DEPTH_TEST);
+		//glDepthMask(GL_TRUE);
+		//glDepthFunc(GL_LESS);
+
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
@@ -349,6 +357,15 @@ public:
 
 		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
 
+		// Render skybox, the background image or clear color
+		glDisable(GL_DEPTH_TEST);
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
+		glEnable(GL_DEPTH_TEST);
+
+		// LIGHT PASS
 		m_GBuffer->getLightPass()->bind();
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());

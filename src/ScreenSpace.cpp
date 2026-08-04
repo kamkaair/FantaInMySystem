@@ -162,8 +162,11 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
 	m_SSR->setUniform("gNormal", 0);
 
-	glActiveTexture(GL_TEXTURE1);
+	/*glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
+	m_SSR->setUniform("colorBuffer", 1);*/
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer()); // HOX: THIS IS FCKED!!
 	m_SSR->setUniform("colorBuffer", 1);
 
 	glActiveTexture(GL_TEXTURE2);
@@ -305,10 +308,10 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
 	
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getDiffuse());
-	m_GBuffer->getCompositeShader()->setUniform("uDirectDiffuse", 1);
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer());
+	m_GBuffer->getCompositeShader()->setUniform("uLightPassTex", 1);
 
-	glActiveTexture(GL_TEXTURE2);
+	/*glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSpecular());
 	m_GBuffer->getCompositeShader()->setUniform("uDirectSpec", 2);
 
@@ -318,7 +321,7 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 
 	glActiveTexture(GL_TEXTURE4);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
-	m_GBuffer->getCompositeShader()->setUniform("uIndirectSpecFallback", 4);
+	m_GBuffer->getCompositeShader()->setUniform("uIndirectSpecFallback", 4);*/
 
 	//glActiveTexture(GL_TEXTURE5);
 	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
@@ -332,17 +335,17 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	//glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
 	//m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);
 
-	glActiveTexture(GL_TEXTURE5);
+	/*glActiveTexture(GL_TEXTURE5);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getTransBuffer());
-	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 5);
+	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 5);*/
 
-	glActiveTexture(GL_TEXTURE6);
+	glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGEmission());
-	m_GBuffer->getCompositeShader()->setUniform("gEmission", 6);
+	m_GBuffer->getCompositeShader()->setUniform("gEmission", 2);
 
-	glActiveTexture(GL_TEXTURE7);
+	/*glActiveTexture(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSkyBoxBuffer());
-	m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);
+	m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);*/
 
 	/*m_GBuffer->getCompositeShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
 	m_GBuffer->getCompositeShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));

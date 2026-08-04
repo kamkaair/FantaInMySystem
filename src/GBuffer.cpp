@@ -39,13 +39,21 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glGenFramebuffers(1, &lightFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
 
-	m_lightDiff = createDiffuse();
-	m_lightingSpec = createSpecular();
-	m_lightingIndirectDiff = createIndirectDiffuse();
-	m_lightingIndirectSpec = createIndirectSpecular();
+	createLightPassBuffer();
 
-	GLuint lightAttachments[4] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3 };
-	glDrawBuffers(4, lightAttachments);
+	glFramebufferTexture2D(
+		GL_FRAMEBUFFER,
+		GL_DEPTH_ATTACHMENT,
+		GL_TEXTURE_2D,
+		gDepthTexture,
+		0);
+
+	/*m_lightingSpec = createSpecular();
+	m_lightingIndirectDiff = createIndirectDiffuse();
+	m_lightingIndirectSpec = createIndirectSpecular();*/
+
+	/*GLuint lightAttachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+	glDrawBuffers(4, lightAttachments);*/
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -54,10 +62,10 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Transparent 
-	createTransparentPass();
+	//createTransparentPass();
 
 	// Sky box
-	createSkyBoxPass();
+	//createSkyBoxPass();
 }
 
 void GBuffer::createTransparentPass() {
@@ -89,7 +97,7 @@ void GBuffer::createSkyBoxPass() {
 
 	glGenTextures(1, &m_skyBoxTexture);
 	glBindTexture(GL_TEXTURE_2D, m_skyBoxTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -114,6 +122,18 @@ void GBuffer::createSkyBoxPass() {
 
 	return newColorBuffer;
 }*/
+
+void GBuffer::createLightPassBuffer() {
+	// position color buffer
+	glGenTextures(1, &m_LightPassTexture);
+	glBindTexture(GL_TEXTURE_2D, m_LightPassTexture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_LightPassTexture, 0);
+}
 
 GLuint GBuffer::createGPosition() {
 	// position color buffer
@@ -187,7 +207,7 @@ GLuint GBuffer::createDepthBuffer() {
 	return gDepthTexture;
 }
 
-GLuint GBuffer::createDiffuse() {
+/*GLuint GBuffer::createDiffuse() {
 	glGenTextures(1, &m_lightDiff);
 	glBindTexture(GL_TEXTURE_2D, m_lightDiff);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
@@ -237,7 +257,7 @@ GLuint GBuffer::createIndirectSpecular() {
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_lightingIndirectSpec, 0);
 
 	return m_lightingIndirectSpec;
-}
+}*/
 
 void GBuffer::CleanUpGBuffer() {
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
@@ -250,10 +270,11 @@ void GBuffer::CleanUpGBuffer() {
 	if (gMetalRough != 0) { glDeleteTextures(1, &gMetalRough); gMetalRough = 0; }
 	if (gDepthTexture != 0) { glDeleteTextures(1, &gDepthTexture); gDepthTexture = 0; }
 
-	if (m_lightDiff != 0) { glDeleteTextures(1, &m_lightDiff); m_lightDiff = 0; }
+	if (m_LightPassTexture != 0) { glDeleteTextures(1, &m_LightPassTexture); m_LightPassTexture = 0; }
+	/*if (m_lightDiff != 0) { glDeleteTextures(1, &m_lightDiff); m_lightDiff = 0; }
 	if (m_lightingSpec != 0) { glDeleteTextures(1, &m_lightingSpec); m_lightingSpec = 0; }
 	if (m_lightingIndirectDiff != 0) { glDeleteTextures(1, &m_lightingIndirectDiff); m_lightingIndirectDiff = 0; }
-	if (m_lightingIndirectSpec != 0) { glDeleteTextures(1, &m_lightingIndirectSpec); m_lightingIndirectSpec = 0; }
+	if (m_lightingIndirectSpec != 0) { glDeleteTextures(1, &m_lightingIndirectSpec); m_lightingIndirectSpec = 0; }*/
 }
 
 void GBuffer::updateResolution() {

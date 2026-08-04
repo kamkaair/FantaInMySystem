@@ -125,9 +125,9 @@
 		if (useOpacityTexture) {
 			opacity = texture(OpacityMap, texCoord).r;
 		}
-		if(opacity < 0.1) {
+		/*if(opacity < 0.1) {
 			discard;
-		}
+		}*/
 		
 		vec3 albedo = u_DiffuseColor;
 		if (useDiffuseTexture) {
