@@ -283,7 +283,7 @@ public:
 		//glClear(GL_COLOR_BUFFER_BIT);
 		if (!m_scene->getModels().empty()) {
 			glEnable(GL_BLEND);
-			//glDepthMask(GL_FALSE);
+			glDepthMask(GL_FALSE);
 
 			m_scene->sortTransparentMeshes();
 			for (auto& trans : m_scene->getTransparentMeshes()) {
@@ -291,7 +291,7 @@ public:
 				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
 
-			//glDepthMask(GL_TRUE);
+			glDepthMask(GL_TRUE);
 			glDisable(GL_BLEND);
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -355,18 +355,18 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
 
-		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
-
 		// Render skybox, the background image or clear color
-		glDisable(GL_DEPTH_TEST);
+		//glDisable(GL_DEPTH_TEST);
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
-		glEnable(GL_DEPTH_TEST);
+		//glEnable(GL_DEPTH_TEST);
 
 		// LIGHT PASS
 		m_GBuffer->getLightPass()->bind();
+		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
+
 		glActiveTexture(GL_TEXTURE3);
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
 		glActiveTexture(GL_TEXTURE4);
