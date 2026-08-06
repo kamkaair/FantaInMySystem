@@ -68,7 +68,7 @@ public:
 
 		// Setup the default save, load the scene from a file
 		setupDefaultSave();
-		m_resoManager->fileLoad("demoScene.bin");
+		m_resoManager->fileLoad("emptyScene.bin");
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);
@@ -129,33 +129,32 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			useTexture<std::string>("/textures/checkerboardNormal.png"),	// 5. Normal
-			useTexture<float>("/textures/blending_window.png") });			// 6. Opacity
-			 
+			useTexture<float>("/textures/blending_window.png"),				// 5. Normal
+			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Opacity
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
 			useTexture<glm::vec3>("/textures/OldLantern/Lantern_Diffuse.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Metallic.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Roughness.jpg"),
 			useTexture<float>("/textures/OldLantern/Lantern_Emissive.jpg", 2.0f),
-			useTexture<std::string>("/textures/OldLantern/Lantern_Normal.png"),
-			useValue<float>(1.0f) });	 
+			useValue<float>(1.0f),
+			useTexture<std::string>("/textures/OldLantern/Lantern_Normal.png") });	 
 
 		materialPath.push_back(MaterialPaths{ std::string("MP18_Material"),
 			useTexture<glm::vec3>("/textures/MP18/Metallic_Diffuse.png"),
 			useTexture<float>("/textures/MP18/Metallic_Metallic.png"),
 			useTexture<float>("/textures/MP18/Metallic_Roughness.png"),
 			useValue<float>(0.0f),
-			useTexture<std::string>("/textures/MP18/Metallic_Normal.png"),
-			useValue<float>(1.0f) }); // Tiny bit transparent	
+			useValue<float>(1.0f),
+			useTexture<std::string>("/textures/MP18/Metallic_Normal.png") }); // Tiny bit transparent	
 
 		materialPath.push_back(MaterialPaths{std::string("Barrel_Material"),
 			useTexture<glm::vec3>("/textures/Barrel/Barrel_Diffuse.png"),
 			useTexture<float>("/textures/Barrel/Barrel_Metallic.png"),
 			useTexture<float>("/textures/Barrel/Barrel_Roughness.png"),
 			useValue<float>(0.0f),
-			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png"),
-			useValue<float>(1.0f) }); // A bitt transparnet hege 
+			useValue<float>(1.0f),
+			useTexture<std::string>("/textures/Barrel/Barrel_Normal.png") }); // A bitt transparnet hege 
 
 		std::vector<FileModels> fileModels;
 		fileModels.push_back({ "/models/plane.obj",{{"Plane", glm::vec3(0.0f, -1.0f, 0.0f), glm::vec3(6.0f),glm::vec3(0.0f), 0}} });
@@ -201,10 +200,6 @@ public:
 		// Framebuffer callback for preserving aspect ratio
 		framebuffer_size_callback(window, width, height);
 
-		// Setup the opengl wiewport (specify area to draw)
-		//glViewport(0, 0, width, height);
-		//checkGLError();
-
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		checkGLError();
@@ -249,7 +244,6 @@ public:
 		m_camera->setAspectRatio(width, height);
 		m_GBuffer->setResolution(width, height);
 		framebuffer_size_callback(window, width, height);
-		//glViewport(0, 0, width, height);
 		checkGLError();
 
 		// Clear everything from the default fb
@@ -262,7 +256,6 @@ public:
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		if (!m_scene->getModels().empty()) {
-			//m_scene->sortTransparentMeshes();
 			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
 				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
 			}
@@ -277,10 +270,8 @@ public:
 		// 3. Lighting pass
 		deferredLightPass();
 
-		// TRANSPARENCY
-		// x. Transparent meshes
+		// 4. Transparent meshes
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
-		//glClear(GL_COLOR_BUFFER_BIT);
 		if (!m_scene->getModels().empty()) {
 			glEnable(GL_BLEND);
 			glDepthMask(GL_FALSE);
@@ -296,57 +287,19 @@ public:
 		}
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-		// 4. Screen Space Reflection pass
+		// 5. Screen Space Reflection pass
 		if (m_ssaoClass->getSSR_Settings().useSSR)
 			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
 
+		// 6. Render the final image
+		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw); // Into the default framebuffer
 
-		//deferredSkyBox(); // Skybox
-		//checkGLError();
-
-		// 5. Render the final image
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw);
-
-		// 6. Render icons and UI
+		// 7. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
 			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
 			m_uiDraw->ImGuiDraw();
 		}
-	}
-
-	void deferredSkyBox() {
-		// Get baked lighting
-		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getSkyBoxFBO());
-		//glClear(GL_COLOR_BUFFER_BIT);
-
-		glDisable(GL_DEPTH_TEST);
-		//glEnable(GL_DEPTH_TEST);
-		//glDepthFunc(GL_LEQUAL);
-		//glDepthMask(GL_FALSE);
-
-		m_GBuffer->getSkyBoxShader()->bind();
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDRI->getCubemapTexture());
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
-
-		m_GBuffer->getSkyBoxShader()->setUniform("uSkybox", 0);
-		m_GBuffer->getSkyBoxShader()->setUniform("uBackgroundTex", 1);
-
-		m_GBuffer->getSkyBoxShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
-		m_GBuffer->getSkyBoxShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
-		m_GBuffer->getSkyBoxShader()->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));
-
-		// Render quad, applies the lighting pass
-		m_meshRender->renderQuad();
-
-		glEnable(GL_DEPTH_TEST);
-		//glDepthMask(GL_TRUE);
-		//glDepthFunc(GL_LESS);
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void deferredLightPass() {

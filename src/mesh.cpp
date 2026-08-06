@@ -81,7 +81,7 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 		shader->setUniform("EmissionMap", 3);
 
 		glActiveTexture(GL_TEXTURE4); 
-		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
+		glBindTexture(GL_TEXTURE_2D, textureIds[5]);  // NormalMap
 		shader->setUniform("NormalMap", 4);
 	}
 
@@ -168,11 +168,11 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 		shader->setUniform("EmissionMap", 6);
 
 		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
+		glBindTexture(GL_TEXTURE_2D, textureIds[5]);  // NormalMap
 		shader->setUniform("NormalMap", 7);
 
 		glActiveTexture(GL_TEXTURE8);
-		glBindTexture(GL_TEXTURE_2D, textureIds[5]);  // NormalMap
+		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
 		shader->setUniform("OpacityMap", 8);
 	}
 

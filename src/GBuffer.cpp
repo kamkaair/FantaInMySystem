@@ -14,7 +14,7 @@ GBuffer::~GBuffer() {
 }
 
 void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing everything this method creates, fix that
-	// This constructor sets up the G-Buffer
+	// GBuffer textures and depth
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
@@ -31,11 +31,11 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Framebuffer GBuffers not complete!" << std::endl;
+		std::cout << "Framebuffer GBUFFER not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// Lighting pass textures
+	// Lighting pass textures and same depth as before
 	glGenFramebuffers(1, &lightFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
 
@@ -48,61 +48,9 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 		gDepthTexture,
 		0);
 
-	/*m_lightingSpec = createSpecular();
-	m_lightingIndirectDiff = createIndirectDiffuse();
-	m_lightingIndirectSpec = createIndirectSpecular();*/
-
-	/*GLuint lightAttachments[4] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
-	glDrawBuffers(4, lightAttachments);*/
-
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Framebuffer lighting textures are not complete!" << std::endl;
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	// Transparent 
-	//createTransparentPass();
-
-	// Sky box
-	//createSkyBoxPass();
-}
-
-void GBuffer::createTransparentPass() {
-	glGenFramebuffers(1, &m_transFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_transFBO);
-
-	glGenTextures(1, &m_transBuffer);
-	glBindTexture(GL_TEXTURE_2D, m_transBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_transBuffer, 0);
-
-	glFramebufferTexture2D(
-		GL_FRAMEBUFFER,
-		GL_DEPTH_ATTACHMENT,
-		GL_TEXTURE_2D,
-		gDepthTexture,
-		0);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void GBuffer::createSkyBoxPass() {
-	glGenFramebuffers(1, &m_skyBoxFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_skyBoxFBO);
-
-	glGenTextures(1, &m_skyBoxTexture);
-	glBindTexture(GL_TEXTURE_2D, m_skyBoxTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_skyBoxTexture, 0);
+		std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
@@ -207,58 +155,6 @@ GLuint GBuffer::createDepthBuffer() {
 	return gDepthTexture;
 }
 
-/*GLuint GBuffer::createDiffuse() {
-	glGenTextures(1, &m_lightDiff);
-	glBindTexture(GL_TEXTURE_2D, m_lightDiff);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_lightDiff, 0);
-
-	return m_lightDiff;
-}
-
-GLuint GBuffer::createSpecular() {
-	glGenTextures(1, &m_lightingSpec);
-	glBindTexture(GL_TEXTURE_2D, m_lightingSpec);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, m_lightingSpec, 0);
-
-	return m_lightingSpec;
-}
-
-GLuint GBuffer::createIndirectDiffuse() {
-	glGenTextures(1, &m_lightingIndirectDiff);
-	glBindTexture(GL_TEXTURE_2D, m_lightingIndirectDiff);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, m_lightingIndirectDiff, 0);
-
-	return m_lightingIndirectDiff;
-}
-
-GLuint GBuffer::createIndirectSpecular() {
-	glGenTextures(1, &m_lightingIndirectSpec);
-	glBindTexture(GL_TEXTURE_2D, m_lightingIndirectSpec);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, m_lightingIndirectSpec, 0);
-
-	return m_lightingIndirectSpec;
-}*/
-
 void GBuffer::CleanUpGBuffer() {
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -271,10 +167,6 @@ void GBuffer::CleanUpGBuffer() {
 	if (gDepthTexture != 0) { glDeleteTextures(1, &gDepthTexture); gDepthTexture = 0; }
 
 	if (m_LightPassTexture != 0) { glDeleteTextures(1, &m_LightPassTexture); m_LightPassTexture = 0; }
-	/*if (m_lightDiff != 0) { glDeleteTextures(1, &m_lightDiff); m_lightDiff = 0; }
-	if (m_lightingSpec != 0) { glDeleteTextures(1, &m_lightingSpec); m_lightingSpec = 0; }
-	if (m_lightingIndirectDiff != 0) { glDeleteTextures(1, &m_lightingIndirectDiff); m_lightingIndirectDiff = 0; }
-	if (m_lightingIndirectSpec != 0) { glDeleteTextures(1, &m_lightingIndirectSpec); m_lightingIndirectSpec = 0; }*/
 }
 
 void GBuffer::updateResolution() {
@@ -293,9 +185,6 @@ void GBuffer::constructDeferredShaders() {
 		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl");
 		setCurrentShader(m_lightPass);
 	}
-
-	if (m_skyBoxPass == 0)
-		m_skyBoxPass = utils::makeShader("SSAO-Vert.glsl", "DeferredSkyFrag.glsl");
 	
 	if (m_compositePass == 0)
 		m_compositePass = utils::makeShader("SSAO-Vert.glsl", "CompositeFrag.glsl");
@@ -312,7 +201,6 @@ void GBuffer::constructForwardShaders() {
 void GBuffer::deconstructDeferredShaders() {
 	if (m_geometryPass != 0) { utils::deleteObject(m_geometryPass); }
 	if (m_lightPass != 0) { utils::deleteObject(m_lightPass); }
-	if (m_skyBoxPass != 0) { utils::deleteObject(m_skyBoxPass); }
 	if (m_compositePass != 0) { utils::deleteObject(m_compositePass); }
 }
 

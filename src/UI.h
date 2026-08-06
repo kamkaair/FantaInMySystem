@@ -58,7 +58,7 @@ public:
 	ImGuiWindowFlags disableInteraction();
 
 private:
-	void updateAllFiles() {
+	void updateAllFiles() { // TODO: probably for resource manager
 		updateFiles(meshFileNames, "models/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
 		updateFiles(m_materialFileNames, "textures/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
 		updateFiles(m_saveFiles, "Saves/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });

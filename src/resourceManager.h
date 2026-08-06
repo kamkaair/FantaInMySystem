@@ -13,6 +13,7 @@ struct SettingsMaterial {
 	bool useMetallicTexture = true;
 	bool useRoughnessTexture = true;
 	bool useEmissionTexture = false;
+	bool useNormalTexture = false;
 	bool useOpacityTexture = false;
 };
 
@@ -27,7 +28,10 @@ public:
 	void saveCameraOrientation(Camera* camera, FileCamera& fileCamera);
 	void loadCameraOrientation(Camera* camera, FileCamera& fileCamera);
 
+	void findMaterialPaths(std::string usePaths[], SettingsMaterial& SetMat, std::vector<std::string>& m_materialFileNames, static int currentItem[]);
+
 	MaterialPaths createMaterialPaths(const std::string& matName, const std::string usePaths[], SettingsMaterial& SetMat);
+	MaterialPaths createMaterialPaths(const std::string usePaths[], Mesh* mesh);
 	void setMaterialParams(SettingsMaterial& SetMat, Material*& material);
 	void replaceMaterials(Material* oldMat, Material* newMat);
 

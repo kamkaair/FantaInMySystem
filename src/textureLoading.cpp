@@ -130,7 +130,7 @@ void setMaterialParams(Material* setMat, const MaterialPaths& materialPaths, std
 	setMat->useMetallicTexture = textureIDs[1] != 0 ? true : false;
 	setMat->useRoughnessTexture = textureIDs[2] != 0 ? true : false;
 	setMat->useEmissionTexture = textureIDs[3] != 0 ? true : false;
-	setMat->useOpacityTexture = textureIDs[5] != 0 ? true : false;
+	setMat->useOpacityTexture = textureIDs[4] != 0 ? true : false;
 
 	setMat->diffuseColor = materialPaths.diffuse.value;
 	setMat->metallic = materialPaths.metallic.value;
@@ -153,8 +153,8 @@ Material* TextureLoading::createMaterial(const MaterialPaths& materialPaths) {
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
 		materialPaths.emission.path.value_or(""),
-		materialPaths.normalPath.path.value(), // Normal maps always use textures
-		materialPaths.opacity.path.value_or("")
+		materialPaths.opacity.path.value_or(""),
+		materialPaths.normalPath.path.value() // Normal maps always use textures	
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -178,9 +178,9 @@ void TextureLoading::editMaterial(Material* editableMat, const MaterialPaths& ma
 		materialPaths.diffuse.path.value_or(""),
 		materialPaths.metallic.path.value_or(""),
 		materialPaths.roughness.path.value_or(""),
-		materialPaths.emission.path.value_or(""),
-		materialPaths.normalPath.path.value(), // Normal maps always use textures
-		materialPaths.opacity.path.value_or("")
+		materialPaths.emission.path.value_or(""),	
+		materialPaths.opacity.path.value_or(""),
+		materialPaths.normalPath.path.value() // Normal maps always use textures
 	};
 
 	// Decide to either use an image texture or use a value for the maps
@@ -204,7 +204,7 @@ std::vector<Material*> TextureLoading::MaterialsPushback(const std::vector<Mater
 
 Material* TextureLoading::findTexturesWithPath(const std::string path, const aiScene* scene, aiMesh* mesh) {
 	// Assign the preloaded material by index
-	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Normal", "_Opacity"  };
+	const std::vector<std::string> types = { "_Diffuse", "_Metallic", "_Roughness", "_Emissive", "_Opacity", "_Normal"  };
 
 	std::vector<std::pair<std::string, std::string>> allFiles = FileSystemTuple(ASSET_DIR + getFolderSearchPath());
 	std::vector<std::string> filenames, cutPath;
@@ -227,8 +227,8 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 			{&usables.metallic.path},
 			{&usables.roughness.path},
 			{&usables.emission.path},
-			{&usables.normalPath.path}, // Normal maps always use textures
-			{&usables.opacity.path}
+			{&usables.opacity.path},
+			{&usables.normalPath.path} // Normal maps always use textures	
 		};
 
 		if ((Mat->Get(AI_MATKEY_NAME, MatName) != AI_SUCCESS)) { // Assimp error catching and Get() a material name in one
@@ -258,7 +258,7 @@ Material* TextureLoading::findTexturesWithPath(const std::string path, const aiS
 				*maps[i] = getFolderSearchPath() + cutPath[nameIndex]; // includes folders and their paths (textures/coolFolder/coolTex.png)
 			}
 			else {
-				std::cout << "ERROR: Not found! Target format: " << types[i] << std::endl;
+				std::cout << "NOT FOUND: Using backup value! Target format: " << types[i] << std::endl;
 				*maps[i] = std::nullopt;
 			}
 		}

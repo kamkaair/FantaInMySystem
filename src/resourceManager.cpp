@@ -8,13 +8,13 @@ ResourceManager::ResourceManager() {
 	setCurrentScene(m_scene);
 
 	// Set the default material
-	m_scene->setDefaultMaterial(createMaterial(MaterialPaths{ std::string("Checkerboard"),
-		useValue<glm::vec3>(glm::vec3(1.0f, 0.0f, 1.0f)),				// Diffuse
-		useTexture<float>("/textures/checkerboard.png"),				// Metallic
-		useTexture<float>("/textures/checkerboard.png"),				// Roughness
-		useTexture<float>("/textures/checkerboard.png", 1.0f),			// Emission
-		useTexture<std::string>("/textures/checkerboardNormal.png"),	// Add the default material
-		useValue<float>(1.0f) }));										// Opacity
+	m_scene->setDefaultMaterial(createMaterial(MaterialPaths{ std::string("Checkerboard"), // Add the default material
+		useValue<glm::vec3>(glm::vec3(1.0f, 0.0f, 1.0f)),					// Diffuse
+		useTexture<float>("/textures/checkerboard.png"),					// Metallic
+		useTexture<float>("/textures/checkerboard.png"),					// Roughness
+		useTexture<float>("/textures/checkerboard.png", 1.0f),				// Emission
+		useValue<float>(1.0f),												// Opacity
+		useTexture<std::string>("/textures/checkerboardNormal.png") }));	// Normal
 }
 
 void ResourceManager::fileLoad(std::string file) {
@@ -62,26 +62,22 @@ void ResourceManager::fileSave(std::string saveName) {
 
 			auto it = checkedMap.find(mesh->getMaterial());
 			if (it == checkedMap.end()) { // Check, whether the material already exists
-				std::vector<std::string> filePaths;
+
+				std::string filePaths[6];
 				checkedMap.insert({ mesh->getMaterial(), texIndex });
 				mesh->getMaterial()->getMaterialIndex() = texIndex;
 
-				for (auto maps : mesh->getMaterial()->getTextures()) {
-					Texture* foundTexture = findTexture(maps);
+				for (int i = 0; i < mesh->getMaterial()->getTextures().size(); i++) {
+					Texture* foundTexture = findTexture(mesh->getMaterial()->getTextures()[i]);
 					if (foundTexture != nullptr)
-						filePaths.push_back(foundTexture->getFilePath());
+						filePaths[i] = foundTexture->getFilePath();
 					else
-						filePaths.push_back("");
-					
+						filePaths[i] = "";
+
 				}
 
-				materialPath.push_back(MaterialPaths{ mesh->getDisplayName(),
-				useTexture<glm::vec3>(filePaths[0], mesh->getMaterial()->diffuseColor),
-				useTexture<float>(filePaths[1], mesh->getMaterial()->metallic),
-				useTexture<float>(filePaths[2], mesh->getMaterial()->roughness),
-				useTexture<float>(filePaths[3], mesh->getMaterial()->emission),
-				useTexture<std::string>(filePaths[4], "emptyNormal"),
-				useTexture<float>(filePaths[5], mesh->getMaterial()->opacity)});
+				MaterialPaths matPath;
+				createMaterialPaths(filePaths, mesh);
 				texIndex++;
 			}
 
@@ -111,9 +107,60 @@ MaterialPaths ResourceManager::createMaterialPaths(const std::string& matName, c
 		useTexture<float>(usePaths[1], SetMat.metallic),
 		useTexture<float>(usePaths[2], SetMat.roughness),
 		useTexture<float>(usePaths[3], SetMat.emission),
-		useTexture<std::string>(usePaths[5], "emptyNormal"),
-		useTexture<float>(usePaths[4], SetMat.opacity) };
+		useTexture<float>(usePaths[4], SetMat.opacity),
+		useTexture<std::string>(usePaths[5], "emptyNormal") };
 }
+
+MaterialPaths ResourceManager::createMaterialPaths(const std::string usePaths[], Mesh* mesh) {
+	return MaterialPaths{ mesh->getDisplayName(),
+		useTexture<glm::vec3>(usePaths[0], mesh->getMaterial()->diffuseColor),
+		useTexture<float>(usePaths[1], mesh->getMaterial()->metallic),
+		useTexture<float>(usePaths[2], mesh->getMaterial()->roughness),
+		useTexture<float>(usePaths[3], mesh->getMaterial()->emission),
+		useTexture<float>(usePaths[4], mesh->getMaterial()->opacity),
+		useTexture<std::string>(usePaths[5], "emptyNormal") };
+}
+
+void ResourceManager::findMaterialPaths(std::string usePaths[], SettingsMaterial& SetMat, std::vector<std::string>& m_materialFileNames, static int currentItem[]) {
+	// In case, where the texture is not used ("" is handled as no texture)
+	//std::string usePaths[6];
+	bool useTextures[5] = { SetMat.useDiffuseTexture, SetMat.useMetallicTexture, SetMat.useRoughnessTexture, SetMat.useEmissionTexture, SetMat.useOpacityTexture };
+	for (std::uint8_t i = 0; i < 5; i++) {
+		usePaths[i] = useTextures[i] ? "/textures/" + m_materialFileNames[currentItem[i]] : "";
+	}
+
+	usePaths[5] = "/textures/EmptyNormal.png"; // Set the default normal map name
+	if (SetMat.useNormalTexture)
+		usePaths[5] = "/textures/" + m_materialFileNames[currentItem[5]];
+}
+
+/*void ResourceManager::findTexturesForMaterial() {
+	for (size_t i = 0; i < materials.size(); i++) {
+		bool isSelected = (materials[i] == materials[select]);
+		if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
+			select = i; // Set the selected index
+			for (size_t j = 0; j < comboBoxSize; j++) { // comboBoxSelection size
+				Texture* foundTex = m_resoManager->findTexture(materials[select]->getTextures()[j]);
+				if (foundTex == nullptr) // solid values are nullptrs
+					continue;
+
+				std::string texFilename = foundTex->getTextureFilename();
+				for (size_t k = 0; k < m_materialFileNames.size(); k++) {
+					//std::cout << "Compared: " << m_materialFileNames[k] << " - Target:" << texFilename << std::endl;
+					if (m_materialFileNames[k] == texFilename) { // maybe store the material names into an unordered_map
+						comboBoxSelection[j] = k;
+						break;
+					}
+				}
+			}
+
+			// Set material properties and bools
+			m_resoManager->setMaterialParams(SetMat, materials[select]);
+		}
+		if (isSelected)
+			ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+	}
+}*/
 
 void ResourceManager::setMaterialParams(SettingsMaterial& SetMat, Material*& material) {
 	// Set material properties and bools

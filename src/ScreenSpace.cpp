@@ -295,66 +295,21 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	// -------------------------------
 	// SSR Composite - Final Image
 	// -------------------------------
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_DEPTH_TEST); // Disable!
 
 	m_GBuffer->getCompositeShader()->bind();
-
-	//GLuint ssrSelect = m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer;
-
-	//glActiveTexture(GL_TEXTURE0);
-	////glBindTexture(GL_TEXTURE_2D, ssrColorBuffer); //getSSRHistoryRead
-	//glBindTexture(GL_TEXTURE_2D, ssrSelect);
-	//m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
 	
 	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer());
 	m_GBuffer->getCompositeShader()->setUniform("uLightPassTex", 0);
 
-	/*glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSpecular());
-	m_GBuffer->getCompositeShader()->setUniform("uDirectSpec", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectDiffuse());
-	m_GBuffer->getCompositeShader()->setUniform("uIndirectDiffuse", 3);
-
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
-	m_GBuffer->getCompositeShader()->setUniform("uIndirectSpecFallback", 4);*/
-
-	//glActiveTexture(GL_TEXTURE5);
-	//glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
-	//m_GBuffer->getCompositeShader()->setUniform("uDepth", 5);
-
-	//glActiveTexture(GL_TEXTURE6);
-	//glBindTexture(GL_TEXTURE_CUBE_MAP, m_HDRI->getCubemapTexture());
-	//m_GBuffer->getCompositeShader()->setUniform("uSkybox", 6);
-
-	//glActiveTexture(GL_TEXTURE7);
-	//glBindTexture(GL_TEXTURE_2D, m_HDRI->getBackgroundTexture()->getTextureId());
-	//m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);
-
-	/*glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getTransBuffer());
-	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 5);*/
-
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGEmission());
 	m_GBuffer->getCompositeShader()->setUniform("gEmission", 1);
 
-	/*glActiveTexture(GL_TEXTURE7);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSkyBoxBuffer());
-	m_GBuffer->getCompositeShader()->setUniform("uBackgroundTex", 7);*/
-
-	/*m_GBuffer->getCompositeShader()->setUniform("backgroundMode", m_uiDraw->getBackgroundMode());
-	m_GBuffer->getCompositeShader()->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
-	m_GBuffer->getCompositeShader()->setUniform("invView", glm::inverse(m_camera->getViewMatrix()));*/
-
 	m_meshRender->renderQuad();
 
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_DEPTH_TEST); // Enable!
 }
 
 void ScreenSpace::updateSSAOUniforms() {

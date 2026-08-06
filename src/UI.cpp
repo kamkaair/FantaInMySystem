@@ -165,8 +165,8 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[
 	ImGui::Dummy(ImVec2(0.0f, 5.0f));
 
 	// ComboBox for Normal (only texture currently)
-	ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
-	if (useNormalTexture) {
+	ImGui::Checkbox("Use Normal Texture", &SetMat.useNormalTexture);
+	if (SetMat.useNormalTexture) {
 		createComboBox("Normal Texture", materialFileNames, currentItem, 5);
 	}
 
@@ -781,14 +781,7 @@ void UI::ImGuiDraw()
 
 					// In case, where the texture is not used ("" is handled as no texture)
 					std::string usePaths[6];
-					bool useTextures[5] = { SetMat.useDiffuseTexture, SetMat.useMetallicTexture, SetMat.useRoughnessTexture, SetMat.useEmissionTexture, SetMat.useOpacityTexture};
-					for (std::uint8_t i = 0; i < 5; i++) {
-						usePaths[i] = useTextures[i] ? "/textures/" + m_materialFileNames[currentItem[i]] : "";
-					}
-
-					usePaths[5] = "/textures/EmptyNormal.png"; // Set the default normal map name
-					if (useNormalTexture)
-						usePaths[5] = "/textures/" + m_materialFileNames[currentItem[5]];
+					m_resoManager->findMaterialPaths(usePaths, SetMat, m_materialFileNames, currentItem);
 
 					// Set the default material
 					m_resoManager->createMaterial(m_resoManager->createMaterialPaths(materialName, usePaths, SetMat));
@@ -854,14 +847,7 @@ void UI::ImGuiDraw()
 
 						// In case, where the texture is not used ("" is handled as no texture)
 						std::string usePaths[6];
-						bool useTextures[5] = { SetMat.useDiffuseTexture, SetMat.useMetallicTexture, SetMat.useRoughnessTexture, SetMat.useEmissionTexture, SetMat.useOpacityTexture };
-						for (std::uint8_t i = 0; i < 5; i++) {
-							usePaths[i] = useTextures[i] ? "/textures/" + m_materialFileNames[comboBoxSelection[i]] : "";
-						}
-						usePaths[5] = "/textures/EmptyNormal.png";
-						if (useNormalTexture)
-							usePaths[5] = "/textures/" + m_materialFileNames[comboBoxSelection[5]];
-
+						m_resoManager->findMaterialPaths(usePaths, SetMat, m_materialFileNames, comboBoxSelection);
 						MaterialPaths newMaterialParams = m_resoManager->createMaterialPaths(std::string(materials[select]->getName()), usePaths, SetMat);
 
 						// Material to be edited and the parameters
