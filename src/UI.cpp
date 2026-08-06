@@ -26,11 +26,11 @@ utils::utils fpsCounter;
 
 UI::~UI() {}
 
-void displayMatList(int item, static std::int8_t currentItem[], std::vector<const char*> materialFileNames) {
-	for (size_t i = 0; i < materialFileNames.size(); i++) {
+void displayMatList(const int& item, static int currentItem[], std::vector<const char*> materialFileNames) {
+	for (std::int8_t i = 0; i < materialFileNames.size(); i++) {
 		bool isSelected = (currentItem[item] == i);
 		if (ImGui::Selectable(materialFileNames[i], isSelected))
-			currentItem[item] = i;
+			currentItem[item] = i;		
 		if (isSelected)
 			ImGui::SetItemDefaultFocus();
 	}
@@ -87,7 +87,7 @@ void UI:: useRegularModelLoading(const static std::uint8_t currentItem) {
 	}
 }
 
-void createComboBox(const char* comboName, std::vector<const char*>& materialFileNames, static std::int8_t currentItem[], const std::int8_t boxIndex) {
+void createComboBox(const char* comboName, std::vector<const char*>& materialFileNames, static int currentItem[], const int& boxIndex) {
 	// ComboBox for Diffuse
 	if (ImGui::BeginCombo(comboName, materialFileNames[currentItem[boxIndex]]))
 	{
@@ -101,7 +101,7 @@ ImGuiWindowFlags UI::disableInteraction() {
 	else { return flagWinEnabled; }
 }
 
-void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t currentItem[]) {
+void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]) {
 	// This is probably quite useless, should probably just use std::string instead and not convert these to c_str() everytime
 	std::vector<const char*> materialFileNames;
 	for (const auto& file : m_materialFileNames) {
@@ -156,7 +156,7 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t curr
 	// ComboBox for Normals
 	ImGui::Checkbox("Use Opacity Texture", &SetMat.useOpacityTexture);
 	if (SetMat.useOpacityTexture) {
-		createComboBox("Opacity Texture", materialFileNames, currentItem, 5); // HOX: was 4, due to MaterialPaths ordering is 5
+		createComboBox("Opacity Texture", materialFileNames, currentItem, 4);
 	}
 	else {
 		ImGui::SliderFloat("Opacity Value", &SetMat.opacity, 0.0f, 1.0f);
@@ -167,7 +167,7 @@ void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t curr
 	// ComboBox for Normal (only texture currently)
 	ImGui::Checkbox("Use Normal Texture", &useNormalTexture);
 	if (useNormalTexture) {
-		createComboBox("Normal Texture", materialFileNames, currentItem, 4); // Was 5
+		createComboBox("Normal Texture", materialFileNames, currentItem, 5);
 	}
 
 	ImGui::Dummy(ImVec2(0.0, 4.0f));
@@ -769,7 +769,7 @@ void UI::ImGuiDraw()
 		{
 			if (ImGui::TreeNode("ADD MATERIAL"))
 			{
-				static std::int8_t currentItem[6] = { 0, 0, 0, 0, 0, 0 }; // One for each texture type
+				static int currentItem[6] = { 0, 0, 0, 0, 0, 0 }; // One for each texture type
 				static char materialName[128] = ""; // Input field for material name
 				SettingsMaterial& SetMat = m_settingsCreateMat;
 
@@ -783,12 +783,12 @@ void UI::ImGuiDraw()
 					std::string usePaths[6];
 					bool useTextures[5] = { SetMat.useDiffuseTexture, SetMat.useMetallicTexture, SetMat.useRoughnessTexture, SetMat.useEmissionTexture, SetMat.useOpacityTexture};
 					for (std::uint8_t i = 0; i < 5; i++) {
-						usePaths[i] = useTextures[i] ? "/textures/" + m_materialFileNames[currentItem[0]] : "";
+						usePaths[i] = useTextures[i] ? "/textures/" + m_materialFileNames[currentItem[i]] : "";
 					}
 
-					usePaths[5] = "EmptyNormal.png"; // Set the default normal map name
+					usePaths[5] = "/textures/EmptyNormal.png"; // Set the default normal map name
 					if (useNormalTexture)
-						usePaths[5] = m_materialFileNames[currentItem[5]];
+						usePaths[5] = "/textures/" + m_materialFileNames[currentItem[5]];
 
 					// Set the default material
 					m_resoManager->createMaterial(m_resoManager->createMaterialPaths(materialName, usePaths, SetMat));
@@ -806,8 +806,8 @@ void UI::ImGuiDraw()
 
 			if (ImGui::TreeNode("EDIT MATERIALS"))
 			{
-				static std::int8_t select = 0;
-				static std::int8_t comboBoxSelection[6] = { 0, 0, 0, 0, 0, 0 }; // One for each texture type
+				static int select = 0;
+				static int comboBoxSelection[6] = { 0, 0, 0, 0, 0, 0 }; // One for each texture type
 				const std::int8_t comboBoxSize = sizeof(comboBoxSelection) / sizeof(comboBoxSelection[0]);
 
 				std::vector<Material*>& materials = m_resoManager->getScene()->getMaterials();
@@ -856,11 +856,11 @@ void UI::ImGuiDraw()
 						std::string usePaths[6];
 						bool useTextures[5] = { SetMat.useDiffuseTexture, SetMat.useMetallicTexture, SetMat.useRoughnessTexture, SetMat.useEmissionTexture, SetMat.useOpacityTexture };
 						for (std::uint8_t i = 0; i < 5; i++) {
-							usePaths[i] = useTextures[i] ? "/textures/" + m_materialFileNames[comboBoxSelection[0]] : "";
+							usePaths[i] = useTextures[i] ? "/textures/" + m_materialFileNames[comboBoxSelection[i]] : "";
 						}
-						usePaths[5] = "EmptyNormal.png";
+						usePaths[5] = "/textures/EmptyNormal.png";
 						if (useNormalTexture)
-							usePaths[5] = m_materialFileNames[comboBoxSelection[5]];
+							usePaths[5] = "/textures/" + m_materialFileNames[comboBoxSelection[5]];
 
 						MaterialPaths newMaterialParams = m_resoManager->createMaterialPaths(std::string(materials[select]->getName()), usePaths, SetMat);
 

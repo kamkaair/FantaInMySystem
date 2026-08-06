@@ -16,7 +16,7 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
-	uniform sampler2D ssao;
+	uniform sampler2D uSSAO, uSSR;
 	uniform bool aoTone = false;
 	uniform bool useSSAO = true;
 	// General ImGui uniforms
@@ -111,7 +111,8 @@
 		float roughness = texture(gMetallicRoughness, texCoord).g;
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		vec3 N = texture(gNormal, texCoord).rgb;
-		float AmbientOcclusion = texture(ssao, texCoord).r;
+		float AmbientOcclusion = texture(uSSAO, texCoord).r;
+		vec4 ssr = texture(uSSR, texCoord).rgba;
 		
 		//float ssrStrength = 1.0 - smoothstep(0.1, 0.9, roughness); // Blends the SSR based on the material's roughness
 		
@@ -200,6 +201,8 @@
 		
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		vec3 indirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
+		indirectSpec = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
+		//vec3 ScreenSpaceColor = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
 		
 		float ao = 1.0f;
 		if(useSSAO){ 

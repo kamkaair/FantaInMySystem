@@ -55,6 +55,7 @@ public:
 	void updateSSRUniforms();
 	SSAO_Settings& getSSAO_Settings() { return m_ssaoSettings; }
 	SSR_Settings& getSSR_Settings() { return m_ssrSettings; }
+	GLuint ScreenSpace::getSSR_History() { return m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer; }
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);

@@ -3,7 +3,7 @@
 
 	in vec2 texCoords;
 
-	uniform sampler2D uSSR;
+	//uniform sampler2D uSSR;
 	
 	uniform sampler2D uLightPassTex;
 	//uniform sampler2D uDirectSpec;
@@ -65,7 +65,7 @@
 			return;
 		}*/
 			
-		vec4 ssr = texture(uSSR, texCoords);
+		//vec4 ssr = texture(uSSR, texCoords);
 		
 		vec3 lightPass  = texture(uLightPassTex, texCoords).rgb;
 		//vec3 directDiffuse  = texture(uDirectDiffuse, texCoords).rgb;

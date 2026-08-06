@@ -300,16 +300,16 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 
 	m_GBuffer->getCompositeShader()->bind();
 
-	GLuint ssrSelect = m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer;
+	//GLuint ssrSelect = m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer;
 
-	glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, ssrColorBuffer); //getSSRHistoryRead
-	glBindTexture(GL_TEXTURE_2D, ssrSelect);
-	m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
+	//glActiveTexture(GL_TEXTURE0);
+	////glBindTexture(GL_TEXTURE_2D, ssrColorBuffer); //getSSRHistoryRead
+	//glBindTexture(GL_TEXTURE_2D, ssrSelect);
+	//m_GBuffer->getCompositeShader()->setUniform("uSSR", 0);
 	
-	glActiveTexture(GL_TEXTURE1);
+	glActiveTexture(GL_TEXTURE0);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer());
-	m_GBuffer->getCompositeShader()->setUniform("uLightPassTex", 1);
+	m_GBuffer->getCompositeShader()->setUniform("uLightPassTex", 0);
 
 	/*glActiveTexture(GL_TEXTURE2);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSpecular());
@@ -339,9 +339,9 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getTransBuffer());
 	m_GBuffer->getCompositeShader()->setUniform("uTransTex", 5);*/
 
-	glActiveTexture(GL_TEXTURE2);
+	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGEmission());
-	m_GBuffer->getCompositeShader()->setUniform("gEmission", 2);
+	m_GBuffer->getCompositeShader()->setUniform("gEmission", 1);
 
 	/*glActiveTexture(GL_TEXTURE7);
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getSkyBoxBuffer());

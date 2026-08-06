@@ -377,12 +377,15 @@ public:
 		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
 		glActiveTexture(GL_TEXTURE7);
 		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSsaoBlurColorBuffer());
+		glActiveTexture(GL_TEXTURE8);
+		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSSR_History());
 
 		m_GBuffer->getLightPass()->setUniform("gPosition", 3);
 		m_GBuffer->getLightPass()->setUniform("gNormal", 4);
 		m_GBuffer->getLightPass()->setUniform("gAlbedoSpec", 5);
 		m_GBuffer->getLightPass()->setUniform("gMetallicRoughness", 6);
-		m_GBuffer->getLightPass()->setUniform("ssao", 7);
+		m_GBuffer->getLightPass()->setUniform("uSSAO", 7);
+		m_GBuffer->getLightPass()->setUniform("uSSR", 8);
 
 		// Set light uniforms + view
 		for (int i = 0; i < m_scene->getLights().size(); i++) {

@@ -74,7 +74,7 @@ private:
 		fileNames = func(std::string(ASSET_DIR) + "/" + location);
 	}
 
-	void UI::renderMaterialOptions(SettingsMaterial& SetMat, static std::int8_t currentItem[]);
+	void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 
 	SettingsMaterial m_settingsCreateMat, m_settingsEditMat;
 
