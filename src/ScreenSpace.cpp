@@ -162,11 +162,8 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
 	m_SSR->setUniform("gNormal", 0);
 
-	/*glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getIndirectSpecular());
-	m_SSR->setUniform("colorBuffer", 1);*/
 	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer()); // HOX: THIS IS FCKED!!
+	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer());
 	m_SSR->setUniform("colorBuffer", 1);
 
 	glActiveTexture(GL_TEXTURE2);

@@ -10,17 +10,7 @@ public:
 	GBuffer(int inWidth, int inHeight);
 	~GBuffer();
 
-	// TODO: make a master creation method, there's way too much useless repetition
-	GLuint createGPosition();
-	GLuint createGAlbedo();
-	GLuint createGNormal();
-	GLuint createDepthBuffer();
-	GLuint createGMetallicRoughness();
-	GLuint createGEmission();
-
-	void createLightPassBuffer();
-
-	GLuint createColorBuffer(int colorType, int colorChannels, int texDataType = GL_FLOAT, int colorAttachment = GL_COLOR_ATTACHMENT0);
+	GLuint createBuffer(int colorType, int colorChannels, int texDataType = GL_FLOAT, int colorAttachment = GL_COLOR_ATTACHMENT0);
 
 	GLuint getGPosition() { return gPosition; }
 	GLuint getGAlbedo() { return gAlbedo; }

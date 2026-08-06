@@ -17,10 +17,9 @@
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
 	uniform sampler2D uSSAO, uSSR;
-	uniform bool aoTone = false;
-	uniform bool useSSAO = true;
+	uniform bool aoTone = false, useSSAO = true;
 	// General ImGui uniforms
-	uniform float aoStrength = 10.0f;
+	uniform float aoStrength = 10.0f, HdrExposure = 1.0f, HdrContrast = 1.0f;
 	uniform vec3 HueChanges = vec3(1.0f);
 	
 	uniform mat4 inverseView;
@@ -114,8 +113,6 @@
 		float AmbientOcclusion = texture(uSSAO, texCoord).r;
 		vec4 ssr = texture(uSSR, texCoord).rgba;
 		
-		//float ssrStrength = 1.0 - smoothstep(0.1, 0.9, roughness); // Blends the SSR based on the material's roughness
-		
 		// PBR	
 		// View direction
 		vec3 NewR, NewN;
@@ -141,6 +138,10 @@
 		vec3 directSpec = vec3(0.0);
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
+			// Skip the pixels, that are out of range
+			if(length(pointLights[i].position - FragPos) > 50.0) // Hard coded distance = 50 (because linear 0.09, quadratic 0.032)
+				continue;
+		
 			// calculate per-light radiance - light calculations
 			// Light direction
 			vec3 L = normalize(pointLights[i].position - FragPos);
@@ -217,6 +218,6 @@
 		/*vec3 directLight = directDiffuse + directSpecular;
 		vec3 inDirectLight = gammaCorrect((indirectDiffuse + indirectSpecular) * HdrExposure, 1.0f, HdrContrast);
 		vec3 color = (gammaCorrect(directLight + inDirectLight, 1.0f, 2.2f)) + emission;	*/
-		vec3 finalColor = (directDiff + directSpec) + (indirectDiff + indirectSpec);
+		vec3 finalColor = (directDiff + directSpec) + gammaCorrect((indirectDiff + indirectSpec), HdrExposure, HdrContrast);
 		oLightPass = gammaCorrect(finalColor, 1.0f, 2.2f);
 	}

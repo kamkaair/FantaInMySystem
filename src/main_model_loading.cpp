@@ -68,7 +68,7 @@ public:
 
 		// Setup the default save, load the scene from a file
 		setupDefaultSave();
-		m_resoManager->fileLoad("emptyScene.bin");
+		m_resoManager->fileLoad("demoScene.bin");
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);
@@ -190,25 +190,19 @@ public:
 		!m_uiDraw->getRenderMode() ? forwardRendering(window) : deferredRendering(window);
 	}
 
-	void forwardRendering(GLFWwindow* window) {
-		// Query the size of the framebuffer (window content) from glfw.
-		glfwGetFramebufferSize(window, &width, &height);
-
-		// Get ratiod idiot
-		m_camera->setAspectRatio(width, height);
-
-		// Framebuffer callback for preserving aspect ratio
-		framebuffer_size_callback(window, width, height);
+	void forwardRendering(GLFWwindow* window) {		
+		glfwGetFramebufferSize(window, &width, &height); // Query the size of the framebuffer (window content) from glfw.
+		m_camera->setAspectRatio(width, height); // Get ratiod idiot
+		framebuffer_size_callback(window, width, height); // Framebuffer callback for preserving aspect ratio
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		checkGLError();
 
-		// Use other shaders for the rest of the scene...
 		glUseProgram(0); // Unbind any active shader
 		m_GBuffer->getForwardShader()->bind();
 
-		// Render skybox, the background image or clear color
+		// 1. Render skybox, the background image or clear color
 		glDisable(GL_DEPTH_TEST);
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
@@ -216,6 +210,7 @@ public:
 		}
 		glEnable(GL_DEPTH_TEST);
 
+		// 2. Render opaque objects
 		if (!m_scene->getModels().empty()) {
 			m_scene->sortTransparentMeshes();
 			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
@@ -223,6 +218,7 @@ public:
 				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
 
+			// 3. Render transparent objects
 			glDepthMask(GL_FALSE); // Disabled depth mask, the results look pretty cool
 			for (auto& trans : m_scene->getTransparentMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
@@ -231,11 +227,11 @@ public:
 			glDepthMask(GL_TRUE);
 		}
 
+		// 4. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
-			// Render all the point lamp icons
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
 			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
-			m_uiDraw->ImGuiDraw(); // Render the ImGui window
+			m_uiDraw->ImGuiDraw();
 		}
 	}
 
@@ -273,7 +269,7 @@ public:
 		// 4. Transparent meshes
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
 		if (!m_scene->getModels().empty()) {
-			glEnable(GL_BLEND);
+			glEnable(GL_BLEND); // Enable blending for the transparency and don't use depth mask
 			glDepthMask(GL_FALSE);
 
 			m_scene->sortTransparentMeshes();

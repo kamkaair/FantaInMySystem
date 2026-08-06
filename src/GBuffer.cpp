@@ -18,16 +18,17 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
 
-	gPosition = createGPosition();
-	gNormal = createGNormal();
-	gAlbedo = createGAlbedo();
-	gMetalRough = createGMetallicRoughness();
-	gEmission = createGEmission();
+	gPosition = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+	gNormal = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT1);
+	gAlbedo = createBuffer(GL_RGBA16F, GL_RGBA, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT2);
+	gMetalRough = createBuffer(GL_RG16F, GL_RG, GL_FLOAT, GL_COLOR_ATTACHMENT3);
+	gEmission = createBuffer(GL_RGB16F, GL_RGB, GL_UNSIGNED_BYTE, GL_COLOR_ATTACHMENT4);
 
 	GLuint attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
 	glDrawBuffers(5, attachments);
 
-	gDepthTexture = createDepthBuffer();
+	//gDepthTexture = createDepthBuffer(); // The depth buffer is also a texture
+	gDepthTexture = createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -39,7 +40,7 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glGenFramebuffers(1, &lightFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
 
-	createLightPassBuffer();
+	m_LightPassTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	glFramebufferTexture2D(
 		GL_FRAMEBUFFER,
@@ -55,7 +56,7 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-/*GLuint GBuffer::createColorBuffer(int colorType, int colorChannels, int texDataType = GL_FLOAT, int colorAttachment = GL_COLOR_ATTACHMENT0) {
+GLuint GBuffer::createBuffer(int colorType, int colorChannels, int texDataType, int colorAttachment) {
 	// position color buffer
 	GLuint newColorBuffer;
 
@@ -68,91 +69,10 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, colorAttachment, GL_TEXTURE_2D, newColorBuffer, 0);
 
-	return newColorBuffer;
-}*/
-
-void GBuffer::createLightPassBuffer() {
-	// position color buffer
-	glGenTextures(1, &m_LightPassTexture);
-	glBindTexture(GL_TEXTURE_2D, m_LightPassTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_LightPassTexture, 0);
-}
-
-GLuint GBuffer::createGPosition() {
-	// position color buffer
-	glGenTextures(1, &gPosition);
-	glBindTexture(GL_TEXTURE_2D, gPosition);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, gPosition, 0);
-
-	return gPosition;
-}
-
-GLuint GBuffer::createGNormal() {
-	// normal color buffer
-	glGenTextures(1, &gNormal);
-	glBindTexture(GL_TEXTURE_2D, gNormal);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, GL_TEXTURE_2D, gNormal, 0);
-
-	return gNormal;
-}
-
-GLuint GBuffer::createGAlbedo() {
-	glGenTextures(1, &gAlbedo);
-	glBindTexture(GL_TEXTURE_2D, gAlbedo);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, GL_TEXTURE_2D, gAlbedo, 0);
-
-	return gAlbedo;
-}
-
-GLuint GBuffer::createGMetallicRoughness() {
-	glGenTextures(1, &gMetalRough);
-	glBindTexture(GL_TEXTURE_2D, gMetalRough);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, width, height, 0, GL_RG, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, GL_TEXTURE_2D, gMetalRough, 0);
-
-	return gMetalRough;
-}
-
-GLuint GBuffer::createGEmission() {
-	glGenTextures(1, &gEmission);
-	glBindTexture(GL_TEXTURE_2D, gEmission);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT4, GL_TEXTURE_2D, gEmission, 0);
-
-	return gEmission;
-}
-
-GLuint GBuffer::createDepthBuffer() {
-	glGenTextures(1, &gDepthTexture);
-	glBindTexture(GL_TEXTURE_2D, gDepthTexture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 		std::cout << "Framebuffer not complete!" << std::endl;
 
-	return gDepthTexture;
+	return newColorBuffer;
 }
 
 void GBuffer::CleanUpGBuffer() {

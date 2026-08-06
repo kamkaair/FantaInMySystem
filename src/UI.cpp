@@ -590,34 +590,15 @@ void UI::ImGuiDraw()
 				}				
 
 				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
-					if (deferredRendering) { // Temporary if else check for now, due to lack of better system of hopping between forward frag, deferred frag and composite
-						m_GBuffer->getCompositeShader()->bind();
-						m_GBuffer->getCompositeShader()->setUniform("HdrExposure", HdrExposure);
-						m_GBuffer->getForwardShader()->bind();
-						m_GBuffer->getForwardShader()->setUniform("HdrExposure", HdrExposure);
-					}
-					else {
-						m_GBuffer->getCurrentShader()->bind();
-						m_GBuffer->getCurrentShader()->setUniform("HdrExposure", HdrExposure);
-					}
+					shaderSetDual("HdrExposure", HdrExposure);
 				}
 
 				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
-					if (deferredRendering) { // Temporary
-						m_GBuffer->getCompositeShader()->bind();
-						m_GBuffer->getCompositeShader()->setUniform("HdrContrast", HdrContrast);
-						m_GBuffer->getForwardShader()->bind();
-						m_GBuffer->getForwardShader()->setUniform("HdrExposure", HdrExposure);
-					}
-					else {
-						m_GBuffer->getCurrentShader()->bind();
-						m_GBuffer->getCurrentShader()->setUniform("HdrContrast", HdrContrast);
-					}
-					
+					shaderSetDual("HdrContrast", HdrContrast);
 				}
 
 				if (ImGui::DragFloat3("HueChanges", glm::value_ptr(HueChanges), 0.01f)) {
-					shaderSet("HueChanges", HueChanges);
+					shaderSetDual("HueChanges", HueChanges);
 				}
 
 				// Load selected HDR file and generate the maps for them
@@ -626,9 +607,9 @@ void UI::ImGuiDraw()
 					HdrExposure = 1.0f;
 					HueChanges = glm::vec3(1.0f);
 
-					shaderSet("HdrContrast", HdrContrast);
-					shaderSet("HdrExposure", HdrExposure);
-					shaderSet("HueChanges", HueChanges);
+					shaderSetDual("HdrContrast", HdrContrast);
+					shaderSetDual("HdrExposure", HdrExposure);
+					shaderSetDual("HueChanges", HueChanges);
 				}
 
 				// Padding

@@ -52,6 +52,15 @@ public:
 		m_GBuffer->getCurrentShader()->setUniform(uniform, value);
 	}
 
+	template<typename T> void shaderSetDual(const char* uniform, T value) {
+		m_GBuffer->getCurrentShader()->bind();
+		m_GBuffer->getCurrentShader()->setUniform(uniform, value);
+		if (deferredRendering) {
+			m_GBuffer->getForwardShader()->bind();
+			m_GBuffer->getForwardShader()->setUniform(uniform, value);
+		}
+	}
+
 	void shaderBind() { m_GBuffer->getCurrentShader()->bind(); }
 
 	void setWindowInteract(bool newBool) { windowDisabled = newBool; }

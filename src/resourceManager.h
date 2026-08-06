@@ -29,6 +29,7 @@ public:
 	void loadCameraOrientation(Camera* camera, FileCamera& fileCamera);
 
 	void findMaterialPaths(std::string usePaths[], SettingsMaterial& SetMat, std::vector<std::string>& m_materialFileNames, static int currentItem[]);
+	void findTexturesForMaterial();
 
 	MaterialPaths createMaterialPaths(const std::string& matName, const std::string usePaths[], SettingsMaterial& SetMat);
 	MaterialPaths createMaterialPaths(const std::string usePaths[], Mesh* mesh);
