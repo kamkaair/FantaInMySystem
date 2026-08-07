@@ -16,9 +16,9 @@
 	// Use textures or basic colors/values?
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false;
 	
-	uniform vec3 u_DiffuseColor, objectColor, HueChanges = vec3(1.0f);
+	uniform vec3 u_DiffuseColor, objectColor, HDRIHue = vec3(1.0f), FinalColorHue = vec3(1.0f);
 	uniform float u_Roughness, u_Metallic, u_emissionStrength, u_opacity;
-	uniform float HdrExposure = 1.0f, HdrContrast = 1.0f;
+	uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
 	uniform int NUM_POINT_LIGHTS;
 
 	// Point light structure in GLSL
@@ -203,13 +203,8 @@
 		
 		vec3 irradiance = texture(irradianceMap, N).rgb * 1;
 		
-		// Hue change for the diffuse color
-		float originalHue = atan(albedo.b, albedo.g);
-		float chroma = sqrt(albedo.b*albedo.b+albedo.g*albedo.g);
-		//float chroma = sqrt(albedo.r*albedo.r+albedo.b*albedo.b+albedo.g*albedo.g);
-		
 		//vec3 diffuse      = irradiance * vec3(albedo.r, chroma * cos(finalHue), chroma * sin(finalHue));
-		vec3 diffuse 		= irradiance * vec3(albedo.r * HueChanges.r, albedo.g * HueChanges.g, albedo.b * HueChanges.b);
+		vec3 diffuse 		= irradiance * vec3(albedo.r * HDRIHue.r, albedo.g * HDRIHue.g, albedo.b * HDRIHue.b);
 		//vec3 diffuse      = irradiance * (vec3(albedo.r * Hue, albedo.g, albedo.b ) );
 		
 		// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
@@ -219,11 +214,14 @@
 		vec2 brdf  = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		
-		vec3 ambient = (kD * diffuse + specular) * HdrExposure;
-		ambient = gammaCorrect(ambient, 1.0f, HdrContrast); // Ambient lighting tone mapping 
+		vec3 ambient = (kD * diffuse + specular) * HDRIExposure;
+		ambient = gammaCorrect(ambient, HDRIExposure, HDRIContrast); // Ambient lighting tone mapping 
 
 		vec3 color = ambient + Lo + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
-		color = gammaCorrect(color, 1.0f, 2.2f); // HDR tonemapping and gamma correct
+		color = gammaCorrect(color, FinalColorExposure, FinalColorContrast); // HDR tonemapping and gamma correct
+		
+		// Color tweaking
+		color = vec3(color.r * FinalColorHue.r, color.g * FinalColorHue.g, color.b * FinalColorHue.b);
 		
 		// Fun things
 		//color = vec3(1.0) - color; // inverted colors

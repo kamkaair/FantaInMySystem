@@ -76,8 +76,8 @@ void ResourceManager::fileSave(std::string saveName) {
 
 				}
 
-				MaterialPaths matPath;
-				createMaterialPaths(filePaths, mesh);
+				
+				materialPath.push_back(createMaterialPaths(filePaths, mesh));
 				texIndex++;
 			}
 

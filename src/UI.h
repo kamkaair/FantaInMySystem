@@ -16,6 +16,13 @@
 
 class ScreenSpace;
 
+struct PostProcess {
+	std::string name;
+	float exposure = 1.0f;
+	float contrast = 1.0f;
+	glm::vec3 hue = { 1.0f, 1.0f, 1.0f };
+};
+
 class UI : public kgfw::Object
 {
 public:
@@ -83,7 +90,15 @@ private:
 		fileNames = func(std::string(ASSET_DIR) + "/" + location);
 	}
 
-	void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
+	PostProcess pp_HDRI, pp_background, pp_model;
+	void updatePostProcess() {
+		pp_HDRI.name = "HDRI";
+		pp_background.name = "Background";
+		pp_model.name = "FinalColor";
+	}
+
+	void renderPostProcessSliders(PostProcess& pp);
+	void renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 
 	SettingsMaterial m_settingsCreateMat, m_settingsEditMat;
 
@@ -98,22 +113,18 @@ private:
 	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames, m_materialFileNames, m_folderNames;
 	std::string defaultFolderPath = "/textures";
 
-	float HdrContrast = 1.0f, HdrExposure = 1.0f, ImGuiAlpha = 0.3f,
-		backExposure = 1.0f, backContrast = 1.0f, totalScale = 0.0f;
-	glm::vec3 HueChanges = {1.0f, 1.0f, 1.0f};
-
+	float ImGuiAlpha = 0.3f, totalScale = 0.0f;
 	int backgroundMode = 0;
 	
-	const char* backgroundOptions[3] = { "HDRI","Texture","Solid Color" };
-	const std::vector<std::string> texTypes = { "Diffuse", "Metallic", "Roughness", "Normal" };
+	const char* backgroundOptions[2] = { "HDRI","Texture" };
 
 	bool meshRotationEnabled = false, doOnce = true,  scaleLock = false, meshHide = false, 
-		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useNormalTexture = true, useFolderFiltering = false;
+		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useFolderFiltering = false;
 
 	// UI settings
 	bool m_useAutomaticTextures = false, m_wireFrame = false;
 
-	glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
+	const glm::vec3 originalScale = { 1.0f, 1.0f, 1.0f };
 	GLfloat backgroundColor[4] = { 0.2, 0.2, 0.2, 1.0 };
 
 	ImGuiWindowFlags flagWinDisabled = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoInputs;

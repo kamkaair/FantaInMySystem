@@ -42,7 +42,7 @@ namespace utils {
 		return new Shader(vertexShaderSource, fragmentShaderSource);
 	}
 
-	static void bindTexture(int glTexture, Shader* inShader, GLuint colorBuffer, std::string name, int value, int type = GL_TEXTURE_2D) {
+	static void bindTexture(int glTexture, Shader* inShader, GLuint colorBuffer, std::string name, int type = GL_TEXTURE_2D) {
 		int GL_TEX_INDEX = glTexture - 33984; // 33984 is the integer number of the lowest GL_TEX (this is slightly crazy)
 
 		glActiveTexture(glTexture);

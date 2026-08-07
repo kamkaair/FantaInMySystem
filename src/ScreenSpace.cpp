@@ -115,9 +115,9 @@ void ScreenSpace::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender,
 	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSAO->bind();
 
-	utils::bindTexture(GL_TEXTURE0, m_SSAO, noiseTexture, "texNoise", 0);
-	utils::bindTexture(GL_TEXTURE1, m_SSAO, m_GBuffer->getGPosition(), "gPosition", 1);
-	utils::bindTexture(GL_TEXTURE2, m_SSAO, m_GBuffer->getGNormal(), "gNormal", 2);
+	utils::bindTexture(GL_TEXTURE0, m_SSAO, noiseTexture, "texNoise");
+	utils::bindTexture(GL_TEXTURE1, m_SSAO, m_GBuffer->getGPosition(), "gPosition");
+	utils::bindTexture(GL_TEXTURE2, m_SSAO, m_GBuffer->getGNormal(), "gNormal");
 
 	// Send kernel + rotation 
 	for (unsigned int i = 0; i < samples; ++i)
@@ -150,10 +150,10 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSR->bind();
 
-	utils::bindTexture(GL_TEXTURE0, m_SSR, m_GBuffer->getGNormal(), "gNormal", 0);
-	utils::bindTexture(GL_TEXTURE1, m_SSR, m_GBuffer->getLightPassBuffer(), "colorBuffer", 1);
-	utils::bindTexture(GL_TEXTURE2, m_SSR, m_GBuffer->getGDepth(), "depthMap", 2);
-	utils::bindTexture(GL_TEXTURE3, m_SSR, m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness", 3);
+	utils::bindTexture(GL_TEXTURE0, m_SSR, m_GBuffer->getGNormal(), "gNormal");
+	utils::bindTexture(GL_TEXTURE1, m_SSR, m_GBuffer->getLightPassBuffer(), "colorBuffer");
+	utils::bindTexture(GL_TEXTURE2, m_SSR, m_GBuffer->getGDepth(), "depthMap");
+	utils::bindTexture(GL_TEXTURE3, m_SSR, m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness");
 
 	m_SSR->setUniform("SCR_WIDTH", float(width));
 	m_SSR->setUniform("SCR_HEIGHT", float(height));
@@ -197,12 +197,12 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	// SSR Temporal Accumulation
 	// -------------------------------
 
-	utils::bindTexture(GL_TEXTURE0, m_SSR_TA, ssrColorBuffer, "uSSRCurrent", 0);
-	utils::bindTexture(GL_TEXTURE1, m_SSR_TA, getSSRHistoryRead(), "uSSRHistory", 1);
-	utils::bindTexture(GL_TEXTURE2, m_SSR_TA, m_GBuffer->getGDepth(), "depthMap", 2);
-	utils::bindTexture(GL_TEXTURE3, m_SSR_TA, m_GBuffer->getGNormal(), "gNormal", 3);
-	utils::bindTexture(GL_TEXTURE4, m_SSR_TA, prevDepthTex, "uPrevDepth", 4);
-	utils::bindTexture(GL_TEXTURE5, m_SSR_TA, prevNormalTex, "uPrevNormal", 5);
+	utils::bindTexture(GL_TEXTURE0, m_SSR_TA, ssrColorBuffer, "uSSRCurrent");
+	utils::bindTexture(GL_TEXTURE1, m_SSR_TA, getSSRHistoryRead(), "uSSRHistory");
+	utils::bindTexture(GL_TEXTURE2, m_SSR_TA, m_GBuffer->getGDepth(), "depthMap");
+	utils::bindTexture(GL_TEXTURE3, m_SSR_TA, m_GBuffer->getGNormal(), "gNormal");
+	utils::bindTexture(GL_TEXTURE4, m_SSR_TA, prevDepthTex, "uPrevDepth");
+	utils::bindTexture(GL_TEXTURE5, m_SSR_TA, prevNormalTex, "uPrevNormal");
 
 	m_SSR_TA->setUniform("near", m_camera->getNear());
 	m_SSR_TA->setUniform("far", m_camera->getFar());
@@ -258,8 +258,8 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 
 	m_GBuffer->getCompositeShader()->bind();
 
-	utils::bindTexture(GL_TEXTURE0, m_GBuffer->getCompositeShader(), m_GBuffer->getLightPassBuffer(), "uLightPassTex", 0);
-	utils::bindTexture(GL_TEXTURE1, m_GBuffer->getCompositeShader(), m_GBuffer->getGEmission(), "gEmission", 1);
+	utils::bindTexture(GL_TEXTURE0, m_GBuffer->getCompositeShader(), m_GBuffer->getLightPassBuffer(), "uLightPassTex");
+	//utils::bindTexture(GL_TEXTURE1, m_GBuffer->getCompositeShader(), m_GBuffer->getGEmission(), "gEmission");
 
 	m_meshRender->renderQuad();
 

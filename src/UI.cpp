@@ -19,6 +19,7 @@ UI::UI(Shader* backImage,
 	ImGuiAlpha(0.3f),
 	Object(__FUNCTION__) {
 
+	updatePostProcess();
 	updateAllFiles();
 }
 
@@ -33,6 +34,31 @@ void displayMatList(const int& item, static int currentItem[], std::vector<const
 			currentItem[item] = i;		
 		if (isSelected)
 			ImGui::SetItemDefaultFocus();
+	}
+}
+
+void UI::renderPostProcessSliders(PostProcess& pp) {
+	if (ImGui::SliderFloat((pp.name + "Exposure").c_str(), &pp.exposure, 0.0f, 5.0f)) {
+		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure);
+	}
+
+	if (ImGui::SliderFloat((pp.name + "Contrast").c_str(), &pp.contrast, 0.0f, 5.0f)) {
+		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast);
+	}
+
+	if (ImGui::DragFloat3((pp.name + "Hue").c_str(), glm::value_ptr(pp.hue), 0.01f)) {
+		shaderSetDual((pp.name + "Hue").c_str(), pp.hue);
+	}
+
+	// Load selected HDR file and generate the maps for them
+	if (ImGui::Button(("Reset parameters: " + pp.name).c_str())) {
+		pp.exposure = 1.0f;
+		pp.contrast = 1.0f;
+		pp.hue = glm::vec3(1.0f);
+
+		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure);
+		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast);
+		shaderSetDual((pp.name + "Hue").c_str(), pp.hue);
 	}
 }
 
@@ -589,28 +615,8 @@ void UI::ImGuiDraw()
 					}
 				}				
 
-				if (ImGui::SliderFloat("HDRI Exposure", &HdrExposure, 0.0f, 10.0f)) {
-					shaderSetDual("HdrExposure", HdrExposure);
-				}
-
-				if (ImGui::SliderFloat("HDRI Contrast", &HdrContrast, 0.0f, 10.0f)) {
-					shaderSetDual("HdrContrast", HdrContrast);
-				}
-
-				if (ImGui::DragFloat3("HueChanges", glm::value_ptr(HueChanges), 0.01f)) {
-					shaderSetDual("HueChanges", HueChanges);
-				}
-
-				// Load selected HDR file and generate the maps for them
-				if (ImGui::Button("Reset Exposure/Contrast")) {
-					HdrContrast = 1.0f;
-					HdrExposure = 1.0f;
-					HueChanges = glm::vec3(1.0f);
-
-					shaderSetDual("HdrContrast", HdrContrast);
-					shaderSetDual("HdrExposure", HdrExposure);
-					shaderSetDual("HueChanges", HueChanges);
-				}
+				renderPostProcessSliders(pp_HDRI);
+				renderPostProcessSliders(pp_model);
 
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
@@ -635,9 +641,7 @@ void UI::ImGuiDraw()
 					std::vector<std::string> backgroundFiles = m_resoManager->FileSystem((std::string(ASSET_DIR) + "/backgrounds/"));
 					
 					std::vector<const char*> backgroundFileNames;
-					for (const auto& file : backgroundFiles)
-					{
-						// file into c_str()
+					for (const auto& file : backgroundFiles) {
 						backgroundFileNames.push_back(file.c_str());
 					}
 
@@ -656,24 +660,7 @@ void UI::ImGuiDraw()
 						ImGui::EndCombo();
 					}
 
-					if (ImGui::SliderFloat("Background Texture Exposure", &backExposure, -10.0f, 10.0f)) {
-						m_backImage->bind();
-						m_backImage->setUniform("backExposure", backExposure);
-					}
-
-					if (ImGui::SliderFloat("Background Texture Contrast", &backContrast, -10.0f, 10.0f)) {
-						m_backImage->bind();
-						m_backImage->setUniform("backContrast", backContrast);
-					}
-
-					// Load selected HDR file and generate the maps for them
-					if (ImGui::Button("Reset Background Exposure/Contrast")) {
-						backContrast = 2.2f;
-						backExposure = 1.0f;
-						m_backImage->bind();
-						m_backImage->setUniform("backExposure", backExposure);
-						m_backImage->setUniform("backContrast", backContrast);
-					}
+					renderPostProcessSliders(pp_background);
 
 					if (ImGui::Button("Set Background Texture")) {
 						// Clean up background texture
@@ -681,12 +668,6 @@ void UI::ImGuiDraw()
 						std::string selectedItem = "/backgrounds/" + backgroundFiles[currentBackground];
 						Texture* newBackground = m_resoManager->loadTexture(selectedItem.c_str(), true);
 						m_HDRI->setBackgroundTexture(newBackground);
-					}
-				}
-				// For solid colored background!
-				else if (backgroundMode == 2) {
-					if (ImGui::ColorEdit4("Background color", backgroundColor)) {
-						glClearColor(backgroundColor[0], backgroundColor[1], backgroundColor[2], backgroundColor[3]);
 					}
 				}
 

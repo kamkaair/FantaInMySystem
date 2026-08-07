@@ -3,24 +3,22 @@
 	//out vec4 FragColor;
 	
 	layout (location = 0) out vec3 oLightPass;
-	//layout (location = 1) out vec3 oDirectSpec;
-	//layout (location = 2) out vec3 oIndirectDiff;
-	//layout (location = 3) out vec3 oIndirectSpec;
 
 	in vec2 texCoord;
 	
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
-	uniform bool worldCoords = true;
+	uniform bool worldCoords = true, aoTone = false, useSSAO = true;
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
-	uniform sampler2D uSSAO, uSSR;
-	uniform bool aoTone = false, useSSAO = true;
+	uniform sampler2D uSSAO, uSSR, uEmission;
 	// General ImGui uniforms
-	uniform float aoStrength = 10.0f, HdrExposure = 1.0f, HdrContrast = 1.0f;
-	uniform vec3 HueChanges = vec3(1.0f);
+	uniform float aoStrength = 10.0f;
+	
+	uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
+	uniform vec3 HDRIHue = vec3(1.0f), FinalColorHue = vec3(1.0);
 	
 	uniform mat4 inverseView;
 	const float PI = 3.14159265359;
@@ -112,6 +110,7 @@
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(uSSAO, texCoord).r;
 		vec4 ssr = texture(uSSR, texCoord).rgba;
+		vec3 emission = texture(uEmission, texCoord).rgb;
 		
 		// PBR	
 		// View direction
@@ -188,11 +187,7 @@
 		// HDRI
 		vec3 irradiance = texture(irradianceMap, NewN).rgb; // N Set to world-space. See the magnificent lighting all around
 		
-		// Hue change for the diffuse color
-		float originalHue = atan(albedo.b, albedo.g);
-		float chroma = sqrt(albedo.b*albedo.b+albedo.g*albedo.g);
-		
-		vec3 diffuse      = irradiance * vec3(albedo.r * HueChanges.r, albedo.g * HueChanges.g, albedo.b * HueChanges.b);
+		vec3 diffuse      = irradiance * vec3(albedo.r * HDRIHue.r, albedo.g * HDRIHue.g, albedo.b * HDRIHue.b);
 		
 		// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
 		//MAX_REFLECTION_LOD = 3.0; is quite nice :3
@@ -215,9 +210,7 @@
 
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		
-		/*vec3 directLight = directDiffuse + directSpecular;
-		vec3 inDirectLight = gammaCorrect((indirectDiffuse + indirectSpecular) * HdrExposure, 1.0f, HdrContrast);
-		vec3 color = (gammaCorrect(directLight + inDirectLight, 1.0f, 2.2f)) + emission;	*/
-		vec3 finalColor = (directDiff + directSpec) + gammaCorrect((indirectDiff + indirectSpec), HdrExposure, HdrContrast);
-		oLightPass = gammaCorrect(finalColor, 1.0f, 2.2f);
+		vec3 finalColor = (directDiff + directSpec) + gammaCorrect((indirectDiff + indirectSpec), HDRIExposure, HDRIContrast) + emission;
+		finalColor = vec3(finalColor.r * FinalColorHue.r, finalColor.g * FinalColorHue.g, finalColor.b * FinalColorHue.b);
+		oLightPass = gammaCorrect(finalColor, FinalColorExposure, FinalColorContrast);
 	}
