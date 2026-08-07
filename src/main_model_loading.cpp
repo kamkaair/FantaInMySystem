@@ -316,25 +316,12 @@ public:
 		m_GBuffer->getLightPass()->bind();
 		m_HDRI->setHDRITextures(m_GBuffer->getLightPass());
 
-		glActiveTexture(GL_TEXTURE3);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-		glActiveTexture(GL_TEXTURE4);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
-		glActiveTexture(GL_TEXTURE5);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGAlbedo());
-		glActiveTexture(GL_TEXTURE6);
-		glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-		glActiveTexture(GL_TEXTURE7);
-		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSsaoBlurColorBuffer());
-		glActiveTexture(GL_TEXTURE8);
-		glBindTexture(GL_TEXTURE_2D, m_ssaoClass->getSSR_History());
-
-		m_GBuffer->getLightPass()->setUniform("gPosition", 3);
-		m_GBuffer->getLightPass()->setUniform("gNormal", 4);
-		m_GBuffer->getLightPass()->setUniform("gAlbedoSpec", 5);
-		m_GBuffer->getLightPass()->setUniform("gMetallicRoughness", 6);
-		m_GBuffer->getLightPass()->setUniform("uSSAO", 7);
-		m_GBuffer->getLightPass()->setUniform("uSSR", 8);
+		utils::bindTexture(GL_TEXTURE3, m_GBuffer->getLightPass(), m_GBuffer->getGPosition(), "gPosition", 3);
+		utils::bindTexture(GL_TEXTURE4, m_GBuffer->getLightPass(), m_GBuffer->getGNormal(), "gNormal", 4);
+		utils::bindTexture(GL_TEXTURE5, m_GBuffer->getLightPass(), m_GBuffer->getGAlbedo(), "gAlbedoSpec", 5);
+		utils::bindTexture(GL_TEXTURE6, m_GBuffer->getLightPass(), m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness", 6);
+		utils::bindTexture(GL_TEXTURE7, m_GBuffer->getLightPass(), m_ssaoClass->getSsaoBlurColorBuffer(), "uSSAO", 7);
+		utils::bindTexture(GL_TEXTURE8, m_GBuffer->getLightPass(), m_ssaoClass->getSSR_History(), "uSSR", 8);
 
 		// Set light uniforms + view
 		for (int i = 0; i < m_scene->getLights().size(); i++) {

@@ -115,17 +115,9 @@ void ScreenSpace::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender,
 	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSAO->bind();
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, noiseTexture);
-	m_SSAO->setUniform("texNoise", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGPosition());
-	m_SSAO->setUniform("gPosition", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
-	m_SSAO->setUniform("gNormal", 2);
+	utils::bindTexture(GL_TEXTURE0, m_SSAO, noiseTexture, "texNoise", 0);
+	utils::bindTexture(GL_TEXTURE1, m_SSAO, m_GBuffer->getGPosition(), "gPosition", 1);
+	utils::bindTexture(GL_TEXTURE2, m_SSAO, m_GBuffer->getGNormal(), "gNormal", 2);
 
 	// Send kernel + rotation 
 	for (unsigned int i = 0; i < samples; ++i)
@@ -158,21 +150,10 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 	glClear(GL_COLOR_BUFFER_BIT);
 	m_SSR->bind();
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
-	m_SSR->setUniform("gNormal", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer());
-	m_SSR->setUniform("colorBuffer", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
-	m_SSR->setUniform("depthMap", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGMetallicRoughness());
-	m_SSR->setUniform("gMetallicRoughness", 3);
+	utils::bindTexture(GL_TEXTURE0, m_SSR, m_GBuffer->getGNormal(), "gNormal", 0);
+	utils::bindTexture(GL_TEXTURE1, m_SSR, m_GBuffer->getLightPassBuffer(), "colorBuffer", 1);
+	utils::bindTexture(GL_TEXTURE2, m_SSR, m_GBuffer->getGDepth(), "depthMap", 2);
+	utils::bindTexture(GL_TEXTURE3, m_SSR, m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness", 3);
 
 	m_SSR->setUniform("SCR_WIDTH", float(width));
 	m_SSR->setUniform("SCR_HEIGHT", float(height));
@@ -216,31 +197,12 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	// SSR Temporal Accumulation
 	// -------------------------------
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-	m_SSR_TA->setUniform("uSSRCurrent", 0);
-
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, getSSRHistoryRead());
-	m_SSR_TA->setUniform("uSSRHistory", 1);
-
-	glActiveTexture(GL_TEXTURE2);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGDepth());
-	m_SSR_TA->setUniform("depthMap", 2);
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGNormal());
-	m_SSR_TA->setUniform("gNormal", 3);
-
-	// Previous depth
-	glActiveTexture(GL_TEXTURE4);
-	glBindTexture(GL_TEXTURE_2D, prevDepthTex);
-	m_SSR_TA->setUniform("uPrevDepth", 4);
-
-	// Previous normal
-	glActiveTexture(GL_TEXTURE5);
-	glBindTexture(GL_TEXTURE_2D, prevNormalTex);
-	m_SSR_TA->setUniform("uPrevNormal", 5);
+	utils::bindTexture(GL_TEXTURE0, m_SSR_TA, ssrColorBuffer, "uSSRCurrent", 0);
+	utils::bindTexture(GL_TEXTURE1, m_SSR_TA, getSSRHistoryRead(), "uSSRHistory", 1);
+	utils::bindTexture(GL_TEXTURE2, m_SSR_TA, m_GBuffer->getGDepth(), "depthMap", 2);
+	utils::bindTexture(GL_TEXTURE3, m_SSR_TA, m_GBuffer->getGNormal(), "gNormal", 3);
+	utils::bindTexture(GL_TEXTURE4, m_SSR_TA, prevDepthTex, "uPrevDepth", 4);
+	utils::bindTexture(GL_TEXTURE5, m_SSR_TA, prevNormalTex, "uPrevNormal", 5);
 
 	m_SSR_TA->setUniform("near", m_camera->getNear());
 	m_SSR_TA->setUniform("far", m_camera->getFar());
@@ -295,14 +257,9 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	glDisable(GL_DEPTH_TEST); // Disable!
 
 	m_GBuffer->getCompositeShader()->bind();
-	
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getLightPassBuffer());
-	m_GBuffer->getCompositeShader()->setUniform("uLightPassTex", 0);
 
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, m_GBuffer->getGEmission());
-	m_GBuffer->getCompositeShader()->setUniform("gEmission", 1);
+	utils::bindTexture(GL_TEXTURE0, m_GBuffer->getCompositeShader(), m_GBuffer->getLightPassBuffer(), "uLightPassTex", 0);
+	utils::bindTexture(GL_TEXTURE1, m_GBuffer->getCompositeShader(), m_GBuffer->getGEmission(), "gEmission", 1);
 
 	m_meshRender->renderQuad();
 
