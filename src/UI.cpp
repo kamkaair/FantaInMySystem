@@ -62,6 +62,19 @@ void UI::renderPostProcessSliders(PostProcess& pp, Shader* inShader) {
 	}
 }
 
+void setRotScale(glm::vec3 inValue, Mesh* mesh) {
+	mesh->setRotation(inValue);
+	mesh->setScaling(inValue);
+}
+
+void setRotation(glm::vec3 inValue, Mesh* mesh) {
+	mesh->setRotation(inValue);
+}
+
+void setScale(glm::vec3 inValue, Mesh* mesh) {
+	mesh->setScaling(inValue);
+}
+
 // TODO: Tidy this up
 void UI::renderMeshTreeNode(Model* model, std::uint16_t nameIndex) {
 	if (ImGui::TreeNode((model->getModelPath() + ": " + std::to_string(nameIndex)).c_str())) {
@@ -439,28 +452,16 @@ void UI::ImGuiDraw()
 			// Reset options for transformations
 			if (ImGui::TreeNode("RESETS"))
 			{
-				// TODO: lambda
-				if (ImGui::Button("Reset all the transforms"))
-					for (auto models : m_resoManager->getScene()->getModels()) {
-						for (auto meshes : models->getMeshes()) {
-							meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-							meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
-						}
-					}			
+				if (ImGui::Button("Reset all the transforms")) {
+					m_resoManager->transformOperation(glm::vec3(0.0f, 0.0f, 0.0f), setRotation);
+					m_resoManager->transformOperation(glm::vec3(1.0f, 1.0f, 1.0f), setScale);
+				}
 
 				if (ImGui::Button("Reset rotation"))
-					for (auto models : m_resoManager->getScene()->getModels()) {
-						for (auto meshes : models->getMeshes()) {
-							meshes->setRotation(glm::vec3(0.0f, 0.0f, 0.0f));
-						}
-					}
+					m_resoManager->transformOperation(glm::vec3(0.0f, 0.0f, 0.0f), setRotation);
 
 				if (ImGui::Button("Reset scale"))
-					for (auto models : m_resoManager->getScene()->getModels()) {
-						for (auto meshes : models->getMeshes()) {
-							meshes->setScaling(glm::vec3(1.0f, 1.0f, 1.0f));
-						}
-					}
+					m_resoManager->transformOperation(glm::vec3(1.0f, 1.0f, 1.0f), setScale);
 
 				ImGui::TreePop();
 			}

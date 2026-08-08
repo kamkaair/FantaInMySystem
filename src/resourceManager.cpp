@@ -182,6 +182,14 @@ void ResourceManager::setUIMaterialParams(SettingsMaterial& SetMat, Material*& m
 	SetMat.useOpacityTexture = material->useOpacityTexture;
 }
 
+void ResourceManager::transformOperation(glm::vec3 inValue, std::function<void(glm::vec3, Mesh*)> operationFunc) {
+	for (auto models : getScene()->getModels()) {
+		for (auto meshes : models->getMeshes()) {
+			operationFunc(inValue, meshes);
+		}
+	}
+}
+
 void ResourceManager::replaceMaterials(Material* oldMat, Material* newMat) {
 	for (auto& model : m_scene->getModels())
 		for (auto& mesh : model->getMeshes()) {

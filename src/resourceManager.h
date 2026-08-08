@@ -40,6 +40,7 @@ public:
 	void removeMaterialBySelection(static int select);
 	void removeModelBySelection(static int select);
 	void applyEditedMaterial(Material* material, static int selectionArr[]);
+	void transformOperation(glm::vec3 inValue, std::function<void(glm::vec3, Mesh*)> operationFunc);
 
 	void clearUnusedTextures();
 
