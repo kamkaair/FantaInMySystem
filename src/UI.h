@@ -81,6 +81,8 @@ private:
 	void renderPostProcessSliders(PostProcess& pp, Shader* inShader);
 	void renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 	void renderMeshTreeNode(Model* model, std::uint16_t nameIndex);
+	void changeMaterial(Mesh* mesh);
+	template<typename T> void meshTransformationUI(T* meshes, glm::vec3 value[3]);
 
 	Shader* m_backImage;
 
