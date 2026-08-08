@@ -20,7 +20,7 @@ UI::UI(Shader* backImage,
 	Object(__FUNCTION__) {
 
 	updatePostProcess();
-	updateAllFiles();
+	m_resoManager->updateAllFiles();
 }
 
 utils::utils fpsCounter;
@@ -136,6 +136,7 @@ void UI::useAutomaticTextureFinding(const static std::uint8_t& currentItem) {
 
 	if (useFolderFiltering) {
 		static int currentFolder = 0;
+		std::vector<std::string>& m_folderNames = m_resoManager->m_folderNames;
 
 		ImGui::Text(("Current folder path: " + m_resoManager->getFolderSearchPath()).c_str());
 		if (ImGui::BeginCombo("Available folders", m_folderNames[currentFolder].c_str())) // Should make a method for Combo Boxes
@@ -160,7 +161,7 @@ void UI::useAutomaticTextureFinding(const static std::uint8_t& currentItem) {
 
 	if (ImGui::Button("Add mesh with automatic textures")) {
 		// Load the selected mesh
-		std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
+		std::string selectedItem = ("/models/" + m_resoManager->meshFileNames[currentItem]);
 		std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem, true);
 
 		m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
@@ -172,7 +173,7 @@ void UI:: useRegularModelLoading(const static std::uint8_t currentItem) {
 	// Load selected HDR file and generate the maps for them
 	if (ImGui::Button("Add new mesh")) {
 		// Load the selected mesh
-		std::string selectedItem = ("/models/" + meshFileNames[currentItem]);
+		std::string selectedItem = ("/models/" + m_resoManager->meshFileNames[currentItem]);
 		std::vector<Mesh*> newMeshes = m_resoManager->processMeshes(selectedItem);
 
 		m_resoManager->getScene()->getModels().push_back(new Model(selectedItem, newMeshes));
@@ -197,7 +198,7 @@ ImGuiWindowFlags UI::disableInteraction() {
 void UI::renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]) {
 	// This is probably quite useless, should probably just use std::string instead and not convert these to c_str() everytime
 	std::vector<const char*> materialFileNames;
-	for (const auto& file : m_materialFileNames) {
+	for (const auto& file : m_resoManager->m_materialFileNames) {
 		materialFileNames.push_back(file.c_str());
 	}
 
@@ -360,7 +361,7 @@ void UI::ImGuiDraw()
 			static char saveName[128] = ""; // Input field for material name
 
 			if (ImGui::BeginMenu("Open")) {				
-				for (auto files : m_saveFiles) {
+				for (auto files : m_resoManager->m_saveFiles) {
 					if (ImGui::MenuItem(files.c_str())) {
 						std::cout << "Opened " + std::string(files) + "\n";
 
@@ -377,7 +378,7 @@ void UI::ImGuiDraw()
 			if (ImGui::MenuItem("Save")) {
 				std::cout << "Saved" << std::endl;
 				m_resoManager->fileSave(saveName);	
-				updateFiles(m_saveFiles, "Saves/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
+				m_resoManager->updateFiles(m_resoManager->m_saveFiles, "Saves/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
 			}
 			ImGui::InputText("Write a name for the save file", saveName, IM_ARRAYSIZE(saveName));
 		
@@ -427,7 +428,7 @@ void UI::ImGuiDraw()
 	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 	ImGui::Text("'Refetch Files' -button updates the available files found in the asset-folder");
 	if (ImGui::Button("Refetch Files")) {
-		updateAllFiles();
+		m_resoManager->updateAllFiles();
 	}
 	ImGui::Dummy(ImVec2(0.0f, 2.0f));
 
@@ -487,6 +488,7 @@ void UI::ImGuiDraw()
 				ImGui::Text("File path: ../FantaInMySystem/assets/models");
 
 				static std::uint8_t currentItem = 0;
+				std::vector<std::string>& meshFileNames = m_resoManager->meshFileNames;
 				// Create a combo box with available mesh files
 				if (ImGui::BeginCombo("Available models", meshFileNames[currentItem].c_str()))
 				{
@@ -519,11 +521,7 @@ void UI::ImGuiDraw()
 						}
 
 						if (ImGui::Button(("Remove##" + std::to_string(i)).c_str())) { // Prevent duplicated names (duplicated names have uniform actions for all iterations)
-							// Remove mesh from vector and cleanup
-							delete m_resoManager->getScene()->getModels()[i];
-							m_resoManager->getScene()->getModels().erase(m_resoManager->getScene()->getModels().begin() + i);
-							m_resoManager->getScene()->updateMeshList();
-							break;
+							m_resoManager->removeModelBySelection(i); // Remove mesh from vector and cleanup
 						}
 
 						ImGui::Dummy(ImVec2(0.0f, 5.0f));
@@ -583,6 +581,7 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("HDRI"))
 			{
 				static int currentItem = 0;
+				std::vector<std::string>& hdrFileNames = m_resoManager->hdrFileNames;
 
 				ImGui::Text("You can upload your own HDRI files!");
 				ImGui::Text("File path: ../FantaInMySystem/assets/HDRI");
@@ -739,9 +738,8 @@ void UI::ImGuiDraw()
 			{
 				static int currentItem[6] = { 0, 0, 0, 0, 0, 0 }; // One for each texture type
 				static char materialName[128] = ""; // Input field for material name
-				SettingsMaterial& SetMat = m_settingsCreateMat;
 
-				renderMaterialOptions(SetMat, currentItem);
+				renderMaterialOptions(m_resoManager->getSettingsCreate(), currentItem);
 
 				ImGui::InputText("Set name for the material", materialName, IM_ARRAYSIZE(materialName));
 				if (ImGui::Button("Create a new material")) {
@@ -749,10 +747,10 @@ void UI::ImGuiDraw()
 
 					// In case, where the texture is not used ("" is handled as no texture)
 					std::string usePaths[6];
-					m_resoManager->findMaterialPaths(usePaths, SetMat, m_materialFileNames, currentItem);
+					m_resoManager->findMaterialPaths(usePaths, m_resoManager->getSettingsCreate(), m_resoManager->m_materialFileNames, currentItem); // Edit SettingsCreate
 
 					// Set the default material
-					m_resoManager->createMaterial(m_resoManager->createMaterialPaths(materialName, usePaths, SetMat));
+					m_resoManager->createMaterial(m_resoManager->createMaterialPaths(materialName, usePaths, m_resoManager->getSettingsCreate()));
 					m_resoManager->getScene()->updateMeshList();
 
 					for (const auto& texture : m_resoManager->getTrackedTextures())
@@ -772,7 +770,6 @@ void UI::ImGuiDraw()
 				const std::int8_t comboBoxSize = sizeof(comboBoxSelection) / sizeof(comboBoxSelection[0]);
 
 				std::vector<Material*>& materials = m_resoManager->getScene()->getMaterials();
-				SettingsMaterial& SetMat = m_settingsEditMat;
 
 				if (!materials.empty()) {
 					const char* materialName = materials[select] ? materials[select]->getName().c_str() : "None"; // transform string into c_str() or set name to "None"
@@ -783,23 +780,7 @@ void UI::ImGuiDraw()
 							bool isSelected = (materials[i] == materials[select]);
 							if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
 								select = i; // Set the selected index
-								for (size_t j = 0; j < comboBoxSize; j++) { // comboBoxSelection size
-									Texture* foundTex = m_resoManager->findTexture(materials[select]->getTextures()[j]);
-									if (foundTex == nullptr) // solid values are nullptrs
-										continue;
-									
-									std::string texFilename = foundTex->getTextureFilename();
-									for (size_t k = 0; k < m_materialFileNames.size(); k++) {
-										//std::cout << "Compared: " << m_materialFileNames[k] << " - Target:" << texFilename << std::endl;
-										if (m_materialFileNames[k] == texFilename) { // maybe store the material names into an unordered_map
-											comboBoxSelection[j] = k;
-											break;
-										}
-									}
-								}
-
-								// Set material properties and bools
-								m_resoManager->setMaterialParams(SetMat, materials[select]);
+								m_resoManager->findComboBoxMaterials(materials[select], comboBoxSize, comboBoxSelection);
 							}
 							if (isSelected)
 								ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
@@ -807,32 +788,17 @@ void UI::ImGuiDraw()
 						ImGui::EndCombo();
 					}
 
-					renderMaterialOptions(SetMat, comboBoxSelection);
+					renderMaterialOptions(m_resoManager->getSettingsEdit(), comboBoxSelection);
 
-					if (ImGui::Button("Apply edited material"))
-					{
-						stbi_set_flip_vertically_on_load(false);
-
-						// In case, where the texture is not used ("" is handled as no texture)
-						std::string usePaths[6];
-						m_resoManager->findMaterialPaths(usePaths, SetMat, m_materialFileNames, comboBoxSelection);
-						MaterialPaths newMaterialParams = m_resoManager->createMaterialPaths(std::string(materials[select]->getName()), usePaths, SetMat);
-
-						// Material to be edited and the parameters
-						m_resoManager->editMaterial(materials[select], newMaterialParams);
-						m_resoManager->getScene()->updateMeshList();
+					if (ImGui::Button("Apply edited material")) {
+						m_resoManager->applyEditedMaterial(materials[select], comboBoxSelection);
 					}
 
 					ImGui::Dummy(ImVec2(0.0f, 4.0f));
 
 					ImGui::Text("This removes the selected material");
 					if (ImGui::Button("Remove selected material")) {
-						m_resoManager->replaceMaterials(materials[select], m_resoManager->getScene()->getDefaultMaterial());
-						delete materials[select];
-						materials.erase(materials.begin() + select);	
-						select = 0;
-						m_resoManager->clearUnusedTextures();
-						m_resoManager->getScene()->updateMeshList();
+						m_resoManager->removeMaterialBySelection(select);
 					}
 				}			
 				ImGui::TreePop();

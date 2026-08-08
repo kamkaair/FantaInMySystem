@@ -134,35 +134,40 @@ void ResourceManager::findMaterialPaths(std::string usePaths[], SettingsMaterial
 		usePaths[5] = "/textures/" + m_materialFileNames[currentItem[5]];
 }
 
-/*void ResourceManager::findTexturesForMaterial() {
-	for (size_t i = 0; i < materials.size(); i++) {
-		bool isSelected = (materials[i] == materials[select]);
-		if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
-			select = i; // Set the selected index
-			for (size_t j = 0; j < comboBoxSize; j++) { // comboBoxSelection size
-				Texture* foundTex = m_resoManager->findTexture(materials[select]->getTextures()[j]);
-				if (foundTex == nullptr) // solid values are nullptrs
-					continue;
+void ResourceManager::findComboBoxMaterials(Material* material, const std::int8_t& loopSize, static int selectionArr[]) {
+	//select = i; // Set the selected index
+	for (size_t j = 0; j < loopSize; j++) { // comboBoxSelection size
+		Texture* foundTex = findTexture(material->getTextures()[j]);
+		if (foundTex == nullptr) // solid values are nullptrs
+			continue;
 
-				std::string texFilename = foundTex->getTextureFilename();
-				for (size_t k = 0; k < m_materialFileNames.size(); k++) {
-					//std::cout << "Compared: " << m_materialFileNames[k] << " - Target:" << texFilename << std::endl;
-					if (m_materialFileNames[k] == texFilename) { // maybe store the material names into an unordered_map
-						comboBoxSelection[j] = k;
-						break;
-					}
-				}
+		std::string texFilename = foundTex->getTextureFilename();
+		for (size_t k = 0; k < m_materialFileNames.size(); k++) {
+			if (m_materialFileNames[k] == texFilename) { // maybe store the material names into an unordered_map
+				selectionArr[j] = k;
+				break;
 			}
-
-			// Set material properties and bools
-			m_resoManager->setMaterialParams(SetMat, materials[select]);
 		}
-		if (isSelected)
-			ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
 	}
-}*/
 
-void ResourceManager::setMaterialParams(SettingsMaterial& SetMat, Material*& material) {
+	// Set material properties and bools
+	setUIMaterialParams(m_settingsEditMat, material);
+}
+
+void ResourceManager::applyEditedMaterial(Material* material, static int selectionArr[]) {
+	stbi_set_flip_vertically_on_load(false);
+
+	// In case, where the texture is not used ("" is handled as no texture)
+	std::string usePaths[6];
+	findMaterialPaths(usePaths, getSettingsEdit(), m_materialFileNames, selectionArr);
+	MaterialPaths newMaterialParams = createMaterialPaths(std::string(material->getName()), usePaths, getSettingsEdit());
+
+	// Material to be edited and the parameters
+	editMaterial(material, newMaterialParams);
+	getScene()->updateMeshList();
+}
+
+void ResourceManager::setUIMaterialParams(SettingsMaterial& SetMat, Material*& material) {
 	// Set material properties and bools
 	SetMat.diffuseColor = material->diffuseColor;
 	SetMat.metallic = material->metallic;
@@ -183,6 +188,25 @@ void ResourceManager::replaceMaterials(Material* oldMat, Material* newMat) {
 			if (mesh->getMaterial() == oldMat)
 				mesh->setMaterial(newMat);
 		}
+}
+
+void ResourceManager::removeModelBySelection(int select) {
+	// Remove mesh from vector and cleanup
+	delete getScene()->getModels()[select];
+	getScene()->getModels().erase(getScene()->getModels().begin() + select);
+	getScene()->updateMeshList();
+}
+
+void ResourceManager::removeMaterialBySelection(int select) {
+	std::vector<Material*>& materials = getScene()->getMaterials();
+	replaceMaterials(materials[select], getScene()->getDefaultMaterial()); // Everything using the deleted material should use the default material
+	
+	delete materials[select]; // Delete the material ptr and rezise the vec
+	materials.erase(materials.begin() + select);
+	select = 0;
+
+	clearUnusedTextures(); // Clear and update the scene
+	getScene()->updateMeshList();
 }
 
 void ResourceManager::clearUnusedTextures() { // Probably unnecessarily mega expensive, but I'll take a look at it later

@@ -11,7 +11,6 @@
 #include <vector>
 #include <stb_image.h>
 #include <initializer_list>
-#include <functional>
 #include <iostream>
 
 class ScreenSpace;
@@ -53,8 +52,6 @@ public:
 
 	bool getLightOrientation() { return lightOrientationOn; }
 
-	SettingsMaterial getSettingsMaterial() { return m_settingsCreateMat; }
-
 	template<typename T> void shaderSet(const char* uniform, T value) {
 		m_GBuffer->getCurrentShader()->setUniform(uniform, value);
 	}
@@ -74,22 +71,6 @@ public:
 	ImGuiWindowFlags disableInteraction();
 
 private:
-	void updateAllFiles() { // TODO: probably for resource manager
-		updateFiles(meshFileNames, "models/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
-		updateFiles(m_materialFileNames, "textures/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
-		updateFiles(m_saveFiles, "Saves/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
-		updateFiles(hdrFileNames, "HDRI/", [this](const std::string& path) { return m_resoManager->FileSystem(path); });
-		updateFiles(m_folderNames, "textures/", [this](const std::string& path) { return m_resoManager->FileSystemFolders(path); });
-	}
-
-	void updateFiles(std::vector<std::string>& fileNames, std::string location, std::function< std::vector<std::string>(const std::string path) > func) {
-		if (!fileNames.empty())
-			fileNames.clear();
-
-		//fileNames = m_resoManager->FileSystem((std::string(ASSET_DIR) + "/" + location));
-		fileNames = func(std::string(ASSET_DIR) + "/" + location);
-	}
-
 	PostProcess pp_HDRI, pp_background, pp_model;
 	void updatePostProcess() {
 		pp_HDRI.name = "HDRI";
@@ -101,8 +82,6 @@ private:
 	void renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 	void renderMeshTreeNode(Model* model, std::uint16_t nameIndex);
 
-	SettingsMaterial m_settingsCreateMat, m_settingsEditMat;
-
 	Shader* m_backImage;
 
 	HDRI* m_HDRI;
@@ -111,7 +90,6 @@ private:
 	ResourceManager* m_resoManager;
 
 	// File names
-	std::vector<std::string> m_saveFiles, meshFileNames, hdrFileNames, m_materialFileNames, m_folderNames;
 	std::string defaultFolderPath = "/textures";
 
 	float ImGuiAlpha = 0.3f, totalScale = 0.0f;
