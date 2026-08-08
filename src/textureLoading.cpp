@@ -417,9 +417,6 @@ Texture* TextureLoading::findTexture(GLuint textureID) {
 }
 
 void TextureLoading::loadMeshes(std::vector<Model*>& container, std::vector<FileModels> fileModels) {
-	/*for (auto mat : m_scene->getMaterials()) {
-		std::cout << "Mat index: " << mat->getMaterialIndex() << " - Mat name: " << mat->getName() << std::endl;
-	}*/
 	for (size_t i = 0; i < fileModels.size(); i++) {
 		std::vector<Mesh*> newMeshes = processMeshes(fileModels[i].modelPath);
 

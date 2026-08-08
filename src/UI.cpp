@@ -37,17 +37,17 @@ void displayMatList(const int& item, static int currentItem[], std::vector<const
 	}
 }
 
-void UI::renderPostProcessSliders(PostProcess& pp) {
+void UI::renderPostProcessSliders(PostProcess& pp, Shader* inShader) {
 	if (ImGui::SliderFloat((pp.name + "Exposure").c_str(), &pp.exposure, 0.0f, 5.0f)) {
-		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure);
+		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure, inShader);
 	}
 
 	if (ImGui::SliderFloat((pp.name + "Contrast").c_str(), &pp.contrast, 0.0f, 5.0f)) {
-		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast);
+		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast, inShader);
 	}
 
 	if (ImGui::DragFloat3((pp.name + "Hue").c_str(), glm::value_ptr(pp.hue), 0.01f)) {
-		shaderSetDual((pp.name + "Hue").c_str(), pp.hue);
+		shaderSetDual((pp.name + "Hue").c_str(), pp.hue, inShader);
 	}
 
 	// Load selected HDR file and generate the maps for them
@@ -56,9 +56,76 @@ void UI::renderPostProcessSliders(PostProcess& pp) {
 		pp.contrast = 1.0f;
 		pp.hue = glm::vec3(1.0f);
 
-		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure);
-		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast);
-		shaderSetDual((pp.name + "Hue").c_str(), pp.hue);
+		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure, inShader);
+		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast, inShader);
+		shaderSetDual((pp.name + "Hue").c_str(), pp.hue, inShader);
+	}
+}
+
+// TODO: Tidy this up
+void UI::renderMeshTreeNode(Model* model, std::uint16_t nameIndex) {
+	if (ImGui::TreeNode((model->getModelPath() + ": " + std::to_string(nameIndex)).c_str())) {
+		for (size_t i = 0; i < model->getMeshes().size(); i++)
+		{
+			Mesh* meshes = model->getMeshes()[i];
+			if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName() + " " + std::to_string(i)).c_str())) // Added an index to the name to avoid duplicates
+			{
+				glm::vec3 pos = meshes->getPosition();
+				if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
+					meshes->setPosition(pos); // Update the position if the value changes
+				}
+
+				// Control for scale
+				ImGui::Checkbox("Scalelock", &scaleLock);
+				glm::vec3 scale = meshes->getScaling();
+				if (!scaleLock) {
+					// Set indiviudal XYZ scaling
+					if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.01f)) {
+						meshes->setScaling(scale);
+					}
+				}
+				else
+				{
+					// Set scaling uniformally
+					ImGui::Text(glm::to_string(scale).c_str());
+					if (ImGui::DragFloat("Scale", &totalScale, 0.01f))
+					{
+						float scaleSet = totalScale;
+						scale = originalScale * scaleSet;
+						meshes->setScaling(scale);
+					}
+				}
+
+				// Control for rotation
+				glm::vec3 rotation = meshes->getRotation();
+				if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 0.01f))
+				{
+					meshes->setRotation(rotation);
+				}
+
+				// Control for material
+				Material* currentMat = meshes->getMaterial();
+				const char* changeMat = currentMat ? currentMat->getName().c_str() : "None"; // get a const char
+
+				if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
+				{
+					for (size_t i = 0; i < m_resoManager->getScene()->getMaterials().size(); i++)
+					{
+						bool isSelected = (m_resoManager->getScene()->getMaterials()[i] == currentMat);
+						if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
+							meshes->setMaterial(m_resoManager->getScene()->getMaterials()[i]);  // Set the selected material to the mesh
+							m_resoManager->getScene()->updateMeshList();
+						}
+						if (isSelected)
+							ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
+					}
+					ImGui::EndCombo();
+				}
+				ImGui::TreePop();
+			}
+
+		}
+		ImGui::TreePop();
 	}
 }
 
@@ -371,6 +438,7 @@ void UI::ImGuiDraw()
 			// Reset options for transformations
 			if (ImGui::TreeNode("RESETS"))
 			{
+				// TODO: lambda
 				if (ImGui::Button("Reset all the transforms"))
 					for (auto models : m_resoManager->getScene()->getModels()) {
 						for (auto meshes : models->getMeshes()) {
@@ -402,71 +470,8 @@ void UI::ImGuiDraw()
 			{
 				ImGui::Text("Below is all the meshes and their transforms");
 				std::uint16_t nameIndex = 0;
-				for (auto model : m_resoManager->getScene()->getModels()) 
-				{
-					if (ImGui::TreeNode((model->getModelPath() + ": " + std::to_string(nameIndex)).c_str())) {
-						for (size_t i = 0; i < model->getMeshes().size(); i++)
-						{
-							Mesh* meshes = model->getMeshes()[i];
-							if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName() + " " + std::to_string(i)).c_str())) // Added an index to the name to avoid duplicates
-							{
-								glm::vec3 pos = meshes->getPosition();
-								if ((ImGui::DragFloat3("Position", glm::value_ptr(pos), 0.01f))) {
-									meshes->setPosition(pos); // Update the position if the value changes
-								}
-
-								// Control for scale
-								ImGui::Checkbox("Scalelock", &scaleLock);
-								glm::vec3 scale = meshes->getScaling();
-								if (!scaleLock) {
-									// Set indiviudal XYZ scaling
-									if (ImGui::DragFloat3("Scale", glm::value_ptr(scale), 0.01f)) {
-										meshes->setScaling(scale);
-									}
-								}
-								else
-								{
-									// Set scaling uniformally
-									ImGui::Text(glm::to_string(scale).c_str());
-									if (ImGui::DragFloat("Scale", &totalScale, 0.01f))
-									{
-										float scaleSet = totalScale;
-										scale = originalScale * scaleSet;
-										meshes->setScaling(scale);
-									}
-								}
-
-								// Control for rotation
-								glm::vec3 rotation = meshes->getRotation();
-								if (ImGui::DragFloat3("Rotation", glm::value_ptr(rotation), 0.01f))
-								{
-									meshes->setRotation(rotation);
-								}
-
-								// Control for material
-								Material* currentMat = meshes->getMaterial();
-								const char* changeMat = currentMat ? currentMat->getName().c_str() : "None"; // get a const char
-
-								if (ImGui::BeginCombo("Material", changeMat))  // Combo box to choose material
-								{
-									for (size_t i = 0; i < m_resoManager->getScene()->getMaterials().size(); i++)
-									{
-										bool isSelected = (m_resoManager->getScene()->getMaterials()[i] == currentMat);
-										if (ImGui::Selectable(m_resoManager->getScene()->getMaterials()[i]->getName().c_str(), isSelected)) {
-											meshes->setMaterial(m_resoManager->getScene()->getMaterials()[i]);  // Set the selected material to the mesh
-											m_resoManager->getScene()->updateMeshList();
-										}
-										if (isSelected)
-											ImGui::SetItemDefaultFocus();  // Ensure selected item is focused
-									}
-									ImGui::EndCombo();
-								}
-								ImGui::TreePop();
-							}
-
-						}
-						ImGui::TreePop();
-					}
+				for (auto model : m_resoManager->getScene()->getModels()) {
+					renderMeshTreeNode(model, nameIndex);
 					nameIndex++;
 				}
 				
@@ -615,8 +620,9 @@ void UI::ImGuiDraw()
 					}
 				}				
 
-				renderPostProcessSliders(pp_HDRI);
-				renderPostProcessSliders(pp_model);
+				renderPostProcessSliders(pp_HDRI, m_GBuffer->getCurrentShader());
+				ImGui::Dummy(ImVec2(0.0f, 10.0f));
+				renderPostProcessSliders(pp_model, m_GBuffer->getCurrentShader());
 
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
@@ -660,7 +666,7 @@ void UI::ImGuiDraw()
 						ImGui::EndCombo();
 					}
 
-					renderPostProcessSliders(pp_background);
+					renderPostProcessSliders(pp_background, m_backImage);
 
 					if (ImGui::Button("Set Background Texture")) {
 						// Clean up background texture
