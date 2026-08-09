@@ -34,7 +34,7 @@ public:
 	void setMaterial(Material* material);
 	void setDisplayName(const std::string name);
 
-	std::string getDisplayName() const;
+	const std::string& getDisplayName() const;
 	Material* getMaterial();
 	int& getVertices() { return m_vertexAmount; }
 

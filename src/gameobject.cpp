@@ -13,25 +13,13 @@ GameObject::GameObject(const char* const functionName)
     setScaling(glm::vec3(1.0f));
 }
 
-GameObject::~GameObject() {
-}
+GameObject::~GameObject() {}
 
 // SETS
-void GameObject::setPosition(const glm::vec3& position) {
-    m_position = position;
-}
-
-void GameObject::setRotationZ(float angleInRadians) {
-    m_angleZInRadians = angleInRadians;
-}
-
-void GameObject::setRotationY(float angleInRadians) {
-    m_angleYInRadians = angleInRadians;
-}
-
-void GameObject::setRotationX(float angleInRadians) {
-    m_angleXInRadians = angleInRadians;
-}
+void GameObject::setPosition(const glm::vec3& position) { m_position = position; }
+void GameObject::setRotationZ(float angleInRadians) { m_angleZInRadians = angleInRadians; }
+void GameObject::setRotationY(float angleInRadians) { m_angleYInRadians = angleInRadians; }
+void GameObject::setRotationX(float angleInRadians) { m_angleXInRadians = angleInRadians; }
 
 void GameObject::setRotation(const glm::vec3& eulerAngles) {
     m_angleXInRadians = eulerAngles.x;
@@ -39,51 +27,19 @@ void GameObject::setRotation(const glm::vec3& eulerAngles) {
     m_angleZInRadians = eulerAngles.z;
 }
 
-void GameObject::setScaling(const glm::vec3& scale) {
-    m_scale = scale;
-}
-
-void GameObject::setViewMatrix(const glm::vec3& to, const glm::vec3& up) {
-    m_viewMatrix = glm::lookAt(m_position, to, up);
-}
-
-void GameObject::setLookAt(const glm::vec3& to, const glm::vec3& up) {
-    m_oritentation = glm::inverse(glm::lookAtRH(getPosition(), to, up));
-}
-
+void GameObject::setScaling(const glm::vec3& scale) { m_scale = scale; }
+void GameObject::setViewMatrix(const glm::vec3& to, const glm::vec3& up) { m_viewMatrix = glm::lookAt(m_position, to, up); }
+void GameObject::setLookAt(const glm::vec3& to, const glm::vec3& up) { m_oritentation = glm::inverse(glm::lookAtRH(getPosition(), to, up)); }
 
 // GETS
-const glm::vec3& GameObject::getPosition() const {
-    return m_position;
-}
-
-float GameObject::getRotationZ() const {
-    return m_angleZInRadians;
-}
-
-float GameObject::getRotationY() const {
-    return m_angleYInRadians;
-}
-
-float GameObject::getRotationX() const {
-    return m_angleXInRadians;
-}
-
-glm::vec3 GameObject::getRotation() const {
-    return glm::vec3(m_angleXInRadians, m_angleYInRadians, m_angleZInRadians);
-}
-
-const glm::vec3& GameObject::getScaling() const {
-    return m_scale;
-}
-
-glm::mat4 GameObject::getLookAt() const {
-    return m_oritentation;
-}
-
-glm::mat4 GameObject::getViewMatrix() const {
-    return m_viewMatrix;
-}
+const glm::vec3& GameObject::getPosition() const { return m_position; }
+float GameObject::getRotationZ() const { return m_angleZInRadians; }
+float GameObject::getRotationY() const { return m_angleYInRadians; }
+float GameObject::getRotationX() const { return m_angleXInRadians; }
+glm::vec3 GameObject::getRotation() const { return glm::vec3(m_angleXInRadians, m_angleYInRadians, m_angleZInRadians); }
+const glm::vec3& GameObject::getScaling() const { return m_scale; }
+glm::mat4 GameObject::getLookAt() const { return m_oritentation; }
+glm::mat4 GameObject::getViewMatrix() const { return m_viewMatrix; }
 
 glm::mat4 GameObject::getModelMatrix() const {
     return glm::translate(glm::mat4(1.0f), m_position)

@@ -3,9 +3,9 @@
 #include <vector>
 #include "mesh.h"
 
-class Model {
+class Model : public GameObject {
 public:
-	Model(std::string path, std::vector<Mesh*> meshes) : m_modelPath(path), m_meshes(meshes) {}
+	Model(std::string path, std::vector<Mesh*> meshes) : GameObject("Model"), m_modelPath(path), m_meshes(meshes) {}
 	~Model() {
 		for (auto meshes : m_meshes) {
 			delete meshes;

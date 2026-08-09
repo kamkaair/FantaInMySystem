@@ -38,7 +38,7 @@ void Mesh::setMaterial(Material* material) {m_material = material;}
 Material* Mesh::getMaterial() {return m_material;}
 
 void Mesh::setDisplayName(const std::string name) { m_meshDisplayName = name;}
-std::string Mesh::getDisplayName() const {return m_meshDisplayName;}
+const std::string& Mesh::getDisplayName() const {return m_meshDisplayName;}
 
 void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 {

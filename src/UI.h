@@ -82,7 +82,7 @@ private:
 	void renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 	void renderMeshTreeNode(Model* model, std::uint16_t nameIndex);
 	void changeMaterial(Mesh* mesh);
-	template<typename T> void meshTransformationUI(T* meshes, glm::vec3 value[3]);
+	template<typename T> void meshTransformationUI(T* meshes, glm::vec3 values[3], std::string name);
 
 	Shader* m_backImage;
 
@@ -99,7 +99,7 @@ private:
 	
 	const char* backgroundOptions[2] = { "HDRI","Texture" };
 
-	bool meshRotationEnabled = false, doOnce = true,  scaleLock = false, meshHide = false, 
+	bool meshRotationEnabled = false, doOnce = true, meshHide = false, 
 		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useFolderFiltering = false;
 
 	// UI settings

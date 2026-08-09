@@ -38,17 +38,14 @@ void displayMatList(const int& item, static int currentItem[], std::vector<const
 }
 
 void UI::renderPostProcessSliders(PostProcess& pp, Shader* inShader) {
-	if (ImGui::SliderFloat((pp.name + "Exposure").c_str(), &pp.exposure, 0.0f, 5.0f)) {
+	if (ImGui::SliderFloat((pp.name + "Exposure").c_str(), &pp.exposure, 0.0f, 5.0f))
 		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure, inShader);
-	}
 
-	if (ImGui::SliderFloat((pp.name + "Contrast").c_str(), &pp.contrast, 0.0f, 5.0f)) {
+	if (ImGui::SliderFloat((pp.name + "Contrast").c_str(), &pp.contrast, 0.0f, 5.0f))
 		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast, inShader);
-	}
 
-	if (ImGui::DragFloat3((pp.name + "Hue").c_str(), glm::value_ptr(pp.hue), 0.01f)) {
+	if (ImGui::DragFloat3((pp.name + "Hue").c_str(), glm::value_ptr(pp.hue), 0.01f))
 		shaderSetDual((pp.name + "Hue").c_str(), pp.hue, inShader);
-	}
 
 	// Load selected HDR file and generate the maps for them
 	if (ImGui::Button(("Reset parameters: " + pp.name).c_str())) {
@@ -62,70 +59,82 @@ void UI::renderPostProcessSliders(PostProcess& pp, Shader* inShader) {
 	}
 }
 
-void setRotScale(glm::vec3 inValue, Mesh* mesh) {
-	mesh->setRotation(inValue);
-	mesh->setScaling(inValue);
-}
+template<typename T> void setRotation(const glm::vec3& inValue, T* obj) { obj->setRotation(inValue); }
+template<typename T> void setScale(const glm::vec3& inValue, T* obj) { obj->setScaling(inValue); }
+template<typename T> void setPosition(const glm::vec3& inValue, T* obj) { obj->setPosition(inValue); }
 
-void setRotation(glm::vec3 inValue, Mesh* mesh) {
-	mesh->setRotation(inValue);
-}
-
-void setScale(glm::vec3 inValue, Mesh* mesh) {
-	mesh->setScaling(inValue);
-}
-
-void setPosition(glm::vec3 inValue, Mesh* mesh) {
-	mesh->setPosition(inValue);
-}
-
-void renderDragFloat3(const char* name, Model* model, std::function<void(glm::vec3, Mesh*)> transFunc, glm::vec3 value) {
+// Life could be a dream
+/*void renderDragFloat3(const char* name, GameObject* obj, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
 	if (ImGui::DragFloat3(name, glm::value_ptr(value), 0.01f)) {
-		for (auto& mesh : model->getMeshes()) {
-			transFunc(value, mesh);
-		}
+		transformFunc(value, obj);
 	}
 }
 
-void renderDragFloat3(const char* name, Mesh* mesh, std::function<void(glm::vec3, Mesh*)> transFunc, glm::vec3& value) {
-	if (ImGui::DragFloat3(name, glm::value_ptr(value), 0.01f))
-		transFunc(value, mesh);
+void renderDragFloat(const char* name, GameObject* obj, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
+	float totalValue = value.x; // kinda stupid, but ok for now (maybe get the average later)
+	if (ImGui::DragFloat(name, &totalValue, 0.01f)) {
+		value = glm::vec3(totalValue);
+		transformFunc(value, obj);
+	}
+}*/
+
+void renderDragFloat3(const char* name, Model* model, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
+	if (ImGui::DragFloat3(name, glm::value_ptr(value), 0.01f)) {
+		for(auto& mesh : model->getMeshes())
+			transformFunc(value, mesh);
+		transformFunc(value, model);
+	}
+}
+void renderDragFloat3(const char* name, Mesh* mesh, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
+	if (ImGui::DragFloat3(name, glm::value_ptr(value), 0.01f)) {
+		transformFunc(value, mesh);
+	}
 }
 
-template<typename T> void UI::meshTransformationUI(T* mesh, glm::vec3 value[3]) {	
-	renderDragFloat3("Position", mesh, setPosition, value[0]);
+void renderDragFloat(const char* name, Model* model, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
+	float totalValue = value.x; // kinda stupid, but ok for now (maybe get the average later)
+	if (ImGui::DragFloat(name, &totalValue, 0.01f)) {
+		for (auto& mesh : model->getMeshes()) {
+			value = glm::vec3(totalValue);
+			transformFunc(value, mesh);
+		}
+		transformFunc(value, model);
+	}
+}
+void renderDragFloat(const char* name, Mesh* mesh, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
+	float totalValue = value.x; // kinda stupid, but ok for now (maybe get the average later)
+	if (ImGui::DragFloat(name, &totalValue, 0.01f)) {
+		value = glm::vec3(totalValue);
+		transformFunc(value, mesh);
+	}
+}
+
+template<typename T> void UI::meshTransformationUI(T* mesh, glm::vec3 values[3],  std::string targetName) {
+	renderDragFloat3((targetName + " Position").c_str(), mesh, setPosition, values[0]);
 
 	// Control for scale
-	ImGui::Checkbox("Scalelock", &scaleLock);
-	if (!scaleLock)	
-		renderDragFloat3("Scale", mesh, setScale, value[1]); // Set indiviudal XYZ scaling
-	/*else
-	{
-		// Set scaling uniformally
-		ImGui::Text(glm::to_string(value[1]).c_str());
-		if (ImGui::DragFloat("Scale", &totalScale, 0.01f))
-		{
-			float scaleSet = totalScale;
-			value[1] = originalScale * scaleSet;
-			mesh->setScaling(value[1]);
-		}
-	}*/
+	static bool scaleLock = false;
+	ImGui::Checkbox((targetName + " Scalelock").c_str(), &scaleLock);
 
-	renderDragFloat3("Rotation", mesh, setRotation, value[2]);
+	if (!scaleLock)
+		renderDragFloat3((targetName + " Scale").c_str(), mesh, setScale, values[1]); // Set indiviudal XYZ scaling
+	else
+		renderDragFloat((targetName + " Scale").c_str(), mesh, setScale, values[1]);
+
+	renderDragFloat3((targetName + " Rotation").c_str(), mesh, setRotation, values[2]);
 }
 
 void UI::renderMeshTreeNode(Model* model, std::uint16_t nameIndex) {
 	if (ImGui::TreeNode((model->getModelPath() + ": " + std::to_string(nameIndex)).c_str())) {
-		glm::vec3 psrModel[3] = { (model->getMeshes()[0]->getPosition(), model->getMeshes()[0]->getScaling(), model->getMeshes()[0]->getRotation()) };
-		meshTransformationUI(model, psrModel);
+		glm::vec3 psrModel[3] = { model->getPosition(), model->getScaling(), model->getRotation() };
+		meshTransformationUI(model, psrModel, "Model");
 
-		for (size_t i = 0; i < model->getMeshes().size(); i++)
-		{
+		for (size_t i = 0; i < model->getMeshes().size(); i++) {
 			Mesh* meshes = model->getMeshes()[i];
 			if (ImGui::TreeNode(("Mesh " + model->getMeshes()[i]->getDisplayName() + " " + std::to_string(i)).c_str())) // Added an index to the name to avoid duplicates
 			{
-				glm::vec3 psrMesh[3] = { (meshes->getPosition(), meshes->getScaling(), meshes->getRotation()) };
-				meshTransformationUI(meshes, psrMesh);
+				glm::vec3 psrMesh[3] = { meshes->getPosition(), meshes->getScaling(), meshes->getRotation() };
+				meshTransformationUI(meshes, psrMesh, "Mesh");
 				changeMaterial(meshes);
 
 				ImGui::TreePop();
