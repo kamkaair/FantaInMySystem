@@ -22,6 +22,11 @@ public:
 
 	GLuint getLightingFBO() { return lightFBO; }
 	GLuint getLightPassBuffer() { return m_LightPassTexture; }
+	GLuint getLightIndirectDiff() { return m_LightIndirectDiff; }
+	GLuint getLightIndirectSpec() { return m_LightIndirectSpec; }
+
+	GLuint getCompositeFBO() { return m_compositeFBO; }
+	GLuint getCompositeTexture() { return m_CompositeTexture; }
 
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }
@@ -58,9 +63,9 @@ private:
 	Shader* m_currentShader = 0;
 
 	// FBOs
-	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0, m_skyBoxFBO = 0;
+	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0, m_skyBoxFBO = 0, m_compositeFBO;
 
 	// Textures
 	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0, gDepthTexture = 0;
-	GLuint m_LightPassTexture = 0;
+	GLuint m_LightPassTexture = 0, m_LightIndirectDiff = 0, m_LightIndirectSpec = 0, m_CompositeTexture = 0;
 };

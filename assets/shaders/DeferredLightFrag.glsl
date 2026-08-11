@@ -3,6 +3,8 @@
 	//out vec4 FragColor;
 	
 	layout (location = 0) out vec3 oLightPass;
+	layout (location = 1) out vec3 oIndirectDiff;
+	layout (location = 2) out vec3 oIndirectSpec;
 
 	in vec2 texCoord;
 	
@@ -13,12 +15,12 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
-	uniform sampler2D uSSAO, uSSR, uEmission;
+	uniform sampler2D uSSAO, uEmission;
 	// General ImGui uniforms
 	uniform float aoStrength = 10.0f;
 	
-	uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
-	uniform vec3 HDRIHue = vec3(1.0f), FinalColorHue = vec3(1.0);
+	//uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
+	uniform vec3 HDRIHue = vec3(1.0f);
 	
 	uniform mat4 inverseView;
 	const float PI = 3.14159265359;
@@ -109,7 +111,6 @@
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(uSSAO, texCoord).r;
-		vec4 ssr = texture(uSSR, texCoord).rgba;
 		vec3 emission = texture(uEmission, texCoord).rgb;
 		
 		// PBR	
@@ -197,8 +198,11 @@
 		
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		vec3 indirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
-		indirectSpec = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
+		oIndirectSpec = indirectSpec;
+		//indirectSpec = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
 		//vec3 ScreenSpaceColor = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
+		
+		//oIndirectLight = (indirectDiff + indirectSpec);
 		
 		float ao = 1.0f;
 		if(useSSAO){ 
@@ -209,8 +213,11 @@
 		//vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
 
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
+		oIndirectDiff = indirectDiff;
 		
-		vec3 finalColor = (directDiff + directSpec) + gammaCorrect((indirectDiff + indirectSpec), HDRIExposure, HDRIContrast) + emission;
-		finalColor = vec3(finalColor.r * FinalColorHue.r, finalColor.g * FinalColorHue.g, finalColor.b * FinalColorHue.b);
-		oLightPass = gammaCorrect(finalColor, FinalColorExposure, FinalColorContrast);
+		//vec3 finalColor = (directDiff + directSpec) + gammaCorrect((indirectDiff + indirectSpec), HDRIExposure, HDRIContrast) + emission;
+		//finalColor = vec3(finalColor.r * FinalColorHue.r, finalColor.g * FinalColorHue.g, finalColor.b * FinalColorHue.b);
+		//oLightPass = gammaCorrect(finalColor, FinalColorExposure, FinalColorContrast);
+		
+		oLightPass = vec3(directDiff + directSpec);
 	}

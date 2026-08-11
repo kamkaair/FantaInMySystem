@@ -59,69 +59,48 @@ void UI::renderPostProcessSliders(PostProcess& pp, Shader* inShader) {
 	}
 }
 
-template<typename T> void setRotation(const glm::vec3& inValue, T* obj) { obj->setRotation(inValue); }
-template<typename T> void setScale(const glm::vec3& inValue, T* obj) { obj->setScaling(inValue); }
-template<typename T> void setPosition(const glm::vec3& inValue, T* obj) { obj->setPosition(inValue); }
+using transformFunction = void (GameObject::*)(const glm::vec3&); // A function
+
+void applyTransform(Mesh* mesh, const std::function<void(GameObject*)>& transformFunc) {
+	transformFunc(mesh);
+}
+void applyTransform(Model* model, const std::function<void(GameObject*)>& transformFunc) {
+	for (auto& mesh : model->getMeshes()) {
+		transformFunc(mesh);
+	}
+	transformFunc(model);
+}
 
 // Life could be a dream
-/*void renderDragFloat3(const char* name, GameObject* obj, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
+template<typename T>
+void renderDragFloat3(const char* name, T* obj, transformFunction transformFunc, glm::vec3& value) {
 	if (ImGui::DragFloat3(name, glm::value_ptr(value), 0.01f)) {
-		transformFunc(value, obj);
+		applyTransform(obj, [&](GameObject* inObj) { (inObj->*transformFunc)(value); });
 	}
 }
 
-void renderDragFloat(const char* name, GameObject* obj, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
+template<typename T>
+void renderDragFloat(const char* name, T* obj, transformFunction transformFunc, glm::vec3& value) {
 	float totalValue = value.x; // kinda stupid, but ok for now (maybe get the average later)
 	if (ImGui::DragFloat(name, &totalValue, 0.01f)) {
 		value = glm::vec3(totalValue);
-		transformFunc(value, obj);
-	}
-}*/
-
-void renderDragFloat3(const char* name, Model* model, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
-	if (ImGui::DragFloat3(name, glm::value_ptr(value), 0.01f)) {
-		for(auto& mesh : model->getMeshes())
-			transformFunc(value, mesh);
-		transformFunc(value, model);
-	}
-}
-void renderDragFloat3(const char* name, Mesh* mesh, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
-	if (ImGui::DragFloat3(name, glm::value_ptr(value), 0.01f)) {
-		transformFunc(value, mesh);
-	}
-}
-
-void renderDragFloat(const char* name, Model* model, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
-	float totalValue = value.x; // kinda stupid, but ok for now (maybe get the average later)
-	if (ImGui::DragFloat(name, &totalValue, 0.01f)) {
-		for (auto& mesh : model->getMeshes()) {
-			value = glm::vec3(totalValue);
-			transformFunc(value, mesh);
-		}
-		transformFunc(value, model);
-	}
-}
-void renderDragFloat(const char* name, Mesh* mesh, void (*transformFunc)(const glm::vec3&, GameObject*), glm::vec3& value) {
-	float totalValue = value.x; // kinda stupid, but ok for now (maybe get the average later)
-	if (ImGui::DragFloat(name, &totalValue, 0.01f)) {
-		value = glm::vec3(totalValue);
-		transformFunc(value, mesh);
+		applyTransform(obj, [&](GameObject* inObj) { (inObj->*transformFunc)(value); });
 	}
 }
 
 template<typename T> void UI::meshTransformationUI(T* mesh, glm::vec3 values[3],  std::string targetName) {
-	renderDragFloat3((targetName + " Position").c_str(), mesh, setPosition, values[0]);
+	renderDragFloat3((targetName + " Position").c_str(), mesh, &GameObject::setPosition, values[0]);
 
 	// Control for scale
 	static bool scaleLock = false;
 	ImGui::Checkbox((targetName + " Scalelock").c_str(), &scaleLock);
 
 	if (!scaleLock)
-		renderDragFloat3((targetName + " Scale").c_str(), mesh, setScale, values[1]); // Set indiviudal XYZ scaling
+		renderDragFloat3((targetName + " Scale").c_str(), mesh, &GameObject::setScaling, values[1]); // Set indiviudal XYZ scaling
 	else
-		renderDragFloat((targetName + " Scale").c_str(), mesh, setScale, values[1]);
+		renderDragFloat((targetName + " Scale").c_str(), mesh, &GameObject::setScaling, values[1]);
 
-	renderDragFloat3((targetName + " Rotation").c_str(), mesh, setRotation, values[2]);
+	renderDragFloat3((targetName + " Rotation").c_str(), mesh, &GameObject::setRotation, values[2]);
 }
 
 void UI::renderMeshTreeNode(Model* model, std::uint16_t nameIndex) {
@@ -477,15 +456,15 @@ void UI::ImGuiDraw()
 			if (ImGui::TreeNode("RESETS"))
 			{
 				if (ImGui::Button("Reset all the transforms")) {
-					m_resoManager->transformOperation(glm::vec3(0.0f, 0.0f, 0.0f), setRotation);
-					m_resoManager->transformOperation(glm::vec3(1.0f, 1.0f, 1.0f), setScale);
+					//m_resoManager->transformOperation(glm::vec3(0.0f, 0.0f, 0.0f), GameObject::setRotation);
+					//m_resoManager->transformOperation(glm::vec3(1.0f, 1.0f, 1.0f), setScale);
 				}
 
 				if (ImGui::Button("Reset rotation"))
-					m_resoManager->transformOperation(glm::vec3(0.0f, 0.0f, 0.0f), setRotation);
+					//m_resoManager->transformOperation(glm::vec3(0.0f, 0.0f, 0.0f), setRotation);
 
 				if (ImGui::Button("Reset scale"))
-					m_resoManager->transformOperation(glm::vec3(1.0f, 1.0f, 1.0f), setScale);
+					//m_resoManager->transformOperation(glm::vec3(1.0f, 1.0f, 1.0f), );
 
 				ImGui::TreePop();
 			}

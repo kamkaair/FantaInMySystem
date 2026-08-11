@@ -151,7 +151,7 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 	m_SSR->bind();
 
 	utils::bindTexture(GL_TEXTURE0, m_SSR, m_GBuffer->getGNormal(), "gNormal");
-	utils::bindTexture(GL_TEXTURE1, m_SSR, m_GBuffer->getLightPassBuffer(), "colorBuffer");
+	utils::bindTexture(GL_TEXTURE1, m_SSR, m_GBuffer->getLightIndirectSpec(), "colorBuffer");
 	utils::bindTexture(GL_TEXTURE2, m_SSR, m_GBuffer->getGDepth(), "depthMap");
 	utils::bindTexture(GL_TEXTURE3, m_SSR, m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness");
 
@@ -256,13 +256,15 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HD
 	// -------------------------------
 	glDisable(GL_DEPTH_TEST); // Disable!
 
+	// Binds
 	m_GBuffer->getCompositeShader()->bind();
-
 	utils::bindTexture(GL_TEXTURE0, m_GBuffer->getCompositeShader(), m_GBuffer->getLightPassBuffer(), "uLightPassTex");
-	//utils::bindTexture(GL_TEXTURE1, m_GBuffer->getCompositeShader(), m_GBuffer->getGEmission(), "gEmission");
+	utils::bindTexture(GL_TEXTURE1, m_GBuffer->getCompositeShader(), m_GBuffer->getLightIndirectDiff(), "uIndirectDiff");
+	utils::bindTexture(GL_TEXTURE2, m_GBuffer->getCompositeShader(), m_GBuffer->getLightIndirectSpec(), "uIndirectSpec");
+	utils::bindTexture(GL_TEXTURE3, m_GBuffer->getCompositeShader(), m_GBuffer->getGEmission(), "uEmission");
+	utils::bindTexture(GL_TEXTURE4, m_GBuffer->getCompositeShader(), getSSR_History(), "uSSR");
 
 	m_meshRender->renderQuad();
-
 	glEnable(GL_DEPTH_TEST); // Enable!
 }
 

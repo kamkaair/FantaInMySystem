@@ -14,7 +14,7 @@ public:
 
 	void setModelPath(const std::string inPath) { m_modelPath = inPath; }
 	std::string& getModelPath() { return m_modelPath; }
-	std::vector<Mesh*> getMeshes() { return m_meshes; }
+	std::vector<Mesh*>& getMeshes() { return m_meshes; }
 
 private:
 	std::string m_modelPath;

@@ -36,18 +36,36 @@ void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing eve
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+	// ----------------------------------
+
 	// Lighting pass textures and same depth as before
 	glGenFramebuffers(1, &lightFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, lightFBO);
 
 	m_LightPassTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+	m_LightIndirectDiff = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT1);
+	m_LightIndirectSpec = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT2);
 
-	glFramebufferTexture2D(
-		GL_FRAMEBUFFER,
-		GL_DEPTH_ATTACHMENT,
-		GL_TEXTURE_2D,
-		gDepthTexture,
-		0);
+	GLuint lightAttachments[3] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2 };
+	glDrawBuffers(3, lightAttachments);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
+
+	// Check completeness
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// ----------------------------------
+	
+	// Lighting pass textures and same depth as before
+	glGenFramebuffers(1, &m_compositeFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
+
+	m_CompositeTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
