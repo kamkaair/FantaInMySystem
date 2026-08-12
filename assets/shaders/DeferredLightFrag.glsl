@@ -19,9 +19,6 @@
 	// General ImGui uniforms
 	uniform float aoStrength = 10.0f;
 	
-	//uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
-	uniform vec3 HDRIHue = vec3(1.0f);
-	
 	uniform mat4 inverseView;
 	const float PI = 3.14159265359;
 	float exposure = 1.5;
@@ -188,7 +185,7 @@
 		// HDRI
 		vec3 irradiance = texture(irradianceMap, NewN).rgb; // N Set to world-space. See the magnificent lighting all around
 		
-		vec3 diffuse      = irradiance * vec3(albedo.r * HDRIHue.r, albedo.g * HDRIHue.g, albedo.b * HDRIHue.b);
+		vec3 diffuse      = irradiance * albedo;
 		
 		// sample both the pre-filter map and the BRDF lut and combine them together as per the Split-Sum approximation to get the IBL specular part.
 		//MAX_REFLECTION_LOD = 3.0; is quite nice :3
@@ -199,10 +196,6 @@
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		vec3 indirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		oIndirectSpec = indirectSpec;
-		//indirectSpec = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
-		//vec3 ScreenSpaceColor = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
-		
-		//oIndirectLight = (indirectDiff + indirectSpec);
 		
 		float ao = 1.0f;
 		if(useSSAO){ 
@@ -214,10 +207,6 @@
 
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		oIndirectDiff = indirectDiff;
-		
-		//vec3 finalColor = (directDiff + directSpec) + gammaCorrect((indirectDiff + indirectSpec), HDRIExposure, HDRIContrast) + emission;
-		//finalColor = vec3(finalColor.r * FinalColorHue.r, finalColor.g * FinalColorHue.g, finalColor.b * FinalColorHue.b);
-		//oLightPass = gammaCorrect(finalColor, FinalColorExposure, FinalColorContrast);
 		
 		oLightPass = vec3(directDiff + directSpec);
 	}

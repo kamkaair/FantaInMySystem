@@ -624,9 +624,9 @@ void UI::ImGuiDraw()
 					}
 				}				
 
-				renderPostProcessSliders(pp_HDRI, m_GBuffer->getCurrentShader());
+				renderPostProcessSliders(pp_HDRI, m_GBuffer->getCompositeShader());
 				ImGui::Dummy(ImVec2(0.0f, 10.0f));
-				renderPostProcessSliders(pp_model, m_GBuffer->getCurrentShader());
+				renderPostProcessSliders(pp_model, m_GBuffer->getCompositeShader());
 
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));

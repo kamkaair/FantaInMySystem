@@ -10,7 +10,7 @@
 	uniform sampler2D uSSR;
 	
 	uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
-	uniform vec3 FinalColorHue = vec3(1.0);
+	uniform vec3 HDRIHue = vec3(1.0), FinalColorHue = vec3(1.0);
 	
 	vec3 gammaCorrect(vec3 color, float exposure, float contrast) {
 		color = color / (color + vec3(1.0)) * exposure;
@@ -21,7 +21,7 @@
 
 	void main()
 	{	
-		vec3 lightPass  = texture(uLightPassTex, texCoords).rgb;	
+		vec3 directLighting  = texture(uLightPassTex, texCoords).rgb;	
 		vec3 indirectDiff  = texture(uIndirectDiff, texCoords).rgb;	
 		vec3 indirectSpec  = texture(uIndirectSpec, texCoords).rgb;
 		vec3 emission  = texture(uEmission, texCoords).rgb;
@@ -29,7 +29,10 @@
 		
 		indirectSpec = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
 		
-		vec3 outColor = (lightPass + gammaCorrect(indirectDiff + indirectSpec, HDRIExposure, HDRIContrast)) + emission;
+		vec3 inDirectLighting = gammaCorrect(indirectDiff + indirectSpec, HDRIExposure, HDRIContrast);
+		inDirectLighting = vec3(inDirectLighting.r * HDRIHue.r, inDirectLighting.g * HDRIHue.g, inDirectLighting.b * HDRIHue.b);
+		
+		vec3 outColor = (directLighting + inDirectLighting) + emission;
 		if(outColor == vec3(0.0f))
 			discard;
 		outColor = vec3(outColor.r * FinalColorHue.r, outColor.g * FinalColorHue.g, outColor.b * FinalColorHue.b);
