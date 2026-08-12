@@ -31,7 +31,7 @@ struct SSR_Settings {
 
 class ScreenSpace : public kgfw::Object {
 public:
-	ScreenSpace(GBuffer* gbuffer, int inWidth, int inHeight);
+	ScreenSpace(GBuffer* gbuffer);
 	~ScreenSpace();
 
 	void constructSSAO();
@@ -43,10 +43,10 @@ public:
 	void constructDeferredRendering();
 	void constructForwardRendering();
 
-	void renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int width, int height, int samples);
-	void renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw);
+	void renderSSAO(Camera* m_camera, Mesh* m_meshRender, int samples);
+	void renderSSR(Camera* m_camera, Mesh* m_meshRender);
 	void renderSSR_TA(Camera* m_camera, Mesh* m_meshRender);
-	void renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw);
+	void renderCompositeShader(Mesh* m_meshRender);
 	void recreateColorBuffer();
 
 	void resetTA_SSR();
@@ -60,6 +60,7 @@ public:
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 
+	// TODO: Make a repeatable create helper, just like in GBuffer
 	// Create textures
 	GLuint createSsaoColorBuffer();
 	GLuint createSsaoColorBufferBlur();
@@ -95,7 +96,7 @@ private:
 	SSAO_Settings m_ssaoSettings;
 	SSR_Settings m_ssrSettings;
 
-	int width = 640, height = 480, ssrHistoryIndex = 0;
+	int ssrHistoryIndex = 0;
 	int frameIndex = 0;
 
 	Shader* m_SSAO = 0;

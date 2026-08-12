@@ -11,7 +11,7 @@
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
-	uniform bool worldCoords = true, aoTone = false, useSSAO = true;
+	uniform bool worldCoords = true, aoTone = false, useSSAO = false;
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
@@ -204,7 +204,7 @@
 		//float ao = pow(AmbientOcclusion, aoStrength);
 		if(aoTone) { ao = clamp((ao - 0.2) * 1.25, 0.0, 1.0); } // Remaps midtones. Adds contrast to the ambient occlusion
 		//vec3 ambient = (kD * (diffuse * ao) + specular); // Replaced specular with the new finalSpecular
-
+		
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		oIndirectDiff = indirectDiff;
 		

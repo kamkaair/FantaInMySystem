@@ -1,7 +1,7 @@
 #include "ScreenSpace.h"
 
-ScreenSpace::ScreenSpace(GBuffer* gbuffer, int inWidth, int inHeight)
-	: m_GBuffer(gbuffer), width(inWidth), height(inHeight), Object(__FUNCTION__) {
+ScreenSpace::ScreenSpace(GBuffer* gbuffer)
+	: m_GBuffer(gbuffer), Object(__FUNCTION__) {
 	setupSSAO(); //constructSSAO(); constructed, when switching to the deferred rendering
 }
 
@@ -104,17 +104,14 @@ void ScreenSpace::setupSSAO() {
 	noiseTexture = createNoiseTexture(randomFloats, generator);
 }
 
-void ScreenSpace::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender, int inWidth, int inHeight, int samples) {
-	width = inWidth;
-	height = inHeight;
-
+void ScreenSpace::renderSSAO(Camera* m_camera, Mesh* m_meshRender, int samples) {
 	updateSSAOUniforms();
 
 	// SSAO texture
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 	glClear(GL_COLOR_BUFFER_BIT);
+		
 	m_SSAO->bind();
-
 	utils::bindTexture(GL_TEXTURE0, m_SSAO, noiseTexture, "texNoise");
 	utils::bindTexture(GL_TEXTURE1, m_SSAO, m_GBuffer->getGPosition(), "gPosition");
 	utils::bindTexture(GL_TEXTURE2, m_SSAO, m_GBuffer->getGNormal(), "gNormal");
@@ -139,11 +136,7 @@ void ScreenSpace::renderSSAO(Camera* m_camera, UI* m_uiDraw, Mesh* m_meshRender,
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) {
-	// -------------------------------
-	// SSR
-	// -------------------------------
-
+void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender) {
 	updateSSRUniforms();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
@@ -155,8 +148,9 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 	utils::bindTexture(GL_TEXTURE2, m_SSR, m_GBuffer->getGDepth(), "depthMap");
 	utils::bindTexture(GL_TEXTURE3, m_SSR, m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness");
 
-	m_SSR->setUniform("SCR_WIDTH", float(width));
-	m_SSR->setUniform("SCR_HEIGHT", float(height));
+	
+	m_SSR->setUniform("SCR_WIDTH", float(m_GBuffer->getWidth()));
+	m_SSR->setUniform("SCR_HEIGHT", float(m_GBuffer->getHeight()));
 
 	m_SSR->setUniform("invProjection", glm::inverse(m_camera->getProjectionMatrix()));
 	m_SSR->setUniform("projection", m_camera->getProjectionMatrix());
@@ -176,10 +170,7 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
-	// -------------------------------
 	// BLUR
-	// -------------------------------
-
 	////Apply the blur to the SSAO texture - SSAO blur technique
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
 	////glClear(GL_COLOR_BUFFER_BIT);
@@ -193,10 +184,8 @@ void ScreenSpace::renderSSR(Camera* m_camera, Mesh* m_meshRender, UI* m_uiDraw) 
 }
 
 void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
-	// -------------------------------
-	// SSR Temporal Accumulation
-	// -------------------------------
 
+	// SSR Temporal Accumulation
 	utils::bindTexture(GL_TEXTURE0, m_SSR_TA, ssrColorBuffer, "uSSRCurrent");
 	utils::bindTexture(GL_TEXTURE1, m_SSR_TA, getSSRHistoryRead(), "uSSRHistory");
 	utils::bindTexture(GL_TEXTURE2, m_SSR_TA, m_GBuffer->getGDepth(), "depthMap");
@@ -223,17 +212,14 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	m_meshRender->renderQuad();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-	// -------------------------------
 	// SSR History - Copying
-	// -------------------------------
-
 	swapSSRHistory();
 
 	// Copy depth to prevDepth
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, prevDepthFBO);
 
-	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_DEPTH_BUFFER_BIT, GL_NEAREST);
+	glBlitFramebuffer(0, 0, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, 0, m_GBuffer->getWidth(), m_GBuffer->getHeight(), GL_DEPTH_BUFFER_BIT, GL_NEAREST);
 
 	// Copy normal
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getGBuffer());
@@ -242,21 +228,17 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	glReadBuffer(GL_COLOR_ATTACHMENT1); // gNormal
 	glDrawBuffer(GL_COLOR_ATTACHMENT0);
 
-	glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
+	glBlitFramebuffer(0, 0, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, 0, m_GBuffer->getWidth(), m_GBuffer->getHeight(), GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 	prevView = currView;
 	prevProj = currProj;
 	frameIndex++; // frame index used for the random
 }
 
-void ScreenSpace::renderCompositeShader(Mesh* m_meshRender, Camera* m_camera, HDRI* m_HDRI, UI* m_uiDraw)
-{
-	// -------------------------------
+void ScreenSpace::renderCompositeShader(Mesh* m_meshRender) {
 	// SSR Composite - Final Image
-	// -------------------------------
-	glDisable(GL_DEPTH_TEST); // Disable!
+	glDisable(GL_DEPTH_TEST); // Disable depth test!
 
-	// Binds
 	m_GBuffer->getCompositeShader()->bind();
 	utils::bindTexture(GL_TEXTURE0, m_GBuffer->getCompositeShader(), m_GBuffer->getLightPassBuffer(), "uLightPassTex");
 	utils::bindTexture(GL_TEXTURE1, m_GBuffer->getCompositeShader(), m_GBuffer->getLightIndirectDiff(), "uIndirectDiff");
@@ -348,7 +330,7 @@ GLuint ScreenSpace::createNoiseTexture(std::uniform_real_distribution<GLfloat> r
 GLuint ScreenSpace::createSsrSceneColorBuffer() {
 	glGenTextures(1, &ssrColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, NULL);
 	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -375,7 +357,7 @@ void ScreenSpace::createSSR_HistoryFramebuffer() {
 		glBindFramebuffer(GL_FRAMEBUFFER, ssrHistoryFBO[i]);
 
 		glBindTexture(GL_TEXTURE_2D, ssrTemporalBuffer[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, nullptr);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, nullptr);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -394,7 +376,7 @@ void ScreenSpace::createTemporalBuffers()
 	// prevDepth
 	glGenTextures(1, &prevDepthTex);
 	glBindTexture(GL_TEXTURE_2D, prevDepthTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, width, height, 0,GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0,GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -405,7 +387,7 @@ void ScreenSpace::createTemporalBuffers()
 	// prevNormal
 	glGenTextures(1, &prevNormalTex);
 	glBindTexture(GL_TEXTURE_2D, prevNormalTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, width, height, 0, GL_RGB, GL_FLOAT, nullptr);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGB, GL_FLOAT, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -419,8 +401,8 @@ void ScreenSpace::createTemporalBuffers()
 GLuint ScreenSpace::createSsrSceneColorBufferBlur() {
 	glGenTextures(1, &ssrColorBufferBlur);
 	glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_FLOAT, NULL);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, NULL);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_GBuffer->getWidth(), height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
@@ -456,7 +438,7 @@ GLuint ScreenSpace::createSsrBlurFBO() {
 GLuint ScreenSpace::createSsaoColorBuffer() {
 	glGenTextures(1, &ssaoColorBuffer);
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -470,7 +452,7 @@ GLuint ScreenSpace::createSsaoColorBuffer() {
 GLuint ScreenSpace::createSsaoColorBufferBlur() {
 	glGenTextures(1, &ssaoColorBufferBlur);
 	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_FLOAT, NULL);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RED, GL_FLOAT, NULL);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
@@ -511,7 +493,7 @@ void ScreenSpace::recreateColorBuffer() {
 	createSSR_HistoryFramebuffer();
 	createTemporalBuffers();
 
-	m_SSAO->setUniform("noiseScale", glm::vec2(width / 4.0f, height / 4.0f)); // new noiseScale resolution
+	m_SSAO->setUniform("noiseScale", glm::vec2(m_GBuffer->getWidth() / 4.0f, m_GBuffer->getHeight() / 4.0f)); // new noiseScale resolution
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

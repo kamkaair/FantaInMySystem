@@ -39,7 +39,7 @@ public:
 		m_GBuffer = new GBuffer(width, height);
 
 		// Screen Spaced Ambient Occlusion initialization
-		m_ssaoClass = new ScreenSpace(m_GBuffer, width, height);
+		m_ssaoClass = new ScreenSpace(m_GBuffer);
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -260,61 +260,63 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. Screen Space Ambient Occlusion pass
-		if(m_ssaoClass->getSSAO_Settings().useSSAO)
-			m_ssaoClass->renderSSAO(m_camera, m_uiDraw, m_meshRender, width, height, 64);
+		if (m_ssaoClass->getSSAO_Settings().useSSAO)
+			m_ssaoClass->renderSSAO(m_camera, m_meshRender, 64);
 
 		// 3. Lighting pass
 		deferredLightPass();
 
 		// 4. Screen Space Reflection pass
 		if (m_ssaoClass->getSSR_Settings().useSSR)
-			m_ssaoClass->renderSSR(m_camera, m_meshRender, m_uiDraw);
+			m_ssaoClass->renderSSR(m_camera, m_meshRender);
 
-		// 5. Final image
+		// 5. Render the final image
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
 
-		// Render the background
+		// 5.1 Render the background
 		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+			case 0: m_HDRI->renderSkybox(m_camera); break;
+			case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
 
-		// Now the composite shader
-		m_ssaoClass->renderCompositeShader(m_meshRender, m_camera, m_HDRI, m_uiDraw); // Into the default framebuffer
+		// 5.2 Composite shader (includes deferred post processing)
+		m_ssaoClass->renderCompositeShader(m_meshRender); // Into the default framebuffer
 
-		// Transparent meshes
+		// 5.3 Transparent meshes
 		renderTransparentPass();
 
-		// Copy the composite shader's colorbuffer into the default fb
+		// 5.4 Copy the composite shader's colorbuffer into the default fb
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-		// 6. Render icons and UI
-		if (!g_input->getImGuiVisibility()) {
-			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
+		// 6. UI into the default fb
+		if (!g_input->getImGuiVisibility())
 			m_uiDraw->ImGuiDraw();
-		}
 	}
 
 	void renderTransparentPass() {
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		if (!m_scene->getModels().empty()) {
 			glEnable(GL_BLEND); // Enable blending for the transparency and don't use depth mask
 			glDepthMask(GL_FALSE);
 
+			// Render transparent objects
 			m_scene->sortTransparentMeshes();
 			for (auto& trans : m_scene->getTransparentMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
 				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
 			}
 
+			// Render transparent icons with the blending and depth
+			if (!g_input->getImGuiVisibility()) {
+				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
+				m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
+			}			
+
 			glDepthMask(GL_TRUE);
 			glDisable(GL_BLEND);
 		}
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
 
 	void deferredLightPass() {
@@ -322,14 +324,6 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getLightingFBO());
 		glClear(GL_COLOR_BUFFER_BIT);
 		glDisable(GL_DEPTH_TEST);
-
-		// Render skybox, the background image or clear color
-		//glDisable(GL_DEPTH_TEST);
-		/*switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}*/
-		//glEnable(GL_DEPTH_TEST);
 
 		// LIGHT PASS
 		m_GBuffer->getLightPass()->bind();
