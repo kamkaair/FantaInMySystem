@@ -55,9 +55,6 @@ public:
 		// the UI class, contains ImGui and such
 		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_ssaoClass, m_resoManager);
 
-		m_BackgroundShader->bind();
-		m_BackgroundShader->setUniform("environmentMap", 0);
-
 		// Create perspective-projection camera
 		const int fov = 40.0f;
 		m_camera = new Camera(fov, width/height, 0.1f, 100.0f);
@@ -497,6 +494,10 @@ int main(void) {
 	// Load GL functions using glad
 	gladLoadGL(glfwGetProcAddress);
 
+	// OpenGL debug output
+	//glEnable(GL_DEBUG_OUTPUT);
+	//glDebugMessageCallback(glDebugOutput, nullptr);
+
 	// Create application
 	g_app = new Application();
 
@@ -584,9 +585,6 @@ int main(void) {
 	// Delete application
 	delete g_app;
 	g_app = 0;
-
-	glEnable(GL_DEBUG_OUTPUT);
-	glDebugMessageCallback(glDebugOutput, nullptr);
 
 	// Destroy window
 	glfwDestroyWindow(window);

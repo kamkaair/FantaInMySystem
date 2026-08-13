@@ -37,15 +37,15 @@ void displayMatList(const int& item, static int currentItem[], std::vector<const
 	}
 }
 
-void UI::renderPostProcessSliders(PostProcess& pp, Shader* inShader) {
+void UI::renderPostProcessSliders(PostProcess& pp, Shader* forwardShader, Shader* deferredShader) {
 	if (ImGui::SliderFloat((pp.name + "Exposure").c_str(), &pp.exposure, 0.0f, 5.0f))
-		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure, inShader);
+		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure, forwardShader, deferredShader);
 
 	if (ImGui::SliderFloat((pp.name + "Contrast").c_str(), &pp.contrast, 0.0f, 5.0f))
-		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast, inShader);
+		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast, forwardShader, deferredShader);
 
 	if (ImGui::DragFloat3((pp.name + "Hue").c_str(), glm::value_ptr(pp.hue), 0.01f))
-		shaderSetDual((pp.name + "Hue").c_str(), pp.hue, inShader);
+		shaderSetDual((pp.name + "Hue").c_str(), pp.hue, forwardShader, deferredShader);
 
 	// Load selected HDR file and generate the maps for them
 	if (ImGui::Button(("Reset parameters: " + pp.name).c_str())) {
@@ -53,9 +53,9 @@ void UI::renderPostProcessSliders(PostProcess& pp, Shader* inShader) {
 		pp.contrast = 1.0f;
 		pp.hue = glm::vec3(1.0f);
 
-		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure, inShader);
-		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast, inShader);
-		shaderSetDual((pp.name + "Hue").c_str(), pp.hue, inShader);
+		shaderSetDual((pp.name + "Exposure").c_str(), pp.exposure, forwardShader, deferredShader);
+		shaderSetDual((pp.name + "Contrast").c_str(), pp.contrast, forwardShader, deferredShader);
+		shaderSetDual((pp.name + "Hue").c_str(), pp.hue, forwardShader, deferredShader);
 	}
 }
 
@@ -624,9 +624,9 @@ void UI::ImGuiDraw()
 					}
 				}				
 
-				renderPostProcessSliders(pp_HDRI, m_GBuffer->getCompositeShader());
+				renderPostProcessSliders(pp_HDRI, m_GBuffer->getForwardShader(), m_GBuffer->getCompositeShader());
 				ImGui::Dummy(ImVec2(0.0f, 10.0f));
-				renderPostProcessSliders(pp_model, m_GBuffer->getCompositeShader());
+				renderPostProcessSliders(pp_model, m_GBuffer->getForwardShader(), m_GBuffer->getCompositeShader());
 
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
@@ -670,7 +670,7 @@ void UI::ImGuiDraw()
 						ImGui::EndCombo();
 					}
 
-					renderPostProcessSliders(pp_background, m_backImage);
+					renderPostProcessSliders(pp_background, m_backImage, 0);
 
 					if (ImGui::Button("Set Background Texture")) {
 						// Clean up background texture

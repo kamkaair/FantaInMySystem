@@ -56,12 +56,12 @@ public:
 		m_GBuffer->getCurrentShader()->setUniform(uniform, value);
 	}
 
-	template<typename T> void shaderSetDual(const char* uniform, T value, Shader* shader = m_GBuffer->getCurrentShader()) {
-		shader->bind();
-		shader->setUniform(uniform, value);
-		if (deferredRendering) {
-			m_GBuffer->getForwardShader()->bind();
-			m_GBuffer->getForwardShader()->setUniform(uniform, value);
+	template<typename T> void shaderSetDual(const char* uniform, T value, Shader* forwardShader, Shader* deferredShader = m_GBuffer->getCurrentShader()) {
+		forwardShader->bind();
+		forwardShader->setUniform(uniform, value);
+		if (deferredRendering && deferredShader != 0) {
+			deferredShader->bind();
+			deferredShader->setUniform(uniform, value);
 		}
 	}
 
@@ -78,7 +78,7 @@ private:
 		pp_model.name = "FinalColor";
 	}
 
-	void renderPostProcessSliders(PostProcess& pp, Shader* inShader);
+	void renderPostProcessSliders(PostProcess& pp, Shader* forwardShader, Shader* deferredShader);
 	void renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 	void renderMeshTreeNode(Model* model, std::uint16_t nameIndex);
 	void changeMaterial(Mesh* mesh);
