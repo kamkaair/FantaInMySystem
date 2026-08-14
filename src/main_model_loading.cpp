@@ -267,31 +267,31 @@ public:
 		if (m_ssaoClass->getSSR_Settings().useSSR)
 			m_ssaoClass->renderSSR(m_camera, m_meshRender);
 
-		// Render bloom
+		// 5. Render bloom
 		m_ssaoClass->renderBloom(m_meshRender);
 
-		// 5. Render the final image
+		// 6. Render the final image
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
 
-		// 5.1 Render the background
+		// 6.1 Render the background
 		switch (m_uiDraw->getBackgroundMode()) {
 			case 0: m_HDRI->renderSkybox(m_camera); break;
 			case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
 
-		// 5.2 Composite shader (includes deferred post processing)
+		// 6.2 Composite shader (includes deferred post processing)
 		m_ssaoClass->renderCompositeShader(m_meshRender); // Into the default framebuffer
 
-		// 5.3 Transparent meshes
+		// 6.3 Transparent meshes
 		renderTransparentPass();
 
-		// 5.4 Copy the composite shader's colorbuffer into the default fb
+		// 6.4 Copy the composite shader's colorbuffer into the default fb
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
 		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
-		// 6. UI into the default fb
+		// 7. UI into the default fb
 		if (!g_input->getImGuiVisibility())
 			m_uiDraw->ImGuiDraw();
 	}

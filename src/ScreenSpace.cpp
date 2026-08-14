@@ -440,19 +440,26 @@ void ScreenSpace::recreateColorBuffer() {
 
 	// Reconstruct screen space color buffers
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
-
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
 	ssaoColorBuffer = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
-
 	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
 	ssaoColorBufferBlur = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-
 	if (ssrColorBuffer != 0) { glDeleteTextures(1, &ssrColorBuffer); ssrColorBuffer = 0; }
 	ssrColorBuffer = m_GBuffer->createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	if ((pingpongBuffer[0] != 0) && (pingpongBuffer[1] != 0)) {
+		for (int i = 0; i < 2; i++) {
+			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+			glDeleteTextures(1, &pingpongBuffer[i]);
+			pingpongBuffer[i] = 0;
+		}
+	}
+	createPingPongBuffer();
 
 	if ((ssrTemporalBuffer[0] != 0) && (ssrTemporalBuffer[1] != 0)) {
 		for (int i = 0; i < 2; i++) {
