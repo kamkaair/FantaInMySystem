@@ -11,6 +11,7 @@ public:
 	~GBuffer();
 
 	GLuint createBuffer(int colorType, int colorChannels, int texDataType = GL_FLOAT, int colorAttachment = GL_COLOR_ATTACHMENT0);
+	GLuint createFBO();
 
 	GLuint getGPosition() { return gPosition; }
 	GLuint getGAlbedo() { return gAlbedo; }

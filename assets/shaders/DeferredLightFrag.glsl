@@ -15,7 +15,7 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
-	uniform sampler2D uSSAO, uEmission;
+	uniform sampler2D uSSAO;
 	// General ImGui uniforms
 	uniform float aoStrength = 10.0f;
 	
@@ -108,7 +108,6 @@
 		float metallic = texture(gMetallicRoughness, texCoord).r;
 		vec3 N = texture(gNormal, texCoord).rgb;
 		float AmbientOcclusion = texture(uSSAO, texCoord).r;
-		vec3 emission = texture(uEmission, texCoord).rgb;
 		
 		// PBR	
 		// View direction

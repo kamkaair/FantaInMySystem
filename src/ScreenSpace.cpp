@@ -58,6 +58,9 @@ void ScreenSpace::constructDeferredRendering() {
 	//m_GBuffer->deconstructForwardShaders();
 	constructSSAO();
 	constructSSR();
+	
+	if (m_gaussianBlur == 0) // TODO: construct gaussian
+		m_gaussianBlur = utils::makeShader("SSAO-Vert.glsl", "GaussianBlurFrag.glsl");
 }
 
 void ScreenSpace::constructForwardRendering() {
@@ -65,6 +68,7 @@ void ScreenSpace::constructForwardRendering() {
 	glEnable(GL_BLEND);
 	deconstructSSAO();
 	deconstructSSR();
+	if (m_gaussianBlur != 0) { utils::deleteObject(m_gaussianBlur); } // TODO: deconstruct gaussian
 	m_GBuffer->setCurrentShader(m_GBuffer->getForwardShader());
 	//m_GBuffer->constructForwardShaders();
 	m_GBuffer->deconstructDeferredShaders();
@@ -75,29 +79,36 @@ void ScreenSpace::setupSSAO() {
 	std::default_random_engine generator;
 
 	// SSAO texture framebuffer
-	ssaoFBO = createSsaoFBO();
+	glGenFramebuffers(1, &ssaoFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
-	ssaoColorBuffer = createSsaoColorBuffer();
+	//ssaoColorBuffer = createSsaoColorBuffer();
+	ssaoColorBuffer = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	// SSR Color Buffer
-	ssrFBO = createSsrFBO();
+	glGenFramebuffers(1, &ssrFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	ssrColorBuffer = createSsrSceneColorBuffer();
+	//ssrColorBuffer = createSsrSceneColorBuffer();
+	ssrColorBuffer = m_GBuffer->createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	// SSR Temporal Accumulation FBO
 	createSSR_HistoryFramebuffer();
 	createTemporalBuffers();
 
 	//// SSR Blur framebuffer
-	//ssrBlurFBO = createSsrBlurFBO();
+	//glGenFramebuffers(1, &ssrBlurFBO);
 	//glBindFramebuffer(GL_FRAMEBUFFER, ssrBlurFBO);
 	//ssrColorBufferBlur = createSsrSceneColorBufferBlur();
 
 	// Blur framebuffer
-	ssaoBlurFBO = createSsaoBlurFBO();
+	glGenFramebuffers(1, &ssaoBlurFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
-	ssaoColorBufferBlur = createSsaoColorBufferBlur();
+	//ssaoColorBufferBlur = createSsaoColorBufferBlur();
+	ssaoColorBufferBlur = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	// Gaussian blur
+	createPingPongBuffer();
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	ssaoKernel = createSampleKernel(randomFloats, generator);
@@ -235,6 +246,31 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	frameIndex++; // frame index used for the random
 }
 
+void ScreenSpace::renderBloom(Mesh* m_meshRender) {
+	horizontal = true;	
+	first_iteration = true;
+
+	int amount = 10;
+	m_gaussianBlur->bind();
+	for (unsigned int i = 0; i < amount; i++)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
+
+		//m_gaussianBlur->setUniform("horizontal", horizontal);
+		//glBindTexture(GL_TEXTURE_2D, first_iteration ? m_GBuffer->getGEmission() : pingpongBuffer[!horizontal]);
+
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, first_iteration ? m_GBuffer->getGEmission() : pingpongBuffer[!horizontal]);
+		m_gaussianBlur->setUniform("horizontal", horizontal);
+
+		m_meshRender->renderQuad();
+		horizontal = !horizontal;
+		if (first_iteration)
+			first_iteration = false;
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
 void ScreenSpace::renderCompositeShader(Mesh* m_meshRender) {
 	// SSR Composite - Final Image
 	glDisable(GL_DEPTH_TEST); // Disable depth test!
@@ -245,6 +281,7 @@ void ScreenSpace::renderCompositeShader(Mesh* m_meshRender) {
 	utils::bindTexture(GL_TEXTURE2, m_GBuffer->getCompositeShader(), m_GBuffer->getLightIndirectSpec(), "uIndirectSpec");
 	utils::bindTexture(GL_TEXTURE3, m_GBuffer->getCompositeShader(), m_GBuffer->getGEmission(), "uEmission");
 	utils::bindTexture(GL_TEXTURE4, m_GBuffer->getCompositeShader(), getSSR_History(), "uSSR");
+	utils::bindTexture(GL_TEXTURE5, m_GBuffer->getCompositeShader(), pingpongBuffer[!horizontal], "uBloom");
 
 	m_meshRender->renderQuad();
 	glEnable(GL_DEPTH_TEST); // Enable!
@@ -327,25 +364,24 @@ GLuint ScreenSpace::createNoiseTexture(std::uniform_real_distribution<GLfloat> r
 	return noiseTexture;
 }
 
-GLuint ScreenSpace::createSsrSceneColorBuffer() {
-	glGenTextures(1, &ssrColorBuffer);
-	glBindTexture(GL_TEXTURE_2D, ssrColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, NULL);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrColorBuffer, 0);
-	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, attachments);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "SSR Framebuffer not complete!" << std::endl;
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	return ssrColorBuffer;
+void ScreenSpace::createPingPongBuffer() {
+	glGenFramebuffers(2, pingpongFBO);
+	glGenTextures(2, pingpongBuffer);
+	for (unsigned int i = 0; i < 2; i++)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+		glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
+		glTexImage2D(
+			GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, NULL
+		);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+		glFramebufferTexture2D(
+			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0
+		);
+	}
 }
 
 void ScreenSpace::createSSR_HistoryFramebuffer() {
@@ -398,71 +434,6 @@ void ScreenSpace::createTemporalBuffers()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-GLuint ScreenSpace::createSsrSceneColorBufferBlur() {
-	glGenTextures(1, &ssrColorBufferBlur);
-	glBindTexture(GL_TEXTURE_2D, ssrColorBufferBlur);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, NULL);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_GBuffer->getWidth(), height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrColorBufferBlur, 0);
-	GLuint attachments[1] = { GL_COLOR_ATTACHMENT0 };
-	glDrawBuffers(1, attachments);
-
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "SSR Framebuffer not complete!" << std::endl;
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	return ssrColorBufferBlur;
-}
-
-GLuint ScreenSpace::createSsrFBO() {
-	glGenFramebuffers(1, &ssrFBO); return ssrFBO;
-}
-
-GLuint ScreenSpace::createSsaoFBO() {
-	glGenFramebuffers(1, &ssaoFBO); return ssaoFBO;
-}
-
-GLuint ScreenSpace::createSsaoBlurFBO() {
-	glGenFramebuffers(1, &ssaoBlurFBO); return ssaoBlurFBO;
-}
-
-GLuint ScreenSpace::createSsrBlurFBO() {
-	glGenFramebuffers(1, &ssrBlurFBO); return ssrBlurFBO;
-}
-
-GLuint ScreenSpace::createSsaoColorBuffer() {
-	glGenTextures(1, &ssaoColorBuffer);
-	glBindTexture(GL_TEXTURE_2D, ssaoColorBuffer);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RED, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBuffer, 0);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "SSAO Framebuffer not complete!" << std::endl;
-
-	return ssaoColorBuffer;
-}
-
-GLuint ScreenSpace::createSsaoColorBufferBlur() {
-	glGenTextures(1, &ssaoColorBufferBlur);
-	glBindTexture(GL_TEXTURE_2D, ssaoColorBufferBlur);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RED, GL_FLOAT, NULL);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssaoColorBufferBlur, 0);
-	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "SSAO Framebuffer not complete!" << std::endl;
-
-	return ssaoColorBufferBlur;
-}
-
 void ScreenSpace::recreateColorBuffer() {
 	// Reconstruct G-Buffer
 	m_GBuffer->updateResolution();
@@ -471,17 +442,17 @@ void ScreenSpace::recreateColorBuffer() {
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
 
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
-	ssaoColorBuffer = createSsaoColorBuffer();
+	ssaoColorBuffer = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
 
 	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
-	ssaoColorBufferBlur = createSsaoColorBufferBlur();
+	ssaoColorBufferBlur = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 
 	if (ssrColorBuffer != 0) { glDeleteTextures(1, &ssrColorBuffer); ssrColorBuffer = 0; }
-	ssrColorBuffer = createSsrSceneColorBuffer();
+	ssrColorBuffer = m_GBuffer->createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	if ((ssrTemporalBuffer[0] != 0) && (ssrTemporalBuffer[1] != 0)) {
 		for (int i = 0; i < 2; i++) {

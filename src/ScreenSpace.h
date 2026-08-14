@@ -46,6 +46,7 @@ public:
 	void renderSSAO(Camera* m_camera, Mesh* m_meshRender, int samples);
 	void renderSSR(Camera* m_camera, Mesh* m_meshRender);
 	void renderSSR_TA(Camera* m_camera, Mesh* m_meshRender);
+	void renderBloom(Mesh* m_meshRender);
 	void renderCompositeShader(Mesh* m_meshRender);
 	void recreateColorBuffer();
 
@@ -59,19 +60,8 @@ public:
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
+	void createPingPongBuffer();
 
-	// TODO: Make a repeatable create helper, just like in GBuffer
-	// Create textures
-	GLuint createSsaoColorBuffer();
-	GLuint createSsaoColorBufferBlur();
-	GLuint createSsrSceneColorBuffer();
-	GLuint createSsrSceneColorBufferBlur();
-
-	// Create FBOs
-	GLuint createSsaoFBO();
-	GLuint createSsaoBlurFBO();
-	GLuint createSsrFBO();
-	GLuint createSsrBlurFBO();
 	void createSSR_HistoryFramebuffer();
 	void createTemporalBuffers();
 
@@ -95,28 +85,34 @@ public:
 private:
 	SSAO_Settings m_ssaoSettings;
 	SSR_Settings m_ssrSettings;
-
-	int ssrHistoryIndex = 0;
-	int frameIndex = 0;
-
+	
 	Shader* m_SSAO = 0;
 	Shader* m_SSR_TA = 0;
 	Shader* m_blurSSAO = 0;
 	Shader* m_SSR = 0;
 	Shader* m_blurSSR = 0;
-	GBuffer* m_GBuffer;
+	Shader* m_gaussianBlur = 0;
+	GBuffer* m_GBuffer;	
 
-	GLuint ssaoFBO = 0, ssaoBlurFBO = 0, ssrFBO = 0, 
-		ssrHistoryFBO[2], ssrBlurFBO = 0;
+	// SSAO
+	GLuint ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0;
+	GLuint ssaoFBO = 0, ssaoBlurFBO = 0;
+	std::vector<glm::vec3> ssaoKernel;
 
-	GLuint ssaoColorBuffer = 0, ssaoColorBufferBlur = 0, noiseTexture = 0, 
-		ssrColorBuffer = 0, ssrTemporalBuffer[2], ssrColorBufferBlur = 0;
+	// SSR
+	GLuint ssrColorBuffer = 0, ssrTemporalBuffer[2], ssrColorBufferBlur = 0;
+	GLuint ssrFBO = 0, ssrHistoryFBO[2], ssrBlurFBO = 0;
 
-	// For the temp accumulation of ssr
+	// Temporary accumulation for SSR
 	GLuint prevDepthTex = 0, prevNormalTex = 0;
 	GLuint prevDepthFBO = 0, prevNormalFBO = 0;
 	glm::mat4 prevView, prevProj;
 	bool firstFrame = true;
+	int ssrHistoryIndex = 0;
+	int frameIndex = 0;
 
-	std::vector<glm::vec3> ssaoKernel;
+	// Bloom
+	GLuint pingpongFBO[2];
+	GLuint pingpongBuffer[2];
+	bool horizontal = true, first_iteration = true;
 };

@@ -267,6 +267,9 @@ public:
 		if (m_ssaoClass->getSSR_Settings().useSSR)
 			m_ssaoClass->renderSSR(m_camera, m_meshRender);
 
+		// Render bloom
+		m_ssaoClass->renderBloom(m_meshRender);
+
 		// 5. Render the final image
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
 

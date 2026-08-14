@@ -8,6 +8,7 @@
 	uniform sampler2D uIndirectSpec;
 	uniform sampler2D uEmission;
 	uniform sampler2D uSSR;
+	uniform sampler2D uBloom;
 	
 	uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
 	uniform vec3 HDRIHue = vec3(1.0), FinalColorHue = vec3(1.0);
@@ -26,6 +27,7 @@
 		vec3 indirectSpec  = texture(uIndirectSpec, texCoords).rgb;
 		vec3 emission  = texture(uEmission, texCoords).rgb;
 		vec4 ssr = texture(uSSR, texCoords).rgba;
+		vec3 bloomBlur = texture(uBloom, texCoords).rgb;
 		
 		indirectSpec = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
 		
@@ -36,6 +38,6 @@
 		if(outColor == vec3(0.0f))
 			discard;
 		outColor = vec3(outColor.r * FinalColorHue.r, outColor.g * FinalColorHue.g, outColor.b * FinalColorHue.b);
-		
+		outColor += bloomBlur;
 		FragColor = vec4(gammaCorrect(outColor, FinalColorExposure, FinalColorContrast), 1.0);
 	}
