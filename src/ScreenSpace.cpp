@@ -17,6 +17,9 @@ ScreenSpace::~ScreenSpace() {
 	for (int i = 0; i < ssaoKernel.size(); i++) {
 		ssaoKernel[i] = glm::vec3{ 0.0f };
 	}
+
+	if (m_gaussianBlur != 0) { utils::deleteObject(m_gaussianBlur); } // Deconstruct gaussian
+	clearPingPongBuffer();
 }
 
 void ScreenSpace::deconstructSSAO() {
@@ -30,25 +33,35 @@ void ScreenSpace::deconstructSSR() {
 	if (m_SSR_TA != 0) { utils::deleteObject(m_SSR_TA); }
 }
 
+void ScreenSpace::clearPingPongBuffer() {
+	if ((pingpongBuffer[0] != 0) && (pingpongBuffer[1] != 0)) {
+		for (int i = 0; i < 2; i++) {
+			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
+			glDeleteTextures(1, &pingpongBuffer[i]);
+			pingpongBuffer[i] = 0;
+		}
+	}
+}
+
 void ScreenSpace::constructSSAO() {
 	// Load SSAO shaders
 	if (m_SSAO == 0)
-		m_SSAO = utils::makeShader("SSAO-Vert.glsl", "SSAO-Frag.glsl");
+		m_SSAO = utils::makeShader("QuadVert.glsl", "SSAO-Frag.glsl");
 
 	if (m_blurSSAO == 0)
-		m_blurSSAO = utils::makeShader("SSAO-Vert.glsl", "blurSSAO-Frag.glsl");
+		m_blurSSAO = utils::makeShader("QuadVert.glsl", "blurSSAO-Frag.glsl");
 }
 
 void ScreenSpace::constructSSR() {
 	// Load SSAO shaders
 	if (m_SSR == 0)
-		m_SSR = utils::makeShader("SSAO-Vert.glsl", "SSR-Frag.glsl");
+		m_SSR = utils::makeShader("QuadVert.glsl", "SSR-Frag.glsl");
 
 	//if (m_blurSSR == 0)
-		//m_blurSSR = utils::makeShader("SSAO-Vert.glsl", "blurSSR-Frag.glsl");
+		//m_blurSSR = utils::makeShader("QuadVert.glsl", "blurSSR-Frag.glsl");
 
 	if (m_SSR_TA == 0)
-		m_SSR_TA = utils::makeShader("SSAO-Vert.glsl", "SSR-TAF.glsl");
+		m_SSR_TA = utils::makeShader("QuadVert.glsl", "SSR-TAF.glsl");
 }
 
 void ScreenSpace::constructDeferredRendering() {
@@ -59,18 +72,19 @@ void ScreenSpace::constructDeferredRendering() {
 	constructSSAO();
 	constructSSR();
 	
-	if (m_gaussianBlur == 0) // TODO: construct gaussian
-		m_gaussianBlur = utils::makeShader("SSAO-Vert.glsl", "GaussianBlurFrag.glsl");
+	if (m_gaussianBlur == 0)
+		m_gaussianBlur = utils::makeShader("QuadVert.glsl", "GaussianBlurFrag.glsl");
 }
 
 void ScreenSpace::constructForwardRendering() {
 	glUseProgram(0); // Unbind any active shader
 	glEnable(GL_BLEND);
+
 	deconstructSSAO();
 	deconstructSSR();
-	if (m_gaussianBlur != 0) { utils::deleteObject(m_gaussianBlur); } // TODO: deconstruct gaussian
+	if (m_gaussianBlur != 0) { utils::deleteObject(m_gaussianBlur); } // Deconstruct gaussian
+
 	m_GBuffer->setCurrentShader(m_GBuffer->getForwardShader());
-	//m_GBuffer->constructForwardShaders();
 	m_GBuffer->deconstructDeferredShaders();
 }
 
@@ -246,7 +260,7 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	frameIndex++; // frame index used for the random
 }
 
-void ScreenSpace::renderBloom(Mesh* m_meshRender) {
+void ScreenSpace::renderBloom(Mesh* m_meshRender, const GLuint& inLightTexture) {
 	static bool first_iteration = true;
 	first_iteration = true;
 	horizontal = true;
@@ -258,7 +272,7 @@ void ScreenSpace::renderBloom(Mesh* m_meshRender) {
 		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
 
 		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, first_iteration ? m_GBuffer->getGEmission() : pingpongBuffer[!horizontal]);
+		glBindTexture(GL_TEXTURE_2D, first_iteration ? inLightTexture : pingpongBuffer[!horizontal]);
 		m_gaussianBlur->setUniform("horizontal", horizontal);
 
 		m_meshRender->renderQuad();
@@ -458,16 +472,10 @@ void ScreenSpace::recreateColorBuffer() {
 	ssrColorBuffer = m_GBuffer->createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	if ((pingpongBuffer[0] != 0) && (pingpongBuffer[1] != 0)) {
-		for (int i = 0; i < 2; i++) {
-			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
-			glDeleteTextures(1, &pingpongBuffer[i]);
-			pingpongBuffer[i] = 0;
-		}
-	}
+	clearPingPongBuffer();
 	createPingPongBuffer();
 
-	if ((ssrTemporalBuffer[0] != 0) && (ssrTemporalBuffer[1] != 0)) {
+	if ((ssrTemporalBuffer[0] != 0) && (ssrTemporalBuffer[1] != 0)) { // Probably could just reuse clearPingPong for this one
 		for (int i = 0; i < 2; i++) {
 			glBindFramebuffer(GL_FRAMEBUFFER, ssrHistoryFBO[i]);
 			glDeleteTextures(1, &ssrTemporalBuffer[i]);

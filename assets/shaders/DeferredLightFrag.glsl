@@ -6,7 +6,7 @@
 	layout (location = 1) out vec3 oIndirectDiff;
 	layout (location = 2) out vec3 oIndirectSpec;
 
-	in vec2 texCoord;
+	in vec2 texCoords;
 	
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
@@ -99,15 +99,15 @@
 	void main()
 	{             
 		// Retrieve data from gbuffer
-		vec3 FragPos = texture(gPosition, texCoord).rgb;
+		vec3 FragPos = texture(gPosition, texCoords).rgb;
 		bool hasGeometry = length(FragPos) > 0.0001;
 		if(!hasGeometry){ discard; return; }
 		
-		vec3 albedo = texture(gAlbedoSpec, texCoord).rgb;	
-		float roughness = texture(gMetallicRoughness, texCoord).g;
-		float metallic = texture(gMetallicRoughness, texCoord).r;
-		vec3 N = texture(gNormal, texCoord).rgb;
-		float AmbientOcclusion = texture(uSSAO, texCoord).r;
+		vec3 albedo = texture(gAlbedoSpec, texCoords).rgb;	
+		float roughness = texture(gMetallicRoughness, texCoords).g;
+		float metallic = texture(gMetallicRoughness, texCoords).r;
+		vec3 N = texture(gNormal, texCoords).rgb;
+		float AmbientOcclusion = texture(uSSAO, texCoords).r;
 		
 		// PBR	
 		// View direction

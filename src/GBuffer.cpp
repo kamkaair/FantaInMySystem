@@ -120,12 +120,12 @@ void GBuffer::constructDeferredShaders() {
 	
 	if (m_lightPass == 0) {
 		setCurrentShader(0);
-		m_lightPass = utils::makeShader("DeferredLightVert.glsl", "DeferredLightFrag.glsl");
+		m_lightPass = utils::makeShader("QuadVert.glsl", "DeferredLightFrag.glsl");
 		setCurrentShader(m_lightPass);
 	}
 	
 	if (m_compositePass == 0)
-		m_compositePass = utils::makeShader("SSAO-Vert.glsl", "CompositeFrag.glsl");
+		m_compositePass = utils::makeShader("QuadVert.glsl", "CompositeFrag.glsl");
 }
 
 void GBuffer::constructForwardShaders() {

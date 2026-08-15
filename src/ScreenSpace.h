@@ -53,10 +53,11 @@ public:
 	void renderSSAO(Camera* m_camera, Mesh* m_meshRender, int samples);
 	void renderSSR(Camera* m_camera, Mesh* m_meshRender);
 	void renderSSR_TA(Camera* m_camera, Mesh* m_meshRender);
-	void renderBloom(Mesh* m_meshRender);
+	void renderBloom(Mesh* m_meshRender, const GLuint& inLightTexture);
 	void renderCompositeShader(Mesh* m_meshRender);
-	void recreateColorBuffer();
 
+	void recreateColorBuffer();
+	void clearPingPongBuffer();
 	void resetTA_SSR();
 
 	void updateSSAOUniforms();

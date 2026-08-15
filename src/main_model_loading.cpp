@@ -178,7 +178,7 @@ public:
 		m_BackgroundShader = utils::makeShader("backgroundVert.glsl", "backgroundFrag.glsl");
 		m_IrradianceShader = utils::makeShader("cubemap_vert.glsl", "irradianceFrag.glsl");
 		m_Prefilter = utils::makeShader("cubemap_vert.glsl", "prefilterFrag.glsl");
-		m_brdf = utils::makeShader("brdfVert.glsl", "brdfFrag.glsl");
+		m_brdf = utils::makeShader("backgroundImageVert.glsl", "brdfFrag.glsl");
 		m_icon = utils::makeShader("iconVert.glsl", "iconFrag.glsl");
 		m_backImage = utils::makeShader("backgroundImageVert.glsl", "backgroundImageFrag.glsl");
 	}
@@ -269,7 +269,7 @@ public:
 
 		// 5. Render bloom
 		if(m_ssaoClass->getBloom_Settings().useBloom)
-			m_ssaoClass->renderBloom(m_meshRender);
+			m_ssaoClass->renderBloom(m_meshRender, m_GBuffer->getGEmission());
 
 		// 6. Render the final image
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());

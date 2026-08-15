@@ -701,6 +701,7 @@ void UI::ImGuiDraw()
 
 					ImGui::TreePop();
 				}
+				ImGui::Separator();
 
 				if (ImGui::TreeNode("SSAO"))
 				{			
