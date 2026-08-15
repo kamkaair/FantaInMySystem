@@ -689,10 +689,22 @@ void UI::ImGuiDraw()
 		}
 		if (deferredRendering) {
 			if (ImGui::BeginTabItem("SCREEN-SPACE"))
-			{		
+			{
+				if (ImGui::TreeNode("Bloom"))
+				{
+					BLOOM_SETTINGS& bloom = m_SSAO->getBloom_Settings();
+					if (ImGui::Checkbox("Use Bloom", &bloom.useBloom))
+						m_SSAO->recreateColorBuffer();
+					ImGui::InputInt("Gaussian Blur Repetitions", &bloom.amount);
+					if (ImGui::SliderInt("Bloom Distance", &bloom.distance, 1, 5)) // Min: 1, Max: 5... currently there's a fixed array of five gaussian weights
+						bloom.dirty = true;
+
+					ImGui::TreePop();
+				}
+
 				if (ImGui::TreeNode("SSAO"))
 				{			
-					SSAO_Settings& ssao = m_SSAO->getSSAO_Settings();
+					SSAO_SETTINGS& ssao = m_SSAO->getSSAO_Settings();
 					if (ImGui::Checkbox("Use SSAO", &ssao.useSSAO)) { // Could be better
 						m_SSAO->recreateColorBuffer();
 						ssao.dirty = true;
@@ -715,7 +727,7 @@ void UI::ImGuiDraw()
 
 				if (ImGui::TreeNode("SSR"))
 				{
-					SSR_Settings& ssr = m_SSAO->getSSR_Settings();
+					SSR_SETTINGS& ssr = m_SSAO->getSSR_Settings();
 					if (ImGui::Checkbox("Use SSR", &ssr.useSSR)) 
 						m_SSAO->recreateColorBuffer();
 					if (ImGui::Checkbox("Use Temporary Accumulation - TA", &ssr.useTA))

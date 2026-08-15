@@ -247,17 +247,15 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 }
 
 void ScreenSpace::renderBloom(Mesh* m_meshRender) {
-	horizontal = true;	
+	static bool first_iteration = true;
 	first_iteration = true;
+	horizontal = true;
 
-	int amount = 10;
+	updateBloomUniforms();
+
 	m_gaussianBlur->bind();
-	for (unsigned int i = 0; i < amount; i++)
-	{
+	for (unsigned int i = 0; i < m_bloomSettings.amount; i++) {
 		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[horizontal]);
-
-		//m_gaussianBlur->setUniform("horizontal", horizontal);
-		//glBindTexture(GL_TEXTURE_2D, first_iteration ? m_GBuffer->getGEmission() : pingpongBuffer[!horizontal]);
 
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, first_iteration ? m_GBuffer->getGEmission() : pingpongBuffer[!horizontal]);
@@ -321,6 +319,14 @@ void ScreenSpace::updateSSRUniforms() {
 	m_SSR->setUniform("useRoughnessScatterSSR", m_ssrSettings.useRayScattering);
 
 	m_ssrSettings.dirty = false;
+}
+
+void ScreenSpace::updateBloomUniforms() {
+	if (!m_bloomSettings.dirty)
+		return;
+
+	m_gaussianBlur->bind();
+	m_gaussianBlur->setUniform("dist", m_bloomSettings.distance);
 }
 
 float SSAOLerp(float a, float b, float f)

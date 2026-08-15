@@ -6,26 +6,33 @@
 #include "UI.h"
 #include <random>
 
-struct SSAO_Settings {
-	bool useSSAO = true;
+struct SSAO_SETTINGS {
 	int kernelSize = 64;
 	float radius = 0.5f;
 	float bias = 0.025f;
 	float occlusionStrength = 10.0f;
-	bool clampedMidTones = false;
 
+	bool clampedMidTones = false;	
+	bool useSSAO = true;
 	bool dirty = false;
 };
 
-struct SSR_Settings {
-	bool useSSR = true;
-	bool useTA = true;
-	bool useRayScattering = true;
-	bool useBinaryRefinement = false;
+struct SSR_SETTINGS {
 	int maxSteps = 5;
 	float thickness = 0.00014;
 	float rayDirMin = 0.001;
 
+	bool useSSR = true;
+	bool useTA = true;
+	bool useRayScattering = true;
+	bool useBinaryRefinement = false;
+	bool dirty = false;
+};
+
+struct BLOOM_SETTINGS {
+	int amount = 10;
+	int distance = 5;
+	bool useBloom = true;
 	bool dirty = false;
 };
 
@@ -54,8 +61,10 @@ public:
 
 	void updateSSAOUniforms();
 	void updateSSRUniforms();
-	SSAO_Settings& getSSAO_Settings() { return m_ssaoSettings; }
-	SSR_Settings& getSSR_Settings() { return m_ssrSettings; }
+	void updateBloomUniforms();
+	SSAO_SETTINGS& getSSAO_Settings() { return m_ssaoSettings; }
+	SSR_SETTINGS& getSSR_Settings() { return m_ssrSettings; }
+	BLOOM_SETTINGS& getBloom_Settings() { return m_bloomSettings; }
 	GLuint ScreenSpace::getSSR_History() { return m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer; }
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
@@ -83,8 +92,9 @@ public:
 	void swapSSRHistory() { ssrHistoryIndex = 1 - ssrHistoryIndex; }
 
 private:
-	SSAO_Settings m_ssaoSettings;
-	SSR_Settings m_ssrSettings;
+	SSAO_SETTINGS m_ssaoSettings;
+	SSR_SETTINGS m_ssrSettings;
+	BLOOM_SETTINGS m_bloomSettings;
 	
 	Shader* m_SSAO = 0;
 	Shader* m_SSR_TA = 0;
@@ -114,5 +124,5 @@ private:
 	// Bloom
 	GLuint pingpongFBO[2];
 	GLuint pingpongBuffer[2];
-	bool horizontal = true, first_iteration = true;
+	bool horizontal = true;
 };
