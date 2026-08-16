@@ -11,26 +11,6 @@ public:
 	~GBuffer();
 
 	GLuint createBuffer(int colorType, int colorChannels, int texDataType = GL_FLOAT, int colorAttachment = GL_COLOR_ATTACHMENT0);
-	GLuint createFBO();
-
-	GLuint getGPosition() { return gPosition; }
-	GLuint getGAlbedo() { return gAlbedo; }
-	GLuint getGNormal() { return gNormal; }
-	GLuint getGBuffer() { return gBuffer; }
-	GLuint getGMetallicRoughness() { return gMetalRough; }
-	GLuint getGEmission() { return gEmission; }
-	GLuint getGDepth() { return gDepthTexture; }
-
-	GLuint getLightingFBO() { return lightFBO; }
-	GLuint getLightPassBuffer() { return m_LightPassTexture; }
-	GLuint getLightIndirectDiff() { return m_LightIndirectDiff; }
-	GLuint getLightIndirectSpec() { return m_LightIndirectSpec; }
-
-	GLuint getCompositeFBO() { return m_compositeFBO; }
-	GLuint getCompositeTexture() { return m_CompositeTexture; }
-
-	float getWidth() const { return width; }
-	float getHeight() const { return height; }
 
 	void updateResolution();
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
@@ -42,6 +22,24 @@ public:
 
 	void deconstructDeferredShaders();
 	void deconstructForwardShaders();
+	void setCurrentShader(Shader* inShader) { m_currentShader = inShader; } // Used for setting (and the other for getting) lighting shaders in the UI
+
+	// Getters
+	GLuint& getGPosition() { return gPosition; }
+	GLuint& getGAlbedo() { return gAlbedo; }
+	GLuint& getGNormal() { return gNormal; }
+	GLuint& getGBuffer() { return gBuffer; }
+	GLuint& getGMetallicRoughness() { return gMetalRough; }
+	GLuint& getGEmission() { return gEmission; }
+	GLuint& getGDepth() { return gDepthTexture; }
+
+	GLuint& getLightingFBO() { return lightFBO; }
+	GLuint& getLightPassBuffer() { return m_LightPassTexture; }
+	GLuint& getLightIndirectDiff() { return m_LightIndirectDiff; }
+	GLuint& getLightIndirectSpec() { return m_LightIndirectSpec; }
+
+	GLuint& getCompositeFBO() { return m_compositeFBO; }
+	GLuint& getCompositeTexture() { return m_CompositeTexture; }
 
 	Shader* getForwardShader() { return m_shader; }
 	Shader* getLightPass() { return m_lightPass; } // TODO: Rename to hint the returning object to be a shader!!
@@ -49,7 +47,8 @@ public:
 	Shader* getCurrentShader() { return m_currentShader; }
 	Shader* getCompositeShader() { return m_compositePass; }
 
-	void setCurrentShader(Shader* inShader) { m_currentShader = inShader; } // Used for setting (and the other for getting) lighting shaders in the UI
+	float getWidth() const { return width; }
+	float getHeight() const { return height; }
 
 private:
 	int width, height;

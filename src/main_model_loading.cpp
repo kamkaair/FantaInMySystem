@@ -39,7 +39,7 @@ public:
 		m_GBuffer = new GBuffer(width, height);
 
 		// Screen Spaced Ambient Occlusion initialization
-		m_ssaoClass = new ScreenSpace(m_GBuffer);
+		m_screenSpace = new ScreenSpace(m_GBuffer);
 
 		// Enable seamless cubemaps
 		glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -53,7 +53,7 @@ public:
 		m_HDRI = m_scene->createHDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_ssaoClass, m_resoManager);
+		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_screenSpace, m_resoManager);
 
 		// Create perspective-projection camera
 		const int fov = 40.0f;
@@ -98,7 +98,7 @@ public:
 		utils::deleteObject(g_input);
 		utils::deleteObject(m_GBuffer);
 		utils::deleteObject(m_iconClass);
-		utils::deleteObject(m_ssaoClass);
+		utils::deleteObject(m_screenSpace);
 		utils::deleteObject(m_scene);
 		utils::deleteObject(m_resoManager);
 
@@ -257,19 +257,19 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. Screen Space Ambient Occlusion pass
-		if (m_ssaoClass->getSSAO_Settings().useSSAO)
-			m_ssaoClass->renderSSAO(m_camera, m_meshRender, 64);
+		if (m_screenSpace->getSSAO_Settings().useSSAO)
+			m_screenSpace->renderSSAO(m_camera, m_meshRender, 64);
 
 		// 3. Lighting pass
 		deferredLightPass();
 
 		// 4. Screen Space Reflection pass
-		if (m_ssaoClass->getSSR_Settings().useSSR)
-			m_ssaoClass->renderSSR(m_camera, m_meshRender);
+		if (m_screenSpace->getSSR_Settings().useSSR)
+			m_screenSpace->renderSSR(m_camera, m_meshRender);
 
 		// 5. Render bloom
-		if(m_ssaoClass->getBloom_Settings().useBloom)
-			m_ssaoClass->renderBloom(m_meshRender, m_GBuffer->getGEmission());
+		if(m_screenSpace->getBloom_Settings().useBloom)
+			m_screenSpace->renderBloom(m_meshRender, m_GBuffer->getGEmission());
 
 		// 6. Render the final image
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
@@ -281,7 +281,7 @@ public:
 		}
 
 		// 6.2 Composite shader (includes deferred post processing)
-		m_ssaoClass->renderCompositeShader(m_meshRender); // Into the default framebuffer
+		m_screenSpace->renderCompositeShader(m_meshRender); // Into the default framebuffer
 
 		// 6.3 Transparent meshes
 		renderTransparentPass();
@@ -334,7 +334,7 @@ public:
 		utils::bindTexture(GL_TEXTURE4, m_GBuffer->getLightPass(), m_GBuffer->getGNormal(), "gNormal");
 		utils::bindTexture(GL_TEXTURE5, m_GBuffer->getLightPass(), m_GBuffer->getGAlbedo(), "gAlbedoSpec");
 		utils::bindTexture(GL_TEXTURE6, m_GBuffer->getLightPass(), m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness");
-		utils::bindTexture(GL_TEXTURE7, m_GBuffer->getLightPass(), m_ssaoClass->getSsaoBlurColorBuffer(), "uSSAO");
+		utils::bindTexture(GL_TEXTURE7, m_GBuffer->getLightPass(), m_screenSpace->getSsaoBlurColorBuffer(), "uSSAO");
 
 		// Set light uniforms + view
 		for (int i = 0; i < m_scene->getLights().size(); i++) {
@@ -455,7 +455,7 @@ private:
 	HDRI*						m_HDRI;
 	GBuffer*					m_GBuffer;
 	Icon*						m_iconClass;
-	ScreenSpace*				m_ssaoClass;
+	ScreenSpace*				m_screenSpace;
 	SaveFile*					m_saveFile;
 	Scene*						m_scene;
 	ResourceManager*			m_resoManager;

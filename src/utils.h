@@ -49,6 +49,8 @@ namespace utils {
 		glBindTexture(type, colorBuffer);
 		inShader->setUniform(name, GL_TEX_INDEX);
 	}
+	static void deleteFBO(GLuint& fbo) { if (fbo != 0) { glDeleteFramebuffers(1, &fbo); fbo = 0; } }
+	static void deleteTexture(GLuint& tex) { if (tex != 0) { glDeleteTextures(1, &tex); tex = 0; } }
 
 	// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
 	template<typename T>

@@ -8,18 +8,20 @@ ScreenSpace::ScreenSpace(GBuffer* gbuffer)
 ScreenSpace::~ScreenSpace() {
 	deconstructSSAO();
 	deconstructSSR();
-	if (ssaoBlurFBO != 0) { glDeleteFramebuffers(1, &ssaoBlurFBO); ssaoBlurFBO = 0; }
-	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
 
-	if (ssaoFBO != 0) { glDeleteFramebuffers(1, &ssaoFBO); ssaoFBO = 0; }
-	if (noiseTexture != 0) { glDeleteTextures(1, &noiseTexture); noiseTexture = 0; }
-	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
+	utils::deleteFBO(ssaoBlurFBO);
+	utils::deleteTexture(ssaoColorBufferBlur);
+
+	utils::deleteFBO(ssaoFBO);
+	utils::deleteTexture(noiseTexture);
+	utils::deleteTexture(ssaoColorBuffer);
+
 	for (int i = 0; i < ssaoKernel.size(); i++) {
 		ssaoKernel[i] = glm::vec3{ 0.0f };
 	}
 
 	if (m_gaussianBlur != 0) { utils::deleteObject(m_gaussianBlur); } // Deconstruct gaussian
-	clearPingPongBuffer();
+	clearPingPongBuffer(pingpongBuffer, pingpongFBO);
 }
 
 void ScreenSpace::deconstructSSAO() {
@@ -33,47 +35,28 @@ void ScreenSpace::deconstructSSR() {
 	if (m_SSR_TA != 0) { utils::deleteObject(m_SSR_TA); }
 }
 
-void ScreenSpace::clearPingPongBuffer() {
-	if ((pingpongBuffer[0] != 0) && (pingpongBuffer[1] != 0)) {
-		for (int i = 0; i < 2; i++) {
-			glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
-			glDeleteTextures(1, &pingpongBuffer[i]);
-			pingpongBuffer[i] = 0;
-		}
-	}
+void ScreenSpace::constructSSAO() { // Load SSAO shaders
+	if (m_SSAO == 0) { m_SSAO = utils::makeShader("QuadVert.glsl", "SSAO-Frag.glsl"); }
+	if (m_blurSSAO == 0) { m_blurSSAO = utils::makeShader("QuadVert.glsl", "blurSSAO-Frag.glsl"); }	
 }
 
-void ScreenSpace::constructSSAO() {
-	// Load SSAO shaders
-	if (m_SSAO == 0)
-		m_SSAO = utils::makeShader("QuadVert.glsl", "SSAO-Frag.glsl");
-
-	if (m_blurSSAO == 0)
-		m_blurSSAO = utils::makeShader("QuadVert.glsl", "blurSSAO-Frag.glsl");
-}
-
-void ScreenSpace::constructSSR() {
-	// Load SSAO shaders
-	if (m_SSR == 0)
-		m_SSR = utils::makeShader("QuadVert.glsl", "SSR-Frag.glsl");
-
-	//if (m_blurSSR == 0)
-		//m_blurSSR = utils::makeShader("QuadVert.glsl", "blurSSR-Frag.glsl");
-
-	if (m_SSR_TA == 0)
-		m_SSR_TA = utils::makeShader("QuadVert.glsl", "SSR-TAF.glsl");
+void ScreenSpace::constructSSR() { // Load SSR shaders
+	if (m_SSR == 0) { m_SSR = utils::makeShader("QuadVert.glsl", "SSR-Frag.glsl"); }
+	//if (m_blurSSR == 0) { m_blurSSR = utils::makeShader("QuadVert.glsl", "blurSSR-Frag.glsl"); }
+	if (m_SSR_TA == 0) { m_SSR_TA = utils::makeShader("QuadVert.glsl", "SSR-TAF.glsl"); }		
 }
 
 void ScreenSpace::constructDeferredRendering() {
 	glUseProgram(0); // Unbind any active shader
 	glDisable(GL_BLEND);
+
 	m_GBuffer->constructDeferredShaders();
 	//m_GBuffer->deconstructForwardShaders();
+
 	constructSSAO();
 	constructSSR();
 	
-	if (m_gaussianBlur == 0)
-		m_gaussianBlur = utils::makeShader("QuadVert.glsl", "GaussianBlurFrag.glsl");
+	if (m_gaussianBlur == 0) { m_gaussianBlur = utils::makeShader("QuadVert.glsl", "GaussianBlurFrag.glsl"); }	
 }
 
 void ScreenSpace::constructForwardRendering() {
@@ -105,8 +88,16 @@ void ScreenSpace::setupSSAO() {
 	ssrColorBuffer = m_GBuffer->createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	// SSR Temporal Accumulation FBO
-	createSSR_HistoryFramebuffer();
-	createTemporalBuffers();
+	glGenFramebuffers(2, ssrHistoryFBO);
+	createPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO);
+
+	glGenFramebuffers(1, &prevDepthFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, prevDepthFBO);
+	prevDepthTex = m_GBuffer->createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
+	
+	glGenFramebuffers(1, &prevNormalFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, prevNormalFBO);
+	prevNormalTex = m_GBuffer->createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	//// SSR Blur framebuffer
 	//glGenFramebuffers(1, &ssrBlurFBO);
@@ -116,13 +107,13 @@ void ScreenSpace::setupSSAO() {
 	// Blur framebuffer
 	glGenFramebuffers(1, &ssaoBlurFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
-	//ssaoColorBufferBlur = createSsaoColorBufferBlur();
 	ssaoColorBufferBlur = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	// Gaussian blur
-	createPingPongBuffer();
+	glGenFramebuffers(2, pingpongFBO);
+	createPingPongBuffer(pingpongBuffer, pingpongFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	ssaoKernel = createSampleKernel(randomFloats, generator);
@@ -224,8 +215,7 @@ void ScreenSpace::renderSSR_TA(Camera* m_camera, Mesh* m_meshRender) {
 	glm::mat4 currView = m_camera->getViewMatrix();
 	glm::mat4 currProj = m_camera->getProjectionMatrix();
 
-	if (firstFrame)
-	{
+	if (firstFrame) {
 		prevView = currView;
 		prevProj = currProj;
 		firstFrame = false;
@@ -384,8 +374,18 @@ GLuint ScreenSpace::createNoiseTexture(std::uniform_real_distribution<GLfloat> r
 	return noiseTexture;
 }
 
-void ScreenSpace::createPingPongBuffer() {
-	glGenFramebuffers(2, pingpongFBO);
+void ScreenSpace::clearPingPongBuffer(GLuint pingBuffer[], GLuint pingFBO[]) {
+	if ((pingBuffer[0] != 0) && (pingBuffer[1] != 0)) {
+		for (int i = 0; i < 2; i++) {
+			glBindFramebuffer(GL_FRAMEBUFFER, pingFBO[i]);
+			glDeleteTextures(1, &pingBuffer[i]);
+			pingBuffer[i] = 0;
+		}
+	}
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void ScreenSpace::createPingPongBuffer(GLuint pingpongBuffer[], GLuint pingpongFBO[]) {
 	glGenTextures(2, pingpongBuffer);
 	for (unsigned int i = 0; i < 2; i++)
 	{
@@ -404,89 +404,43 @@ void ScreenSpace::createPingPongBuffer() {
 	}
 }
 
-void ScreenSpace::createSSR_HistoryFramebuffer() {
-	glGenFramebuffers(2, ssrHistoryFBO);
-	glGenTextures(2, ssrTemporalBuffer);
-
-	for (int i = 0; i < 2; ++i)
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, ssrHistoryFBO[i]);
-
-		glBindTexture(GL_TEXTURE_2D, ssrTemporalBuffer[i]);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, nullptr);
-
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ssrTemporalBuffer[i], 0);
-
-		if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-			std::cout << "SSR history FBO incomplete!" << std::endl;
-	}
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-void ScreenSpace::createTemporalBuffers()
-{
-	// prevDepth
-	glGenTextures(1, &prevDepthTex);
-	glBindTexture(GL_TEXTURE_2D, prevDepthTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0,GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	glGenFramebuffers(1, &prevDepthFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, prevDepthFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, prevDepthTex, 0);
-
-	// prevNormal
-	glGenTextures(1, &prevNormalTex);
-	glBindTexture(GL_TEXTURE_2D, prevNormalTex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGB, GL_FLOAT, nullptr);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-	glGenFramebuffers(1, &prevNormalFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, prevNormalFBO);
-	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, prevNormalTex, 0);
-
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
 void ScreenSpace::recreateColorBuffer() {
 	// Reconstruct G-Buffer
 	m_GBuffer->updateResolution();
-
+	
 	// Reconstruct screen space color buffers
-	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO);
+	// SSAO
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO); 
 	if (ssaoColorBuffer != 0) { glDeleteTextures(1, &ssaoColorBuffer); ssaoColorBuffer = 0; }
 	ssaoColorBuffer = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO);
+	// SSAO blur
+	glBindFramebuffer(GL_FRAMEBUFFER, ssaoBlurFBO); 
 	if (ssaoColorBufferBlur != 0) { glDeleteTextures(1, &ssaoColorBufferBlur); ssaoColorBufferBlur = 0; }
 	ssaoColorBufferBlur = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
+	// SSR
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO); 
 	if (ssrColorBuffer != 0) { glDeleteTextures(1, &ssrColorBuffer); ssrColorBuffer = 0; }
 	ssrColorBuffer = m_GBuffer->createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+	checkGLError();
 
-	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
-	clearPingPongBuffer();
-	createPingPongBuffer();
+	// Gaussian blur
+	clearPingPongBuffer(pingpongBuffer, pingpongFBO); 
+	createPingPongBuffer(pingpongBuffer, pingpongFBO);
 
-	if ((ssrTemporalBuffer[0] != 0) && (ssrTemporalBuffer[1] != 0)) { // Probably could just reuse clearPingPong for this one
-		for (int i = 0; i < 2; i++) {
-			glBindFramebuffer(GL_FRAMEBUFFER, ssrHistoryFBO[i]);
-			glDeleteTextures(1, &ssrTemporalBuffer[i]);
-			ssrTemporalBuffer[i] = 0;
-		}
-	}
-	createSSR_HistoryFramebuffer();
-	createTemporalBuffers();
+	// SSR Temporal
+	clearPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO); 
+	createPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO);
 
+	utils::deleteTexture(prevDepthTex);
+	utils::deleteTexture(prevNormalTex);
+	prevDepthTex = m_GBuffer->createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
+	prevNormalTex = m_GBuffer->createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+
+	// Update noise resolution
 	m_SSAO->setUniform("noiseScale", glm::vec2(m_GBuffer->getWidth() / 4.0f, m_GBuffer->getHeight() / 4.0f)); // new noiseScale resolution
-
+	
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 

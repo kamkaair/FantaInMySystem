@@ -57,7 +57,7 @@ public:
 	void renderCompositeShader(Mesh* m_meshRender);
 
 	void recreateColorBuffer();
-	void clearPingPongBuffer();
+	void clearPingPongBuffer(GLuint pingBuffer[], GLuint pingFBO[]);
 	void resetTA_SSR();
 
 	void updateSSAOUniforms();
@@ -70,10 +70,7 @@ public:
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
-	void createPingPongBuffer();
-
-	void createSSR_HistoryFramebuffer();
-	void createTemporalBuffers();
+	void createPingPongBuffer(GLuint pingpongBuffer[], GLuint pingpongFBO[]);
 
 	// Screen space gets
 	GLuint getSsaoColorBuffer() { return ssaoColorBuffer; }

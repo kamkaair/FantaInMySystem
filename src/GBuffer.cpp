@@ -6,14 +6,13 @@ GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), 
 	constructForwardShaders(); constructGBuffer();
 }
 
-// TODO: seems that the cleanup doesn't delete everything (memory usage rises up after reconstructing G-Buffer)
 GBuffer::~GBuffer() {
 	CleanUpGBuffer();
 	deconstructForwardShaders();
 	deconstructDeferredShaders();
 }
 
-void GBuffer::constructGBuffer() { // TODO: CleanUpGBuffer() is not clearing everything this method creates, fix that
+void GBuffer::constructGBuffer() {
 	// GBuffer textures and depth
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -97,14 +96,28 @@ void GBuffer::CleanUpGBuffer() {
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	if (gBuffer != 0) { glDeleteFramebuffers(1, &gBuffer); gBuffer = 0; }
-	if (gPosition != 0) { glDeleteTextures(1, &gPosition); gPosition = 0; }
-	if (gNormal != 0) { glDeleteTextures(1, &gNormal); gNormal = 0; }
-	if (gAlbedo != 0) { glDeleteTextures(1, &gAlbedo); gAlbedo = 0; }
-	if (gMetalRough != 0) { glDeleteTextures(1, &gMetalRough); gMetalRough = 0; }
-	if (gDepthTexture != 0) { glDeleteTextures(1, &gDepthTexture); gDepthTexture = 0; }
 
-	if (m_LightPassTexture != 0) { glDeleteTextures(1, &m_LightPassTexture); m_LightPassTexture = 0; }
+	// GBuffer
+	utils::deleteFBO(gBuffer);
+	
+	utils::deleteTexture(gPosition);
+	utils::deleteTexture(gNormal);
+	utils::deleteTexture(gAlbedo);
+	utils::deleteTexture(gEmission);
+	utils::deleteTexture(gMetalRough);
+	utils::deleteTexture(gDepthTexture);
+
+	// Light pass
+	utils::deleteFBO(lightFBO);
+
+	utils::deleteTexture(m_LightPassTexture);
+	utils::deleteTexture(m_LightIndirectDiff);
+	utils::deleteTexture(m_LightIndirectSpec);
+
+	// Composite pass
+	utils::deleteFBO(m_compositeFBO);
+
+	utils::deleteTexture(m_CompositeTexture);
 }
 
 void GBuffer::updateResolution() {
@@ -112,7 +125,6 @@ void GBuffer::updateResolution() {
 	CleanUpGBuffer();
 	constructGBuffer();
 }
-
 
 void GBuffer::constructDeferredShaders() {
 	if (m_geometryPass == 0)
