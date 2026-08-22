@@ -436,8 +436,7 @@ void UI::ImGuiDraw()
 		}
 	}
 
-	if (ImGui::Checkbox("Wireframe mode", &m_wireFrame))
-	{
+	if (ImGui::Checkbox("Wireframe mode", &m_wireFrame)) {
 		m_wireFrame ? glPolygonMode(GL_FRONT_AND_BACK, GL_LINE) : glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 	}
 	

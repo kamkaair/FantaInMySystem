@@ -103,7 +103,7 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 	}
 }
 
-void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights) const {
+void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights, const GLuint& cameraDepthBuffer, const glm::mat4& lightSpace) const {
 	// Bind the shader
 	shader->bind();
 
@@ -113,6 +113,9 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 
 	// Model matrix
 	shader->setUniform("M", getModelMatrix());
+
+	// Light space for shadow mapping
+	shader->setUniform("lightMatrix", lightSpace);
 
 	// Point light properties
 	for (int i = 0; i < lights.size(); i++) {
@@ -174,6 +177,10 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 		glActiveTexture(GL_TEXTURE8);
 		glBindTexture(GL_TEXTURE_2D, textureIds[4]);  // NormalMap
 		shader->setUniform("OpacityMap", 8);
+
+		glActiveTexture(GL_TEXTURE9);
+		glBindTexture(GL_TEXTURE_2D, cameraDepthBuffer);  // NormalMap
+		shader->setUniform("shadowMap", 9);
 	}
 
 	// draw mesh
@@ -192,6 +199,19 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 			glBindTexture(GL_TEXTURE_2D, 0);
 		}
 	}
+}
+
+void Mesh::renderMeshOnly(Shader* shader, const glm::mat4& lightSpace) {
+	// Light space for shadow mapping
+	shader->setUniform("lightMatrix", lightSpace);
+
+	// Model matrix
+	shader->setUniform("modelMatrix", getModelMatrix());
+
+	// draw mesh
+	glBindVertexArray(m_VAO);
+	glDrawElements(GL_TRIANGLES, m_indiceCount, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 }
 
  //Function to render a 1x1 3D cube

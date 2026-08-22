@@ -52,7 +52,7 @@ namespace utils {
 	static void deleteFBO(GLuint& fbo) { if (fbo != 0) { glDeleteFramebuffers(1, &fbo); fbo = 0; } }
 	static void deleteTexture(GLuint& tex) { if (tex != 0) { glDeleteTextures(1, &tex); tex = 0; } }
 
-	// Lambda  helper for deletion of objects. C++ doesn't support polymorphism, so this'll do
+	// Lambda  helper for deletion of objects. TODO: add the if(ptr != 0) check in here. Less repeated code
 	template<typename T>
 	inline void deleteObject(T*& ptr) {
 		delete ptr;

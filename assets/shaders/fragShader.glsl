@@ -6,12 +6,13 @@
 	in vec3 fragPos;
 	in vec2 texCoord;
 	in vec3 normal;
+	in vec4 fragPosLightSpace;
 
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
 	// PBR
-	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, EmissionMap, NormalMap, OpacityMap;
+	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, EmissionMap, NormalMap, OpacityMap, shadowMap;
 	
 	// Use textures or basic colors/values?
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false;
@@ -110,11 +111,26 @@
 		return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
 	}
 	
-	vec3 gammaCorrect(vec3 color, float exposure, float contrast){
+	vec3 gammaCorrect(vec3 color, float exposure, float contrast) {
 		color = color / (color + vec3(1.0)) * exposure;
 		color = pow(color, vec3(1.0 / contrast));
 		
 		return color;
+	}
+
+	float ShadowCalculation(vec4 fragPosLightSpace) {
+		// perform perspective divide
+		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+		// transform to [0,1] range
+		projCoords = projCoords * 0.5 + 0.5;
+		// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+		float closestDepth = texture(shadowMap, projCoords.xy).r; 
+		// get depth of current fragment from light's perspective
+		float currentDepth = projCoords.z;
+		// check whether current frag pos is in shadow
+		float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+
+		return shadow;
 	}
 
 	//Main
@@ -217,7 +233,8 @@
 		vec3 ambient = (kD * diffuse + specular) * HDRIExposure;
 		ambient = gammaCorrect(ambient, HDRIExposure, HDRIContrast); // Ambient lighting tone mapping 
 
-		vec3 color = ambient + Lo + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
+		float shadow = ShadowCalculation(fragPosLightSpace);
+		vec3 color = ambient + (1.0 - shadow) + Lo + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
 		color = gammaCorrect(color, FinalColorExposure, FinalColorContrast); // HDR tonemapping and gamma correct
 		
 		// Color tweaking
@@ -226,6 +243,10 @@
 		// Fun things
 		//color = vec3(1.0) - color; // inverted colors
 		//color = vec3((color.r + color.g + color.b) / 3.0f); // Black and white with average
+		
+		// Shadow mapping debugging
+		//color = texture(shadowMap, texCoord).rgb;
+		//FragColor = vec4(color, 1.0);
 		
 		//Color out
 		FragColor = vec4(color, opacity);

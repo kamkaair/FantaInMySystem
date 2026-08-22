@@ -28,7 +28,8 @@ public:
 	~Mesh();
 	//const std::vector<glm::vec3> 
 	void RenderGBuffer(Shader* shader, Camera* m_camera) const;
-	void Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights) const;
+	void Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights, const GLuint& cameraDepthBuffer, const glm::mat4& lightSpace) const;
+	void renderMeshOnly(Shader* shader, const glm::mat4& lightSpace);
 	void renderCube();
 	void renderQuad();
 	void setMaterial(Material* material);
