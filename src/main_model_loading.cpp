@@ -216,7 +216,7 @@ public:
 
 		// Shader and Matrices:
 		// Light POV, matrices
-		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f); // near plane = 1.0f, far plane = 7.5f. Let's try 0.1f, 100.0f
+		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f); // near plane = 1.0f, far plane = 7.5f. Let's try 0.1f, 100.0f
 		glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
 			glm::vec3(0.0f, 0.0f, 0.0f),
 			glm::vec3(0.0f, 1.0f, 0.0f));
@@ -224,7 +224,9 @@ public:
 		m_shadowRendering->getDepthShader()->bind();
 		checkGLError();
 
+		glCullFace(GL_FRONT);
 		renderOnlyMeshes(lightSpace);
+		glCullFace(GL_BACK);
 		/*if (!m_scene->getModels().empty()) {
 			m_scene->sortTransparentMeshes();
 			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {

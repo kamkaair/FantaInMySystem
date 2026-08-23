@@ -17,7 +17,7 @@
 	// Use textures or basic colors/values?
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false;
 	
-	uniform vec3 u_DiffuseColor, objectColor, HDRIHue = vec3(1.0f), FinalColorHue = vec3(1.0f);
+	uniform vec3 u_DiffuseColor, objectColor, HDRIHue = vec3(1.0f), FinalColorHue = vec3(1.0f), sunDir;
 	uniform float u_Roughness, u_Metallic, u_emissionStrength, u_opacity;
 	uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
 	uniform int NUM_POINT_LIGHTS;
@@ -123,20 +123,38 @@
 		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
 		// transform to [0,1] range
 		projCoords = projCoords * 0.5 + 0.5;
+			
 		// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
 		float closestDepth = texture(shadowMap, projCoords.xy).r; 
 		// get depth of current fragment from light's perspective
 		float currentDepth = projCoords.z;
 		// check whether current frag pos is in shadow
-		float shadow = currentDepth > closestDepth  ? 1.0 : 0.0;
+		float bias = 0.005;
+		//vec3 normal = normalize(fs_in.Normal);
+		//vec3 lightDir = normalize(lightPos - fs_in.FragPos);
+		//float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005); // Max 0.05, min 0.005. Dot product to get the angle
+		float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+		
+		vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+		for(int x = -1; x <= 1; ++x)
+		{
+			for(int y = -1; y <= 1; ++y)
+			{
+				float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+				shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+			}    
+		}
+		shadow /= 9.0;
+
+		if(projCoords.z > 1.0) // Set the lightSpace outside frustum coordinates to 0.0f
+			shadow = 0.0;
 
 		return shadow;
 	}
 
 	//Main
 	void main()
-	{
-	
+	{	
 		float opacity = u_opacity; // Kind of a dinky way of implementing a switch between (texture OR float value)
 		if (useOpacityTexture) {
 			opacity = texture(OpacityMap, texCoord).r;
@@ -234,7 +252,7 @@
 		ambient = gammaCorrect(ambient, HDRIExposure, HDRIContrast); // Ambient lighting tone mapping 
 
 		float shadow = ShadowCalculation(fragPosLightSpace);
-		vec3 color = ambient + (1.0 - shadow) + Lo + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
+		vec3 color = (ambient + Lo * (1.0 - shadow)) + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
 		color = gammaCorrect(color, FinalColorExposure, FinalColorContrast); // HDR tonemapping and gamma correct
 		
 		// Color tweaking
