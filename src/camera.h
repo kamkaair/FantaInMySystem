@@ -12,8 +12,14 @@ public:
     ~Camera() {}
 
     const glm::mat4& getProjectionMatrix() const { return m_projection; }
+    //const glm::mat4& getViewMatrix() const { return m_view; }
+    //const glm::mat4& getLookAt() const { return m_lookAt; }
+
     float getNear() { return m_near; }
     float getFar() { return m_far; }
+
+    //void setLookAt(const glm::vec3& to, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f)) { m_lookAt = glm::inverse(glm::lookAtRH(getPosition(), to, up)); }
+    //void setViewMatrix(const glm::vec3& to, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f)) { m_view = glm::lookAt(cameraPos, to, up); }
 
     // FOV
     void setFOV(float fov) {
@@ -29,6 +35,8 @@ public:
         m_aspect = static_cast<float>(width) / static_cast<float>(height);
         updateProjectionMatrix();
     }
+
+    
 
     float getFOV() const { return m_fov; }
     
@@ -47,6 +55,7 @@ public:
 
 private:
     glm::mat4 m_projection;
+    //glm::mat4 m_projection, m_view, m_lookAt;
 
     float m_fov;
     float m_width, m_height, m_near, m_far;

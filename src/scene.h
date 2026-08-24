@@ -59,6 +59,7 @@ public:
 
 	std::vector<Material*>& getMaterials() { return m_materials; }
 	std::vector<FileLights>& getLights() { return m_lights; }
+	glm::vec3& getDirectionalLight() { return directionalLight; }
 
 	Material* getDefaultMaterial() { return m_defaultMaterial; }
 	Camera* getCamera() { return m_camera; }
@@ -75,8 +76,9 @@ private:
 	std::vector<Mesh*> m_opaqueMeshes;
 	std::vector<std::pair<float, Mesh*>> m_transparentMeshes;
 
+	glm::vec3 directionalLight;
 	std::vector<FileLights> m_lights;
-	std::vector<Material*> m_materials;
+	std::vector<Material*> m_materials;	
 	FileCamera* cameraData;
 	Camera* m_camera;
 	HDRI* m_HDRI;

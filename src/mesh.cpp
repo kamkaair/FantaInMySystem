@@ -103,7 +103,7 @@ void Mesh::RenderGBuffer(Shader* shader, Camera* m_camera) const
 	}
 }
 
-void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights, const GLuint& cameraDepthBuffer, const glm::mat4& lightSpace) const {
+void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights> lights, const glm::vec3& dirLight, const glm::mat4& lightSpace, const GLuint& cameraDepth) const {
 	// Bind the shader
 	shader->bind();
 
@@ -135,6 +135,7 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 	shader->setUniform("NUM_POINT_LIGHTS", lightAmount);
 
 	shader->setUniform("viewPos", m_camera->getPosition().x, m_camera->getPosition().y, m_camera->getPosition().z);
+	shader->setUniform("sunDir", dirLight);
 	
 	// Bind material textures
 	const std::vector<GLuint>& textureIds = m_material->getTextures();
@@ -179,7 +180,7 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 		shader->setUniform("OpacityMap", 8);
 
 		glActiveTexture(GL_TEXTURE9);
-		glBindTexture(GL_TEXTURE_2D, cameraDepthBuffer);  // NormalMap
+		glBindTexture(GL_TEXTURE_2D, cameraDepth);  // NormalMap
 		shader->setUniform("shadowMap", 9);
 	}
 
@@ -201,10 +202,7 @@ void Mesh::Render(Shader* shader, Camera* m_camera, const std::vector<FileLights
 	}
 }
 
-void Mesh::renderMeshOnly(Shader* shader, const glm::mat4& lightSpace) {
-	// Light space for shadow mapping
-	shader->setUniform("lightMatrix", lightSpace);
-
+void Mesh::renderMeshOnly(Shader* shader) {
 	// Model matrix
 	shader->setUniform("modelMatrix", getModelMatrix());
 

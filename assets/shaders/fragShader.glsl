@@ -129,14 +129,15 @@
 		// get depth of current fragment from light's perspective
 		float currentDepth = projCoords.z;
 		// check whether current frag pos is in shadow
-		float bias = 0.005;
-		//vec3 normal = normalize(fs_in.Normal);
-		//vec3 lightDir = normalize(lightPos - fs_in.FragPos);
-		//float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005); // Max 0.05, min 0.005. Dot product to get the angle
-		float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+		//float bias = 0.005;
+		//float shadow = currentDepth - bias > closestDepth ? 1.0 : 0.0;
+		vec3 normal = normalize(normal);
+		vec3 lightDir = normalize(sunDir - fragPos);
+		float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005); // Max 0.05, min 0.005. Dot product to get the angle
 		
+		float shadow;
 		vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
-		for(int x = -1; x <= 1; ++x)
+		for(int x = -1; x <= 1; ++x) // percentage-closer filtering (PCF), look at the surrounding texels and get the average
 		{
 			for(int y = -1; y <= 1; ++y)
 			{

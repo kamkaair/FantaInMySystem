@@ -60,6 +60,7 @@ public:
 		const int fov = 40.0f;
 		m_camera = new Camera(fov, width/height, 0.1f, 100.0f);
 		m_scene->setActiveCamera(m_camera);
+		m_scene->getDirectionalLight() = glm::vec3(-2.0f, 4.0f, -1.0f); // Default directional light
 
 		// Input class
 		g_input = new Inputs(m_uiDraw, m_camera);
@@ -202,54 +203,36 @@ public:
 		framebuffer_size_callback(window, width, height); // Framebuffer callback for preserving aspect ratio
 
 		// Clear the screen
-		//glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		checkGLError();
 
 		glUseProgram(0); // Unbind any active shader
 
-		// SHADOW RENDERING
-		glViewport(0, 0, 1024, 1024);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowRendering->getCameraDepthFBO());
-		glClear(GL_DEPTH_BUFFER_BIT);
-		checkGLError();
+		// 1. Render the shadow depth map, the shadow fb is bound
+		m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f; // Fun stuff. TODO: Could add ImGui options for the directional light
+		m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
+		m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
+		m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
 
-		// Shader and Matrices:
-		// Light POV, matrices
-		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 0.1f, 100.0f); // near plane = 1.0f, far plane = 7.5f. Let's try 0.1f, 100.0f
-		glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::mat4 lightSpace = lightProjection * lightView;
-		m_shadowRendering->getDepthShader()->bind();
-		checkGLError();
-
-		glCullFace(GL_FRONT);
-		renderOnlyMeshes(lightSpace);
-		glCullFace(GL_BACK);
-		/*if (!m_scene->getModels().empty()) {
-			m_scene->sortTransparentMeshes();
-			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
-				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_shadowRendering->getCameraDepthBuffer(), lightSpace);
-				checkGLError();
-			}
-		}*/
-		checkGLError();
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0); // The rest is rendered into the default fb :3
 		glViewport(0, 0, width, height);
-		checkGLError();
+		m_GBuffer->getForwardShader()->bind();
 
-		m_GBuffer->getForwardShader()->bind(); // FORWARD
-		checkGLError();
+		// 1. Render skybox, the background image or clear color
+		glDisable(GL_DEPTH_TEST);
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
+		glEnable(GL_DEPTH_TEST);
 
 		// 2. Render opaque objects
 		if (!m_scene->getModels().empty()) {
 			m_scene->sortTransparentMeshes();
 			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_shadowRendering->getCameraDepthBuffer(), lightSpace);
+				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight(),
+					m_shadowRendering->getLightSpaceMatrix(), m_shadowRendering->getCameraDepthBuffer());
 				checkGLError();
 			}
 
@@ -267,113 +250,7 @@ public:
 			glDepthMask(GL_TRUE);*/
 		}
 
-		// 4. Render icons and UI
-		if (!g_input->getImGuiVisibility()) {
-			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
-			m_uiDraw->ImGuiDraw();
-		}
-
-		// 6.4 Copy the composite shader's colorbuffer into the default fb
-		/*glBindFramebuffer(GL_READ_FRAMEBUFFER, m_shadowRendering->getCameraDepthFBO());
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);*/
-	}
-
-	void renderOnlyMeshes(const glm::mat4& inLightSpace) {
-		//glDepthMask(GL_TRUE);
-		//glEnable(GL_DEPTH_TEST);
-		// 2. Render opaque objects
-		if (!m_scene->getModels().empty()) {
-			//m_scene->sortTransparentMeshes();
-			/*for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
-				glm::mat4 model = glm::mat4(1.0f);
-				m_shadowRendering->getDepthShader()->setUniform("modelMatrix", model);
-				mesh->renderMeshOnly();
-			}
-			for (auto& trans : m_scene->getTransparentMeshes()) {
-				glm::mat4 model = glm::mat4(1.0f);
-				m_shadowRendering->getDepthShader()->setUniform("modelMatrix", model);
-				trans.second->renderMeshOnly();
-			}*/
-			for(Model* model : m_scene->getModels())
-				for (Mesh* mesh : model->getMeshes()) {
-					mesh->renderMeshOnly(m_shadowRendering->getDepthShader(), inLightSpace);
-				}
-		}
-		//glDisable(GL_DEPTH_TEST);
-		//glDepthMask(GL_FALSE);
-	}
-
-	/*void forwardRendering(GLFWwindow* window) {
-		glfwGetFramebufferSize(window, &width, &height); // Query the size of the framebuffer (window content) from glfw.
-		m_camera->setAspectRatio(width, height); // Get ratiod idiot
-		framebuffer_size_callback(window, width, height); // Framebuffer callback for preserving aspect ratio
-
-		// Clear the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		checkGLError();
-
-		glUseProgram(0); // Unbind any active shader
-		m_GBuffer->getForwardShader()->bind();
-
-		// 1. Render skybox, the background image or clear color
-		glDisable(GL_DEPTH_TEST);
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
-		glEnable(GL_DEPTH_TEST);
-
-		// SHADOW RENDERING
-		GLuint m_shadowWidth = 1024, m_shadowHeight = 1024;
-		glViewport(0, 0, m_shadowWidth, m_shadowHeight);
-		glBindFramebuffer(GL_FRAMEBUFFER, m_shadowRendering->getCameraDepthFBO());
-		glClear(GL_DEPTH_BUFFER_BIT);
-		checkGLError();
-
-		// Shader and Matrices:
-		// Light POV, matrices
-		glm::mat4 lightProjection = glm::ortho(-10.0f, 10.0f, -10.0f, 10.0f, 1.0f, 7.5f); // near plane = 1.0f, far plane = 7.5f
-		glm::mat4 lightView = glm::lookAt(glm::vec3(-2.0f, 4.0f, -1.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 1.0f, 0.0f));
-		glm::mat4 lightSpace = lightProjection * lightView;
-		checkGLError();
-		renderOnlyMeshes();
-		checkGLError();
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glViewport(0, 0, width, height);
-
-		// 2. Render opaque objects
-		if (!m_scene->getModels().empty()) {
-			m_scene->sortTransparentMeshes();
-			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
-				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
-
-				glActiveTexture(GL_TEXTURE9);
-				glBindTexture(GL_TEXTURE_2D, m_shadowRendering->getCameraDepthBuffer());  // NormalMap
-				m_GBuffer->getForwardShader()->setUniform("shadowMap", 9);
-				m_GBuffer->getForwardShader()->setUniform("lightMatrix", lightSpace); // TODO: fix this: Render first shadow maps and then normally
-				// https://learnopengl.com/code_viewer_gh.php?code=src/5.advanced_lighting/3.1.2.shadow_mapping_base/shadow_mapping_base.cpp
-			}
-
-			// 3. Render transparent objects
-			glDepthMask(GL_FALSE); // Disabled depth mask, the results look pretty cool
-			for (auto& trans : m_scene->getTransparentMeshes()) {
-				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
-
-				glActiveTexture(GL_TEXTURE9);
-				glBindTexture(GL_TEXTURE_2D, m_shadowRendering->getCameraDepthBuffer());  // NormalMap
-				m_GBuffer->getForwardShader()->setUniform("shadowMap", 9);
-				m_GBuffer->getForwardShader()->setUniform("lightMatrix", lightSpace);
-			}
-			glDepthMask(GL_TRUE);
-		}
+		m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 0);
 
 		// 4. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
@@ -381,13 +258,7 @@ public:
 			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
 			m_uiDraw->ImGuiDraw();
 		}
-
-		// 6.4 Copy the composite shader's colorbuffer into the default fb
-		//glBindFramebuffer(GL_READ_FRAMEBUFFER, m_shadowRendering->getCameraDepthFBO());
-		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-		//glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-	}*/
+	}
 
 	void deferredRendering(GLFWwindow* window) {
 		glfwGetFramebufferSize(window, &width, &height);
@@ -441,7 +312,7 @@ public:
 		m_screenSpace->renderCompositeShader(m_meshRender); // Into the default framebuffer
 
 		// 6.3 Transparent meshes
-		//renderTransparentPass();
+		renderTransparentPass();
 
 		// 6.4 Copy the composite shader's colorbuffer into the default fb
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
@@ -454,7 +325,7 @@ public:
 			m_uiDraw->ImGuiDraw();
 	}
 
-	/*void renderTransparentPass() {
+	void renderTransparentPass() {
 		if (!m_scene->getModels().empty()) {
 			glEnable(GL_BLEND); // Enable blending for the transparency and don't use depth mask
 			glDepthMask(GL_FALSE);
@@ -463,7 +334,7 @@ public:
 			m_scene->sortTransparentMeshes();
 			for (auto& trans : m_scene->getTransparentMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
+				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight());
 			}
 
 			// Render transparent icons with the blending and depth
@@ -475,7 +346,7 @@ public:
 			glDepthMask(GL_TRUE);
 			glDisable(GL_BLEND);
 		}
-	}*/
+	}
 
 	void deferredLightPass() {
 		// Get baked lighting
