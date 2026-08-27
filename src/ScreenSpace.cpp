@@ -3,6 +3,7 @@
 ScreenSpace::ScreenSpace(GBuffer* gbuffer)
 	: m_GBuffer(gbuffer), Object(__FUNCTION__) {
 	setupSSAO(); //constructSSAO(); constructed, when switching to the deferred rendering
+	if (m_gaussianBlur == 0) { m_gaussianBlur = utils::makeShader("QuadVert.glsl", "GaussianBlurFrag.glsl"); }
 }
 
 ScreenSpace::~ScreenSpace() {
@@ -55,8 +56,6 @@ void ScreenSpace::constructDeferredRendering() {
 
 	constructSSAO();
 	constructSSR();
-	
-	if (m_gaussianBlur == 0) { m_gaussianBlur = utils::makeShader("QuadVert.glsl", "GaussianBlurFrag.glsl"); }	
 }
 
 void ScreenSpace::constructForwardRendering() {
@@ -65,7 +64,7 @@ void ScreenSpace::constructForwardRendering() {
 
 	deconstructSSAO();
 	deconstructSSR();
-	if (m_gaussianBlur != 0) { utils::deleteObject(m_gaussianBlur); } // Deconstruct gaussian
+	//if (m_gaussianBlur != 0) { utils::deleteObject(m_gaussianBlur); } // Deconstruct gaussian
 
 	m_GBuffer->setCurrentShader(m_GBuffer->getForwardShader());
 	m_GBuffer->deconstructDeferredShaders();

@@ -16,6 +16,7 @@ public:
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
 	void CleanUpGBuffer();
 	void constructGBuffer();
+	void constructForwardShading();
 
 	void constructDeferredShaders();
 	void constructForwardShaders();
@@ -40,12 +41,16 @@ public:
 
 	GLuint& getCompositeFBO() { return m_compositeFBO; }
 	GLuint& getCompositeTexture() { return m_CompositeTexture; }
+	GLuint& getCompositeForwardFBO() { return m_compositeForwardFBO; }
+	GLuint& getForwardColorBuffer() { return m_forwardColor; }
+	GLuint& getForwardHDRBuffer() { return m_forwardHDR; }
 
 	Shader* getForwardShader() { return m_shader; }
 	Shader* getLightPass() { return m_lightPass; } // TODO: Rename to hint the returning object to be a shader!!
 	Shader* getGeometryPass() { return m_geometryPass; }
 	Shader* getCurrentShader() { return m_currentShader; }
 	Shader* getCompositeShader() { return m_compositePass; }
+	Shader* getForwardCompositeShader() { return m_forwardComposite; }
 
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }
@@ -54,6 +59,7 @@ private:
 	int width, height;
 
 	Shader* m_shader = 0; // Forward rendering lighting pass
+	Shader* m_forwardComposite = 0;
 
 	// Deferred rendering lighting passes
 	Shader* m_lightPass = 0;
@@ -63,9 +69,10 @@ private:
 	Shader* m_currentShader = 0;
 
 	// FBOs
-	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0, m_skyBoxFBO = 0, m_compositeFBO;
+	GLuint gBuffer = 0, ssaoFBO = 0, lightFBO = 0, m_transFBO = 0, m_skyBoxFBO = 0, m_compositeFBO = 0, m_compositeForwardFBO = 0;
 
 	// Textures
 	GLuint gPosition = 0, gNormal = 0, gAlbedo = 0, gMetalRough = 0, gEmission = 0, gDepthTexture = 0;
 	GLuint m_LightPassTexture = 0, m_LightIndirectDiff = 0, m_LightIndirectSpec = 0, m_CompositeTexture = 0;
+	GLuint m_forwardColor = 0, m_forwardHDR = 0;
 };

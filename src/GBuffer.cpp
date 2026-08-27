@@ -3,7 +3,23 @@
 #include <iostream>
 
 GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), Object(__FUNCTION__) {
-	constructForwardShaders(); constructGBuffer();
+	// Lighting pass textures and same depth as before
+	glGenFramebuffers(1, &m_compositeFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
+
+	m_CompositeTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
+	gDepthTexture = createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
+
+	// Check completeness
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+		std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
+
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+	constructForwardShading();
+	constructGBuffer();
 }
 
 GBuffer::~GBuffer() {
@@ -26,8 +42,8 @@ void GBuffer::constructGBuffer() {
 	GLuint attachments[5] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, GL_COLOR_ATTACHMENT4 };
 	glDrawBuffers(5, attachments);
 
-	//gDepthTexture = createDepthBuffer(); // The depth buffer is also a texture
-	gDepthTexture = createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
+	//gDepthTexture = createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT); // The depth buffer is also a texture
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
@@ -58,19 +74,39 @@ void GBuffer::constructGBuffer() {
 
 	// ----------------------------------
 	
-	// Lighting pass textures and same depth as before
-	glGenFramebuffers(1, &m_compositeFBO);
-	glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
+	//// Lighting pass textures and same depth as before
+	//glGenFramebuffers(1, &m_compositeFBO);
+	//glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
 
-	m_CompositeTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+	//m_CompositeTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+
+	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
+
+	//// Check completeness
+	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	//	std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
+
+	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}
+
+void GBuffer::constructForwardShading() {
+	glGenFramebuffers(1, &m_compositeForwardFBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, m_compositeForwardFBO);
+
+	m_forwardColor = createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+	m_forwardHDR = createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT1);
+
+	GLuint attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	glDrawBuffers(2, attachments);
 
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
 
 	// Check completeness
 	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-		std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
+		std::cout << "Framebuffer FORWARD not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	constructForwardShaders();
 }
 
 GLuint GBuffer::createBuffer(int colorType, int colorChannels, int texDataType, int colorAttachment) {
@@ -143,7 +179,8 @@ void GBuffer::constructDeferredShaders() {
 void GBuffer::constructForwardShaders() {
 	if (m_shader == 0) {
 		setCurrentShader(0);
-		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl"); 
+		m_shader = utils::makeShader("vertShader.glsl", "fragShader.glsl");
+		m_forwardComposite = utils::makeShader("backgroundImageVert.glsl", "CompositeForwardFrag.glsl");
 		setCurrentShader(m_shader);
 	}
 }
@@ -156,4 +193,5 @@ void GBuffer::deconstructDeferredShaders() {
 
 void GBuffer::deconstructForwardShaders() {
 	if (m_shader != 0) { utils::deleteObject(m_shader); }
+	if (m_forwardComposite != 0) { utils::deleteObject(m_forwardComposite); }
 }

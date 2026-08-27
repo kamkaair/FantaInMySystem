@@ -1,7 +1,9 @@
 	#version 330 core
 
 	//Variables
-	out vec4 FragColor;
+	//out vec4 FragColor;
+	layout (location = 0) out vec4 FragColor;
+	layout (location = 1) out vec4 BrightColor;
 
 	in vec3 fragPos;
 	in vec2 texCoord;
@@ -254,10 +256,6 @@
 
 		float shadow = ShadowCalculation(fragPosLightSpace);
 		vec3 color = (ambient + Lo * (1.0 - shadow)) + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
-		color = gammaCorrect(color, FinalColorExposure, FinalColorContrast); // HDR tonemapping and gamma correct
-		
-		// Color tweaking
-		color = vec3(color.r * FinalColorHue.r, color.g * FinalColorHue.g, color.b * FinalColorHue.b);
 		
 		// Fun things
 		//color = vec3(1.0) - color; // inverted colors
@@ -266,6 +264,16 @@
 		// Shadow mapping debugging
 		//color = texture(shadowMap, texCoord).rgb;
 		//FragColor = vec4(color, 1.0);
+		
+		float brightness = dot(color, vec3(0.2126, 0.7152, 0.0722));
+		if(brightness > 1.0)
+			BrightColor = vec4(color, 1.0);
+		else
+			BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+			
+		// Color tweaking
+		color = gammaCorrect(color, FinalColorExposure, FinalColorContrast); // HDR tonemapping and gamma correct
+		color = vec3(color.r * FinalColorHue.r, color.g * FinalColorHue.g, color.b * FinalColorHue.b);
 		
 		//Color out
 		FragColor = vec4(color, opacity);

@@ -66,7 +66,8 @@ public:
 	SSAO_SETTINGS& getSSAO_Settings() { return m_ssaoSettings; }
 	SSR_SETTINGS& getSSR_Settings() { return m_ssrSettings; }
 	BLOOM_SETTINGS& getBloom_Settings() { return m_bloomSettings; }
-	GLuint ScreenSpace::getSSR_History() { return m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer; }
+	GLuint getSSR_History() { return m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer; }
+	GLuint getBloomBuffer() { return pingpongBuffer[!horizontal]; }
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
