@@ -2,7 +2,7 @@
 
 ScreenSpace::ScreenSpace(GBuffer* gbuffer)
 	: m_GBuffer(gbuffer), Object(__FUNCTION__) {
-	setupSSAO(); //constructSSAO(); constructed, when switching to the deferred rendering
+	constructScreenSpace(); //constructSSAO(); constructed, when switching to the deferred rendering
 	if (m_gaussianBlur == 0) { m_gaussianBlur = utils::makeShader("QuadVert.glsl", "GaussianBlurFrag.glsl"); }
 }
 
@@ -70,7 +70,7 @@ void ScreenSpace::constructForwardRendering() {
 	m_GBuffer->deconstructDeferredShaders();
 }
 
-void ScreenSpace::setupSSAO() {
+void ScreenSpace::constructScreenSpace() {
 	std::uniform_real_distribution<GLfloat> randomFloats(0.0, 1.0); // generates random floats between 0.0 and 1.0
 	std::default_random_engine generator;
 
@@ -88,7 +88,7 @@ void ScreenSpace::setupSSAO() {
 
 	// SSR Temporal Accumulation FBO
 	glGenFramebuffers(2, ssrHistoryFBO);
-	createPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO);
+	createPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO, GL_RGBA16F, GL_RGBA);
 
 	glGenFramebuffers(1, &prevDepthFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, prevDepthFBO);
@@ -112,7 +112,7 @@ void ScreenSpace::setupSSAO() {
 
 	// Gaussian blur
 	glGenFramebuffers(2, pingpongFBO);
-	createPingPongBuffer(pingpongBuffer, pingpongFBO);
+	createPingPongBuffer(pingpongBuffer, pingpongFBO, GL_RGB16F, GL_RGB);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	ssaoKernel = createSampleKernel(randomFloats, generator);
@@ -384,14 +384,14 @@ void ScreenSpace::clearPingPongBuffer(GLuint pingBuffer[], GLuint pingFBO[]) {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void ScreenSpace::createPingPongBuffer(GLuint pingpongBuffer[], GLuint pingpongFBO[]) {
+void ScreenSpace::createPingPongBuffer(GLuint pingpongBuffer[], GLuint pingpongFBO[], int texImageFormat, int texImageChannels) {
 	glGenTextures(2, pingpongBuffer);
 	for (unsigned int i = 0; i < 2; i++)
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
 		glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
 		glTexImage2D(
-			GL_TEXTURE_2D, 0, GL_RGBA16F, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, GL_RGBA, GL_FLOAT, NULL
+			GL_TEXTURE_2D, 0, texImageFormat, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, texImageChannels, GL_FLOAT, NULL
 		);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -426,11 +426,11 @@ void ScreenSpace::recreateColorBuffer() {
 
 	// Gaussian blur
 	clearPingPongBuffer(pingpongBuffer, pingpongFBO); 
-	createPingPongBuffer(pingpongBuffer, pingpongFBO);
+	createPingPongBuffer(pingpongBuffer, pingpongFBO, GL_RGB16F, GL_RGB);
 
 	// SSR Temporal
-	clearPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO); 
-	createPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO);
+	clearPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO);
+	createPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO, GL_RGBA16F, GL_RGBA);
 
 	utils::deleteTexture(prevDepthTex);
 	utils::deleteTexture(prevNormalTex);

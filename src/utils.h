@@ -4,6 +4,7 @@
 #include <vector>
 #include <filesystem>
 #include <string>
+#include <chrono>
 
 #include "glm/gtx/string_cast.hpp" // Include for printing mats and vecs
 #include <glm/gtc/type_ptr.hpp>

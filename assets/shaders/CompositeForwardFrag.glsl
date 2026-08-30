@@ -21,17 +21,20 @@
 		vec3 directLighting  = texture(uLightPassTex, texCoord).rgb;	
 		vec3 bloomBlur = texture(uBloom, texCoord).rgb;
 		
-		/*indirectSpec = mix(indirectSpec.rgb, ssr.rgb, ssr.a);
-		
-		vec3 inDirectLighting = gammaCorrect(indirectDiff + indirectSpec, HDRIExposure, HDRIContrast);
-		inDirectLighting = vec3(inDirectLighting.r * HDRIHue.r, inDirectLighting.g * HDRIHue.g, inDirectLighting.b * HDRIHue.b);
-		
-		vec3 outColor = (directLighting + inDirectLighting) + emission;
-		if(outColor == vec3(0.0f))
-			discard;*/
+		/*vec3 inDirectLighting = gammaCorrect(indirectDiff + indirectSpec, HDRIExposure, HDRIContrast);
+		inDirectLighting = vec3(inDirectLighting.r * HDRIHue.r, inDirectLighting.g * HDRIHue.g, inDirectLighting.b * HDRIHue.b);	
+		vec3 outColor = (directLighting + inDirectLighting) + emission;*/
+			
 		vec3 outColor = directLighting;
-		//outColor = vec3(outColor.r * FinalColorHue.r, outColor.g * FinalColorHue.g, outColor.b * FinalColorHue.b);
-		outColor += bloomBlur;
+		if(outColor == vec3(0.0f))
+			discard;
+
+		// Color tweaking
+		//color = gammaCorrect(color, FinalColorExposure, FinalColorContrast); // HDR tonemapping and gamma correct
+		//color = vec3(color.r * FinalColorHue.r, color.g * FinalColorHue.g, color.b * FinalColorHue.b);
+		
+		outColor.rgb += bloomBlur.rgb;
+		
 		//FragColor = vec4(gammaCorrect(outColor, FinalColorExposure, FinalColorContrast), 1.0);
 		FragColor = vec4(outColor, 1.0);
 	}

@@ -135,8 +135,8 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			//useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
-			useValue<float>(1.0),											// 5. Opacity
+			useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
+			//useValue<float>(1.0),											// 5. Opacity
 			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
@@ -221,12 +221,12 @@ public:
 		m_GBuffer->getForwardShader()->bind();
 
 		// 1. Render skybox, the background image or clear color
-		glDisable(GL_DEPTH_TEST);
+		/*glDisable(GL_DEPTH_TEST);
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
 		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
 		}
-		glEnable(GL_DEPTH_TEST);
+		glEnable(GL_DEPTH_TEST);*/
 
 		// 2. Render opaque objects
 		if (!m_scene->getModels().empty()) {
@@ -236,39 +236,48 @@ public:
 				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight(),
 					m_shadowRendering->getLightSpaceMatrix(), m_shadowRendering->getCameraDepthBuffer());
 			}
-
-			// 3. Render transparent objects
-			/*glDepthMask(GL_FALSE); // Disabled depth mask, the results look pretty cool
-			for (auto& trans : m_scene->getTransparentMeshes()) {
-				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights());
-
-				glActiveTexture(GL_TEXTURE9);
-				glBindTexture(GL_TEXTURE_2D, m_shadowRendering->getCameraDepthBuffer());  // NormalMap
-				m_GBuffer->getForwardShader()->setUniform("shadowMap", 9);
-				m_GBuffer->getForwardShader()->setUniform("lightMatrix", lightSpace);
-			}
-			glDepthMask(GL_TRUE);*/
 		}
 
+		// Render za bloom
 		if (m_screenSpace->getBloom_Settings().useBloom)
 			m_screenSpace->renderBloom(m_meshRender, m_GBuffer->getForwardHDRBuffer());
+	
+		// 6. Render the final image
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
+		glClear(GL_COLOR_BUFFER_BIT);
+		// 1. Render skybox, the background image or clear color
+		glDisable(GL_DEPTH_TEST);
+		switch (m_uiDraw->getBackgroundMode()) {
+		case 0: m_HDRI->renderSkybox(m_camera); break;
+		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
+		}
+		glEnable(GL_DEPTH_TEST);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		// Render the composite pass
 		renderForwardComposite();
 
-		// 6.4 Copy the composite shader's colorbuffer into the default fb
-		//glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
-		//glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		if (!m_scene->getModels().empty()) {
+			// 3. Render transparent objects
+			glDepthMask(GL_FALSE); // Disabled depth mask, the results look pretty cool
+			for (auto& trans : m_scene->getTransparentMeshes()) {
+				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
+				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight(),
+					m_shadowRendering->getLightSpaceMatrix(), m_shadowRendering->getCameraDepthBuffer());
+			}
+			glDepthMask(GL_TRUE);
+		}
 
-		//glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
-
-		m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 0);
+		// Copy the composite shader's colorbuffer into the default fb
+		glBindFramebuffer(GL_READ_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 		// 4. Render icons and UI
 		if (!g_input->getImGuiVisibility()) {
 			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
 			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
+			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 0);
 			m_uiDraw->ImGuiDraw();
 		}
 	}
@@ -284,57 +293,6 @@ public:
 
 		glEnable(GL_DEPTH_TEST); // Enable!
 	}
-	/*void forwardRendering(GLFWwindow* window) {
-		glfwGetFramebufferSize(window, &width, &height); // Query the size of the framebuffer (window content) from glfw.
-		m_camera->setAspectRatio(width, height); // Get ratiod idiot
-		framebuffer_size_callback(window, width, height); // Framebuffer callback for preserving aspect ratio
-
-		// Clear the screen
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		checkGLError();
-
-		glUseProgram(0); // Unbind any active shader
-
-		// 1. Render the shadow depth map, the shadow fb is bound
-		m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f; // Fun stuff. TODO: Could add ImGui options for the directional light
-		m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
-		m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
-		m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
-
-		glBindFramebuffer(GL_FRAMEBUFFER, 0); // The rest is rendered into the default fb :3
-		glViewport(0, 0, width, height);
-		m_GBuffer->getForwardShader()->bind();
-
-		// 1. Render skybox, the background image or clear color
-		glDisable(GL_DEPTH_TEST);
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
-		glEnable(GL_DEPTH_TEST);
-
-		// 2. Render opaque objects
-		if (!m_scene->getModels().empty()) {
-			m_scene->sortTransparentMeshes();
-			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
-				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
-				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight(),
-					m_shadowRendering->getLightSpaceMatrix(), m_shadowRendering->getCameraDepthBuffer());
-				
-				if (m_screenSpace->getBloom_Settings().useBloom)
-					m_screenSpace->renderBloom(m_meshRender, mesh->getMaterial()->getTextures()[3]);
-			}
-		}
-
-		m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 0);
-
-		// 4. Render icons and UI
-		if (!g_input->getImGuiVisibility()) {
-			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
-			m_uiDraw->ImGuiDraw();
-		}
-	}*/
 
 	void deferredRendering(GLFWwindow* window) {
 		glfwGetFramebufferSize(window, &width, &height);
@@ -385,7 +343,7 @@ public:
 		}
 
 		// 6.2 Composite shader (includes deferred post processing)
-		m_screenSpace->renderCompositeShader(m_meshRender); // Into the default framebuffer
+		m_screenSpace->renderCompositeShader(m_meshRender);
 
 		// 6.3 Transparent meshes
 		renderTransparentPass();
@@ -677,7 +635,9 @@ int main(void) {
 	while (!glfwWindowShouldClose(window)) {
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
+		// Maybe measure the execution time of different render operations: https://stackoverflow.com/questions/22387586/measuring-execution-time-of-a-function-in-c
 		g_app->render(window);
+
 		//g_app->deferredRendering(window);
 		glfwSwapBuffers(window);
 

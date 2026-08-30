@@ -45,7 +45,7 @@ public:
 	void constructSSR();
 	void deconstructSSAO();
 	void deconstructSSR();
-	void setupSSAO();
+	void constructScreenSpace();
 
 	void constructDeferredRendering();
 	void constructForwardRendering();
@@ -71,7 +71,7 @@ public:
 
 	std::vector<glm::vec3> createSampleKernel(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
 	GLuint createNoiseTexture(std::uniform_real_distribution<GLfloat> randomFloats, std::default_random_engine generator);
-	void createPingPongBuffer(GLuint pingpongBuffer[], GLuint pingpongFBO[]);
+	void createPingPongBuffer(GLuint pingpongBuffer[], GLuint pingpongFBO[], int texImageFormat, int texImageChannels);
 
 	// Screen space gets
 	GLuint getSsaoColorBuffer() { return ssaoColorBuffer; }

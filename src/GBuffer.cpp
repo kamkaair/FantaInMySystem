@@ -93,8 +93,8 @@ void GBuffer::constructForwardShading() {
 	glGenFramebuffers(1, &m_compositeForwardFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_compositeForwardFBO);
 
-	m_forwardColor = createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
-	m_forwardHDR = createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT1);
+	m_forwardColor = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+	m_forwardHDR = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT1);
 
 	GLuint attachments[2] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
 	glDrawBuffers(2, attachments);
