@@ -7,6 +7,7 @@
 	layout (location = 2) out vec3 oIndirectSpec;
 
 	in vec2 texCoords;
+	//in vec4 fragPosLightSpace;
 	
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
@@ -15,13 +16,12 @@
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
-	uniform sampler2D uSSAO;
+	uniform sampler2D uSSAO, shadowMap;
 	// General ImGui uniforms
 	uniform float aoStrength = 10.0f;
-	
-	uniform mat4 inverseView;
-	const float PI = 3.14159265359;
-	float exposure = 1.5;
+	uniform mat4 inverseView, lightMatrix;
+	uniform int NUM_POINT_LIGHTS;
+	uniform vec3 sunDir;
 
 	struct PointLight {
 		vec3 position;
@@ -31,13 +31,13 @@
 		float quadratic;
 		float strength;
 	};
-
 	uniform PointLight pointLights[12];
-	uniform int NUM_POINT_LIGHTS;
 
 	// Camera is always at (0.0f, 0.0f, 0.0f), even after viewMatrix * cameraPos.
 	// Works, but the IBL reflections have the same rotation in every angle.
 	const vec3 view = vec3(0.0f, 0.0f, 0.0f);
+	const float PI = 3.14159265359;
+	const float exposure = 1.5;
 
 	//1-----
 	float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -94,6 +94,47 @@
 		color = pow(color, vec3(1.0 / contrast));
 		
 		return color;
+	}
+	
+	float ShadowCalculation(vec3 gFragPos, vec3 gNormal) {
+		//vec3 fragPos = mat3(inverseView) * gFragPos;
+		vec3 fragPos = vec3(inverseView * vec4(gFragPos, 1.0));
+	
+		//vec3 N = gNormal * mat3(inverseView);
+		//vec3 N = mat3(inverseView) * gNormal;
+		vec3 N = normalize(mat3(inverseView) * gNormal);
+		vec4 fragPosLightSpace = lightMatrix * vec4(fragPos, 1.0);
+	
+		// perform perspective divide
+		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
+		// transform to [0,1] range
+		projCoords = projCoords * 0.5 + 0.5;
+			
+		// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
+		//float closestDepth = texture(shadowMap, projCoords.xy).r; 
+		// get depth of current fragment from light's perspective
+		float currentDepth = projCoords.z;
+		// check whether current frag pos is in shadow
+		vec3 normal = normalize(N);
+		vec3 lightDir = normalize(sunDir - fragPos);
+		float bias = max(0.05 * (1.0 - dot(normal, lightDir)), 0.005); // Max 0.05, min 0.005. Dot product to get the angle
+		
+		float shadow;
+		vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
+		for(int x = -1; x <= 1; ++x) // percentage-closer filtering (PCF), look at the surrounding texels and get the average
+		{
+			for(int y = -1; y <= 1; ++y)
+			{
+				float pcfDepth = texture(shadowMap, projCoords.xy + vec2(x, y) * texelSize).r; 
+				shadow += currentDepth - bias > pcfDepth ? 1.0 : 0.0;        
+			}    
+		}
+		shadow /= 9.0;
+
+		if(projCoords.z > 1.0) // Set the lightSpace outside frustum coordinates to 0.0f
+			shadow = 0.0;
+
+		return shadow;
 	}
 	
 	void main()
@@ -192,6 +233,8 @@
 		vec3 prefilteredColor = textureLod(prefilterMap, NewR, roughness * MAX_REFLECTION_LOD).rgb; // R Set to world-space. Reflect, reflect 360 degrees around my brother
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
+		float shadow = ShadowCalculation(FragPos, N);
+		
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		vec3 indirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		oIndirectSpec = indirectSpec;
@@ -207,5 +250,6 @@
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		oIndirectDiff = indirectDiff;
 		
-		oLightPass = vec3(directDiff + directSpec);
+		//oLightPass = vec3(directDiff + directSpec);
+		oLightPass = vec3(shadow, 0.0, 0.0);
 	}

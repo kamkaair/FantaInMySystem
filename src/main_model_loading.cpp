@@ -135,8 +135,8 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
-			//useValue<float>(1.0),											// 5. Opacity
+			//useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
+			useValue<float>(1.0),											// 5. Opacity
 			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
@@ -397,6 +397,9 @@ public:
 		utils::bindTexture(GL_TEXTURE5, m_GBuffer->getLightPass(), m_GBuffer->getGAlbedo(), "gAlbedoSpec");
 		utils::bindTexture(GL_TEXTURE6, m_GBuffer->getLightPass(), m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness");
 		utils::bindTexture(GL_TEXTURE7, m_GBuffer->getLightPass(), m_screenSpace->getSsaoBlurColorBuffer(), "uSSAO");
+		utils::bindTexture(GL_TEXTURE8, m_GBuffer->getLightPass(), m_shadowRendering->getCameraDepthBuffer(), "shadowMap");
+
+		m_GBuffer->getLightPass()->setUniform("lightMatrix", m_shadowRendering->getLightSpaceMatrix());
 
 		// Set light uniforms + view
 		for (int i = 0; i < m_scene->getLights().size(); i++) {
