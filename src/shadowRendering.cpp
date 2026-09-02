@@ -66,4 +66,5 @@ void ShadowRendering::renderShadowMapping(const std::vector<Model*>& models, con
 			}
 	}
 	glCullFace(GL_BACK);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }

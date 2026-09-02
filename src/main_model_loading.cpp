@@ -137,7 +137,7 @@ public:
 			useValue<float>(0.0f),											// 4. Emission
 			//useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
 			useValue<float>(1.0),											// 5. Opacity
-			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
+			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal*/
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
 			useTexture<glm::vec3>("/textures/OldLantern/Lantern_Diffuse.jpg"),
@@ -306,6 +306,13 @@ public:
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_TRUE);
 
+		// 1. Render the shadow depth map, the shadow fb is bound
+		m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f; // Fun stuff. TODO: Could add ImGui options for the directional light
+		m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
+		m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
+		m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
+		glViewport(0, 0, width, height);
+
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -315,7 +322,6 @@ public:
 				mesh->RenderGBuffer(m_GBuffer->getGeometryPass(), m_camera);
 			}
 		}
-
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		// 2. Screen Space Ambient Occlusion pass
@@ -373,8 +379,9 @@ public:
 
 			// Render transparent icons with the blending and depth
 			if (!g_input->getImGuiVisibility()) {
-				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-				m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
+				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0); // Lights
+				m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1); // Crosshair
+				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 0); // Sun
 			}			
 
 			glDepthMask(GL_TRUE);
@@ -399,8 +406,6 @@ public:
 		utils::bindTexture(GL_TEXTURE7, m_GBuffer->getLightPass(), m_screenSpace->getSsaoBlurColorBuffer(), "uSSAO");
 		utils::bindTexture(GL_TEXTURE8, m_GBuffer->getLightPass(), m_shadowRendering->getCameraDepthBuffer(), "shadowMap");
 
-		m_GBuffer->getLightPass()->setUniform("lightMatrix", m_shadowRendering->getLightSpaceMatrix());
-
 		// Set light uniforms + view
 		for (int i = 0; i < m_scene->getLights().size(); i++) {
 			glm::vec3 lightPosWorld = m_scene->getLights()[i].pos;
@@ -417,9 +422,11 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_scene->getLights()[i].strength);
 		}
 
-		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_scene->getLights().size());
 		if (m_uiDraw->getLightOrientation())
 			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
+		m_GBuffer->getLightPass()->setUniform("lightMatrix", m_shadowRendering->getLightSpaceMatrix());
+		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_scene->getLights().size());
+		m_GBuffer->getLightPass()->setUniform("sunDir", m_scene->getDirectionalLight());
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();

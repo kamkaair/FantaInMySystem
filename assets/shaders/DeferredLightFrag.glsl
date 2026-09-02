@@ -250,6 +250,5 @@
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		oIndirectDiff = indirectDiff;
 		
-		//oLightPass = vec3(directDiff + directSpec);
-		oLightPass = vec3(shadow, 0.0, 0.0);
+		oLightPass = vec3(directDiff + directSpec * (1.0 - shadow));
 	}
