@@ -79,6 +79,7 @@ public:
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
 		m_iconClass->loadIconTexture("/textures/crosshair.png");			// 1
+		m_iconClass->loadIconTexture("/textures/SunOutline.png");			// 2
 
 		// Alpha blending
 		glEnable(GL_BLEND);
@@ -214,19 +215,10 @@ public:
 		m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
 		m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
 
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0); // The rest is rendered into the default fb :3
-		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeForwardFBO()); // The rest is rendered into the default fb :3
+		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeForwardFBO()); // Render into a composite fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
 		m_GBuffer->getForwardShader()->bind();
-
-		// 1. Render skybox, the background image or clear color
-		/*glDisable(GL_DEPTH_TEST);
-		switch (m_uiDraw->getBackgroundMode()) {
-		case 0: m_HDRI->renderSkybox(m_camera); break;
-		case 1: m_HDRI->renderBackgroundImage(m_camera, m_HDRI->getBackgroundTexture(), m_backImage); break;
-		}
-		glEnable(GL_DEPTH_TEST);*/
 
 		// 2. Render opaque objects
 		if (!m_scene->getModels().empty()) {
@@ -238,15 +230,15 @@ public:
 			}
 		}
 
-		// Render za bloom
+		// Render za bloom into it's own colorbuffer
 		if (m_screenSpace->getBloom_Settings().useBloom)
 			m_screenSpace->renderBloom(m_meshRender, m_GBuffer->getForwardHDRBuffer());
 	
-		// 6. Render the final image
-		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		// Render and display the final image
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
 		glClear(GL_COLOR_BUFFER_BIT);
-		// 1. Render skybox, the background image or clear color
+
+		// Render skybox, the background image or clear color
 		glDisable(GL_DEPTH_TEST);
 		switch (m_uiDraw->getBackgroundMode()) {
 		case 0: m_HDRI->renderSkybox(m_camera); break;
@@ -265,6 +257,13 @@ public:
 				trans.second->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight(),
 					m_shadowRendering->getLightSpaceMatrix(), m_shadowRendering->getCameraDepthBuffer());
 			}
+
+			// 4. Render icons and UI
+			if (!g_input->getImGuiVisibility()) {
+				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
+				m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
+				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 2);
+			}
 			glDepthMask(GL_TRUE);
 		}
 
@@ -274,12 +273,8 @@ public:
 		glBlitFramebuffer(0, 0, width, height, 0, 0, width, height, GL_COLOR_BUFFER_BIT, GL_NEAREST);
 
 		// 4. Render icons and UI
-		if (!g_input->getImGuiVisibility()) {
-			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0);
-			m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1);
-			m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 0);
+		if (!g_input->getImGuiVisibility())
 			m_uiDraw->ImGuiDraw();
-		}
 	}
 
 	void renderForwardComposite() {
@@ -381,7 +376,7 @@ public:
 			if (!g_input->getImGuiVisibility()) {
 				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getLights(), 0); // Lights
 				m_iconClass->renderIcons(m_icon, 100.0f, m_camera->cameraFocus, 1); // Crosshair
-				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 0); // Sun
+				m_iconClass->renderIcons(m_icon, 25.0f, m_scene->getDirectionalLight(), 2); // Sun
 			}			
 
 			glDepthMask(GL_TRUE);
