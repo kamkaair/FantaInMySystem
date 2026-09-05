@@ -57,6 +57,7 @@ public:
 	void renderCompositeShader(Mesh* m_meshRender);
 
 	void recreateColorBuffer();
+	void recreateGaussianBlur();
 	void clearPingPongBuffer(GLuint pingBuffer[], GLuint pingFBO[]);
 	void resetTA_SSR();
 

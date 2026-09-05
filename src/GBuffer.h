@@ -14,9 +14,15 @@ public:
 
 	void updateResolution();
 	void setResolution(int inWidth, int inHeight) { width = inWidth; height = inHeight; }
-	void CleanUpGBuffer();
-	void constructGBuffer();
-	void constructForwardShading();
+
+	void cleanUpGBuffer();
+	void cleanupForward();
+	void cleanupDeferred();
+	void cleanupComposite();
+
+	void constructDeferred();
+	void constructForward();
+	void reconstructCompositePass();
 
 	void constructDeferredShaders();
 	void constructForwardShaders();
@@ -54,9 +60,11 @@ public:
 
 	float getWidth() const { return width; }
 	float getHeight() const { return height; }
+	bool& getRenderMode() { return deferredRendering; }
 
 private:
 	int width, height;
+	bool deferredRendering = false;
 
 	Shader* m_shader = 0; // Forward rendering lighting pass
 	Shader* m_forwardComposite = 0;

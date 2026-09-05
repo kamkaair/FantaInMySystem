@@ -423,17 +423,16 @@ void UI::ImGuiDraw()
 
 	shaderBind(); // Bind the current shader
 
-	if (ImGui::Checkbox("Deferred Rendering", &deferredRendering)) {
-		if (deferredRendering)
+	if (ImGui::Checkbox("Deferred Rendering", &m_GBuffer->getRenderMode())) {
+		if (m_GBuffer->getRenderMode())
 			m_SSAO->constructDeferredRendering();
-		else if (!deferredRendering)
+		else if (!m_GBuffer->getRenderMode())
 			m_SSAO->constructForwardRendering();
 	}
 
-	if(deferredRendering) {
-		if(ImGui::Button("Set Resolution")) {
-			m_SSAO->recreateColorBuffer();
-		}
+	if(ImGui::Button("Set Resolution")) {
+		m_GBuffer->updateResolution();
+		m_GBuffer->getRenderMode() ? m_SSAO->recreateColorBuffer() : m_SSAO->recreateGaussianBlur();
 	}
 
 	if (ImGui::Checkbox("Wireframe mode", &m_wireFrame)) {
@@ -615,7 +614,7 @@ void UI::ImGuiDraw()
 				// Padding
 				ImGui::Dummy(ImVec2(0.0f, 7.5f));
 
-				if (deferredRendering) {
+				if (m_GBuffer->getRenderMode()) {
 					if (ImGui::Checkbox("Lighting Orientation (only for deferred!)", &lightOrientationOn)) {
 						if (!m_GBuffer->getLightPass() == 0) {
 							shaderSet("worldCoords", lightOrientationOn);
@@ -686,7 +685,7 @@ void UI::ImGuiDraw()
 
 			ImGui::EndTabItem();
 		}
-		if (deferredRendering) {
+		if (m_GBuffer->getRenderMode()) {
 			if (ImGui::BeginTabItem("SCREEN-SPACE"))
 			{
 				if (ImGui::TreeNode("Bloom"))

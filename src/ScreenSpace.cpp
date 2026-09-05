@@ -390,23 +390,22 @@ void ScreenSpace::createPingPongBuffer(GLuint pingpongBuffer[], GLuint pingpongF
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, pingpongFBO[i]);
 		glBindTexture(GL_TEXTURE_2D, pingpongBuffer[i]);
-		glTexImage2D(
-			GL_TEXTURE_2D, 0, texImageFormat, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, texImageChannels, GL_FLOAT, NULL
-		);
+		glTexImage2D(GL_TEXTURE_2D, 0, texImageFormat, m_GBuffer->getWidth(), m_GBuffer->getHeight(), 0, texImageChannels, GL_FLOAT, NULL);
+		
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glFramebufferTexture2D(
-			GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0
-		);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, pingpongBuffer[i], 0);
 	}
 }
 
+void ScreenSpace::recreateGaussianBlur() {	
+	clearPingPongBuffer(pingpongBuffer, pingpongFBO);
+	createPingPongBuffer(pingpongBuffer, pingpongFBO, GL_RGB16F, GL_RGB);
+}
+
 void ScreenSpace::recreateColorBuffer() {
-	// Reconstruct G-Buffer
-	m_GBuffer->updateResolution();
-	
 	// Reconstruct screen space color buffers
 	// SSAO
 	glBindFramebuffer(GL_FRAMEBUFFER, ssaoFBO); 
@@ -419,14 +418,11 @@ void ScreenSpace::recreateColorBuffer() {
 	ssaoColorBufferBlur = m_GBuffer->createBuffer(GL_R16F, GL_RED, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	// SSR
-	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO); 
+	glBindFramebuffer(GL_FRAMEBUFFER, ssrFBO);
 	if (ssrColorBuffer != 0) { glDeleteTextures(1, &ssrColorBuffer); ssrColorBuffer = 0; }
 	ssrColorBuffer = m_GBuffer->createBuffer(GL_RGBA16F, GL_RGBA, GL_FLOAT, GL_COLOR_ATTACHMENT0);
-	checkGLError();
 
-	// Gaussian blur
-	clearPingPongBuffer(pingpongBuffer, pingpongFBO); 
-	createPingPongBuffer(pingpongBuffer, pingpongFBO, GL_RGB16F, GL_RGB);
+	recreateGaussianBlur(); // Gaussian blur
 
 	// SSR Temporal
 	clearPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO);

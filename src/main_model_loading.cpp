@@ -195,12 +195,13 @@ public:
 	}
 
 	void render(GLFWwindow* window) {
-		!m_uiDraw->getRenderMode() ? forwardRendering(window) : deferredRendering(window);
+		!m_GBuffer->getRenderMode() ? forwardRendering(window) : deferredRendering(window);
 	}
 
 	void forwardRendering(GLFWwindow* window) {
 		glfwGetFramebufferSize(window, &width, &height); // Query the size of the framebuffer (window content) from glfw.
 		m_camera->setAspectRatio(width, height); // Get ratiod idiot
+		m_GBuffer->setResolution(width, height);
 		framebuffer_size_callback(window, width, height); // Framebuffer callback for preserving aspect ratio
 
 		// Clear the screen

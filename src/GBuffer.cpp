@@ -3,13 +3,30 @@
 #include <iostream>
 
 GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), Object(__FUNCTION__) {
+	reconstructCompositePass();
+	constructForward();
+	constructDeferred();
+}
+
+GBuffer::~GBuffer() {
+	cleanUpGBuffer();
+	deconstructForwardShaders();
+	deconstructDeferredShaders();
+}
+
+void GBuffer::reconstructCompositePass() {
+	if (m_compositeFBO != 0) {
+		glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
+		utils::deleteTexture(m_CompositeTexture);
+		m_CompositeTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+
 	// Lighting pass textures and same depth as before
 	glGenFramebuffers(1, &m_compositeFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
 
 	m_CompositeTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
-
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
 	gDepthTexture = createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
 
 	// Check completeness
@@ -17,18 +34,9 @@ GBuffer::GBuffer(int inWidth, int inHeight) : width(inWidth), height(inHeight), 
 		std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	constructForwardShading();
-	constructGBuffer();
 }
 
-GBuffer::~GBuffer() {
-	CleanUpGBuffer();
-	deconstructForwardShaders();
-	deconstructDeferredShaders();
-}
-
-void GBuffer::constructGBuffer() {
+void GBuffer::constructDeferred() {
 	// GBuffer textures and depth
 	glGenFramebuffers(1, &gBuffer);
 	glBindFramebuffer(GL_FRAMEBUFFER, gBuffer);
@@ -71,25 +79,9 @@ void GBuffer::constructGBuffer() {
 		std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-	// ----------------------------------
-	
-	//// Lighting pass textures and same depth as before
-	//glGenFramebuffers(1, &m_compositeFBO);
-	//glBindFramebuffer(GL_FRAMEBUFFER, m_compositeFBO);
-
-	//m_CompositeTexture = createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
-
-	//glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, gDepthTexture, 0);
-
-	//// Check completeness
-	//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-	//	std::cout << "Framebuffer LIGHT PASS textures are not complete!" << std::endl;
-
-	//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void GBuffer::constructForwardShading() {
+void GBuffer::constructForward() {
 	glGenFramebuffers(1, &m_compositeForwardFBO);
 	glBindFramebuffer(GL_FRAMEBUFFER, m_compositeForwardFBO);
 
@@ -128,20 +120,22 @@ GLuint GBuffer::createBuffer(int colorType, int colorChannels, int texDataType, 
 	return newColorBuffer;
 }
 
-void GBuffer::CleanUpGBuffer() {
-	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+void GBuffer::cleanupForward() {
+	// Forward composite
+	utils::deleteFBO(m_compositeForwardFBO);
+	utils::deleteTexture(m_forwardColor);
+	utils::deleteTexture(m_forwardHDR);
+}
 
+void GBuffer::cleanupDeferred() {
 	// GBuffer
 	utils::deleteFBO(gBuffer);
-	
+
 	utils::deleteTexture(gPosition);
 	utils::deleteTexture(gNormal);
 	utils::deleteTexture(gAlbedo);
 	utils::deleteTexture(gEmission);
 	utils::deleteTexture(gMetalRough);
-	utils::deleteTexture(gDepthTexture);
 
 	// Light pass
 	utils::deleteFBO(lightFBO);
@@ -149,17 +143,34 @@ void GBuffer::CleanUpGBuffer() {
 	utils::deleteTexture(m_LightPassTexture);
 	utils::deleteTexture(m_LightIndirectDiff);
 	utils::deleteTexture(m_LightIndirectSpec);
+}
 
+void GBuffer::cleanupComposite() {
 	// Composite pass
 	utils::deleteFBO(m_compositeFBO);
-
 	utils::deleteTexture(m_CompositeTexture);
 }
 
+void GBuffer::cleanUpGBuffer() {
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	cleanupDeferred(); // Deferred
+	cleanupForward(); // Forward
+	cleanupComposite(); // Composite
+}
+
 void GBuffer::updateResolution() {
-	// Reconstruct GBuffer
-	CleanUpGBuffer();
-	constructGBuffer();
+	reconstructCompositePass(); // Reconstruct composite, cleanup inside
+	if (deferredRendering) {
+		cleanupDeferred(); // Deferred
+		constructDeferred();
+	}
+	else {
+		cleanupForward(); // Forward
+		constructForward();
+	}
 }
 
 void GBuffer::constructDeferredShaders() {

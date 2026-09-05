@@ -47,7 +47,6 @@ public:
 	void toggleWireframe() { m_wireFrame = !m_wireFrame; }
 	void setImGuiAlpha(float alpha) { ImGuiAlpha = alpha; }
 
-	bool getRenderMode() { return deferredRendering; }
 	int getBackgroundMode() const { return backgroundMode; }
 
 	bool getLightOrientation() { return lightOrientationOn; }
@@ -59,7 +58,7 @@ public:
 	template<typename T> void shaderSetDual(const char* uniform, T value, Shader* forwardShader, Shader* deferredShader = m_GBuffer->getCurrentShader()) {
 		forwardShader->bind();
 		forwardShader->setUniform(uniform, value);
-		if (deferredRendering && deferredShader != 0) {
+		if (m_GBuffer->getRenderMode() && deferredShader != 0) {
 			deferredShader->bind();
 			deferredShader->setUniform(uniform, value);
 		}
@@ -99,8 +98,7 @@ private:
 	
 	const char* backgroundOptions[2] = { "HDRI","Texture" };
 
-	bool meshRotationEnabled = false, doOnce = true, meshHide = false, 
-		deferredRendering = false, windowDisabled = false, lightOrientationOn = true, useFolderFiltering = false;
+	bool meshRotationEnabled = false, doOnce = true, meshHide = false, windowDisabled = false, lightOrientationOn = true, useFolderFiltering = false;
 
 	// UI settings
 	bool m_useAutomaticTextures = false, m_wireFrame = false;
