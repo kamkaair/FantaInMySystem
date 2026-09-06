@@ -427,10 +427,12 @@ void ScreenSpace::recreateColorBuffer() {
 	// SSR Temporal
 	clearPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO);
 	createPingPongBuffer(ssrTemporalBuffer, ssrHistoryFBO, GL_RGBA16F, GL_RGBA);
-
 	utils::deleteTexture(prevDepthTex);
 	utils::deleteTexture(prevNormalTex);
+
+	glBindFramebuffer(GL_FRAMEBUFFER, prevDepthFBO);
 	prevDepthTex = m_GBuffer->createBuffer(GL_DEPTH_COMPONENT32F, GL_DEPTH_COMPONENT, GL_FLOAT, GL_DEPTH_ATTACHMENT);
+	glBindFramebuffer(GL_FRAMEBUFFER, prevNormalFBO);
 	prevNormalTex = m_GBuffer->createBuffer(GL_RGB16F, GL_RGB, GL_FLOAT, GL_COLOR_ATTACHMENT0);
 
 	// Update noise resolution

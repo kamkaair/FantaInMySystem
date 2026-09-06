@@ -121,10 +121,9 @@
 	}
 
 	float ShadowCalculation(vec4 fragPosLightSpace) {
-		// perform perspective divide
-		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
-		// transform to [0,1] range
-		projCoords = projCoords * 0.5 + 0.5;
+		// perform perspective divide, transform to NDC [-1,1] (gl_Position would automatically do this transform, but it was passed in as clip-space)
+		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w; // Light-space position in range of [-1,1]
+		projCoords = projCoords * 0.5 + 0.5; // transform to [0,1] range
 			
 		// get closest depth value from light's perspective (using [0,1] range fragPosLight as coords)
 		//float closestDepth = texture(shadowMap, projCoords.xy).r; 
