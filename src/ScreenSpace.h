@@ -1,40 +1,13 @@
 #pragma once
 #include "kgfw/Object.h"
+
 #include "shader.h"
 #include "GBuffer.h"
 #include "utils.h"
 #include "UI.h"
+#include "settingsStructs.h"
+
 #include <random>
-
-struct SSAO_SETTINGS {
-	int kernelSize = 64;
-	float radius = 0.5f;
-	float bias = 0.025f;
-	float occlusionStrength = 10.0f;
-
-	bool clampedMidTones = false;	
-	bool useSSAO = true;
-	bool dirty = false;
-};
-
-struct SSR_SETTINGS {
-	int maxSteps = 5;
-	float thickness = 0.00014;
-	float rayDirMin = 0.001;
-
-	bool useSSR = true;
-	bool useTA = true;
-	bool useRayScattering = true;
-	bool useBinaryRefinement = false;
-	bool dirty = false;
-};
-
-struct BLOOM_SETTINGS {
-	int amount = 10;
-	int distance = 5;
-	bool useBloom = true;
-	bool dirty = false;
-};
 
 class ScreenSpace : public kgfw::Object {
 public:
@@ -64,9 +37,12 @@ public:
 	void updateSSAOUniforms();
 	void updateSSRUniforms();
 	void updateBloomUniforms();
+
 	SSAO_SETTINGS& getSSAO_Settings() { return m_ssaoSettings; }
 	SSR_SETTINGS& getSSR_Settings() { return m_ssrSettings; }
 	BLOOM_SETTINGS& getBloom_Settings() { return m_bloomSettings; }
+	SHADOW_SETTINGS& getShadow_Settings() { return m_shadowSettings; }
+
 	GLuint getSSR_History() { return m_ssrSettings.useTA ? getSSRHistoryRead() : ssrColorBuffer; }
 	GLuint getBloomBuffer() { return pingpongBuffer[!horizontal]; }
 
@@ -95,6 +71,7 @@ private:
 	SSAO_SETTINGS m_ssaoSettings;
 	SSR_SETTINGS m_ssrSettings;
 	BLOOM_SETTINGS m_bloomSettings;
+	SHADOW_SETTINGS m_shadowSettings;
 	
 	Shader* m_SSAO = 0;
 	Shader* m_SSR_TA = 0;

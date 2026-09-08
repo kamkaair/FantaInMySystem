@@ -3,6 +3,7 @@
 #include "GBuffer.h"
 #include "scene.h"
 #include "resourceManager.h"
+#include "shadowRendering.h"
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -29,7 +30,8 @@ public:
 		HDRI* hdri,
 		GBuffer* gbuffer,
 		ScreenSpace* ssao,
-		ResourceManager* resoManager);
+		ResourceManager* resoManager,
+		ShadowRendering* shadow);
 	~UI();
 
 	void ImGuiStyleSetup();
@@ -89,6 +91,7 @@ private:
 	GBuffer* m_GBuffer;
 	ScreenSpace* m_SSAO;
 	ResourceManager* m_resoManager;
+	ShadowRendering* m_shadowRendering;
 
 	// File names
 	std::string defaultFolderPath = "/textures";

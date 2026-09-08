@@ -10,12 +10,14 @@ UI::UI(Shader* backImage,
 	HDRI* hdri,
 	GBuffer* gbuffer,
 	ScreenSpace* ssao,
-	ResourceManager* resoManager)
+	ResourceManager* resoManager,
+	ShadowRendering* shadow)
 	: m_backImage(backImage),
 	m_HDRI(hdri),
 	m_GBuffer(gbuffer),
 	m_SSAO(ssao),
 	m_resoManager(resoManager),
+	m_shadowRendering(shadow),
 	ImGuiAlpha(0.3f),
 	Object(__FUNCTION__) {
 
@@ -685,41 +687,58 @@ void UI::ImGuiDraw()
 
 			ImGui::EndTabItem();
 		}
-		if (m_GBuffer->getRenderMode()) {
-			if (ImGui::BeginTabItem("SCREEN-SPACE"))
+		if (ImGui::BeginTabItem("EFFECTS"))
+		{
+			if (ImGui::TreeNode("Bloom"))
 			{
-				if (ImGui::TreeNode("Bloom"))
-				{
-					BLOOM_SETTINGS& bloom = m_SSAO->getBloom_Settings();
-					if (ImGui::Checkbox("Use Bloom", &bloom.useBloom))
-						m_SSAO->recreateColorBuffer();
-					ImGui::InputInt("Gaussian Blur Repetitions", &bloom.amount);
-					if (ImGui::SliderInt("Bloom Distance", &bloom.distance, 1, 5)) // Min: 1, Max: 5... currently there's a fixed array of five gaussian weights
-						bloom.dirty = true;
+				BLOOM_SETTINGS& bloom = m_SSAO->getBloom_Settings();
+				if (ImGui::Checkbox("Use Bloom", &bloom.useBloom))
+					m_SSAO->recreateColorBuffer();
+				ImGui::InputInt("Gaussian Blur Repetitions", &bloom.amount);
+				if (ImGui::SliderInt("Bloom Distance", &bloom.distance, 1, 5)) // Min: 1, Max: 5... currently there's a fixed array of five gaussian weights
+					bloom.dirty = true;
 
-					ImGui::TreePop();
+				ImGui::TreePop();
+			}
+			ImGui::Separator();
+
+			if (ImGui::TreeNode("Shadows"))
+			{
+				SHADOW_SETTINGS& shadow = m_SSAO->getShadow_Settings();
+				if (ImGui::Checkbox("Use Shadow Mapping", &shadow.useShadowMap)) {
+					m_shadowRendering->clearShadowMapping();
+					shaderSet("useShadowMap", shadow.useShadowMap);
 				}
-				ImGui::Separator();
+				if (ImGui::Checkbox("Use Time Spin", &shadow.useTimeSpin))
+					shadow.pos = m_resoManager->getScene()->getDirectionalLight();
+				if (!shadow.useTimeSpin) {
+					if (ImGui::DragFloat3("Directional Light Position", glm::value_ptr(shadow.pos), 0.01f))
+						m_resoManager->getScene()->getDirectionalLight() = shadow.pos;
+				}							
 
+				ImGui::TreePop();
+			}
+			ImGui::Separator();
+			if (m_GBuffer->getRenderMode()) {
 				if (ImGui::TreeNode("SSAO"))
-				{			
+				{
 					SSAO_SETTINGS& ssao = m_SSAO->getSSAO_Settings();
 					if (ImGui::Checkbox("Use SSAO", &ssao.useSSAO)) { // Could be better
 						m_SSAO->recreateColorBuffer();
 						ssao.dirty = true;
-						m_SSAO->updateSSAOUniforms();	
-					}				
-					if (ImGui::InputInt("Kernel Samples", &ssao.kernelSize)) 
+						m_SSAO->updateSSAOUniforms();
+					}
+					if (ImGui::InputInt("Kernel Samples", &ssao.kernelSize))
 						ssao.dirty = true;
-					if (ImGui::InputFloat("Radius", &ssao.radius)) 
+					if (ImGui::InputFloat("Radius", &ssao.radius))
 						ssao.dirty = true;
-					if (ImGui::InputFloat("Bias", &ssao.bias)) 
+					if (ImGui::InputFloat("Bias", &ssao.bias))
 						ssao.dirty = true;
-					if (ImGui::InputFloat("Occlusion Strength", &ssao.occlusionStrength)) 
-						ssao.dirty = true;	
-					if (ImGui::Checkbox("Clamped Midtones", &ssao.clampedMidTones)) 
+					if (ImGui::InputFloat("Occlusion Strength", &ssao.occlusionStrength))
 						ssao.dirty = true;
-					
+					if (ImGui::Checkbox("Clamped Midtones", &ssao.clampedMidTones))
+						ssao.dirty = true;
+
 					ImGui::TreePop();
 				}
 				ImGui::Separator();
@@ -727,14 +746,14 @@ void UI::ImGuiDraw()
 				if (ImGui::TreeNode("SSR"))
 				{
 					SSR_SETTINGS& ssr = m_SSAO->getSSR_Settings();
-					if (ImGui::Checkbox("Use SSR", &ssr.useSSR)) 
+					if (ImGui::Checkbox("Use SSR", &ssr.useSSR))
 						m_SSAO->recreateColorBuffer();
 					if (ImGui::Checkbox("Use Temporary Accumulation - TA", &ssr.useTA))
 						ssr.dirty = true;
 					if (ImGui::Checkbox("Use Roughness Ray Scattering (recommended with TA)", &ssr.useRayScattering))
-						ssr.dirty = true;			
-					if (ImGui::InputInt("maxSteps", &ssr.maxSteps)) 
-						ssr.dirty = true;			
+						ssr.dirty = true;
+					if (ImGui::InputInt("maxSteps", &ssr.maxSteps))
+						ssr.dirty = true;
 					if (ImGui::InputFloat("thickness", &ssr.thickness))
 						ssr.dirty = true;
 					if (ImGui::InputFloat("rayDirMin", &ssr.rayDirMin))
@@ -744,9 +763,9 @@ void UI::ImGuiDraw()
 
 					ImGui::TreePop();
 				}
-
-				ImGui::EndTabItem();
 			}
+
+			ImGui::EndTabItem();
 		}
 		if (ImGui::BeginTabItem("MATERIALS"))
 		{

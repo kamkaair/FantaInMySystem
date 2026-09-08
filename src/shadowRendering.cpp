@@ -68,3 +68,10 @@ void ShadowRendering::renderShadowMapping(const std::vector<Model*>& models, con
 	glCullFace(GL_BACK);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
+
+void ShadowRendering::clearShadowMapping() {
+	glBindFramebuffer(GL_FRAMEBUFFER, getCameraDepthFBO());
+	glClear(GL_DEPTH_BUFFER_BIT);
+	m_lightSpaceMatrix = glm::mat4(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+}

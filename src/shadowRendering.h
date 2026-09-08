@@ -12,6 +12,7 @@ public:
 	~ShadowRendering();
 	void constructShadowMapping();
 	void renderShadowMapping(const std::vector<Model*>& scene, const glm::vec3& lightPos);
+	void clearShadowMapping();
 
 	glm::mat4& getLightSpaceMatrix() { return m_lightSpaceMatrix; }
 	GLuint& getCameraDepthFBO() { return m_cameraDepthFBO; }

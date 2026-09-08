@@ -53,8 +53,11 @@ public:
 		// TODO: move HDRI shaders into HDRI class
 		m_HDRI = m_scene->createHDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
 
+		// Class containing rendering for shadows
+		m_shadowRendering = new ShadowRendering();
+
 		// the UI class, contains ImGui and such
-		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_screenSpace, m_resoManager);
+		m_uiDraw = new UI(m_backImage, m_HDRI, m_GBuffer, m_screenSpace, m_resoManager, m_shadowRendering);
 
 		// Create perspective-projection camera
 		const int fov = 40.0f;
@@ -71,10 +74,6 @@ public:
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);
-
-		// Class containing rendering for shadows
-		m_shadowRendering = new ShadowRendering();
-		checkGLError();
 
 		// Load the texture for an icon
 		m_iconClass->loadIconTexture("/textures/LightBulbLitOutline.png");	// 0
@@ -211,11 +210,15 @@ public:
 		glUseProgram(0); // Unbind any active shader
 
 		// 1. Render the shadow depth map, the shadow fb is bound
-		m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f; // Fun stuff. TODO: Could add ImGui options for the directional light
-		m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
-		m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
-		m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
+		if (m_screenSpace->getShadow_Settings().useTimeSpin) {
+			m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f;
+			m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
+			m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
+		}
+		if (m_screenSpace->getShadow_Settings().useShadowMap)
+			m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
 
+		checkGLError();
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeForwardFBO()); // Render into a composite fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
@@ -303,13 +306,16 @@ public:
 		glDepthMask(GL_TRUE);
 
 		// 1. Render the shadow depth map, the shadow fb is bound
-		m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f; // Fun stuff. TODO: Could add ImGui options for the directional light
-		m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
-		m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
-		m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
-		glViewport(0, 0, width, height);
+		if (m_screenSpace->getShadow_Settings().useTimeSpin) {
+			m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f;
+			m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
+			m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
+		}
+		if (m_screenSpace->getShadow_Settings().useShadowMap)
+			m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
 
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
+		glViewport(0, 0, width, height);
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getGBuffer());
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

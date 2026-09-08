@@ -17,7 +17,7 @@
 	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, EmissionMap, NormalMap, OpacityMap, shadowMap;
 	
 	// Use textures or basic colors/values?
-	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false;
+	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false, useShadowMap = true;
 	
 	uniform vec3 u_DiffuseColor, objectColor, HDRIHue = vec3(1.0f), FinalColorHue = vec3(1.0f), sunDir;
 	uniform float u_Roughness, u_Metallic, u_emissionStrength, u_opacity;
@@ -252,8 +252,11 @@
 		
 		vec3 ambient = (kD * diffuse + specular) * HDRIExposure;
 		ambient = gammaCorrect(ambient, HDRIExposure, HDRIContrast); // Ambient lighting tone mapping 
-
-		float shadow = ShadowCalculation(fragPosLightSpace);
+		
+		float shadow = 0.0;
+		if(useShadowMap)
+			shadow = ShadowCalculation(fragPosLightSpace);
+			
 		vec3 color = (ambient + Lo * (1.0 - shadow)) + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
 		
 		// Fun things

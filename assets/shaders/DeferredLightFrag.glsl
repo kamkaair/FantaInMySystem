@@ -12,7 +12,7 @@
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
-	uniform bool worldCoords = true, aoTone = false, useSSAO = false;
+	uniform bool worldCoords = true, aoTone = false, useSSAO = false, useShadowMap = true;
 	// G-Buffer
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
@@ -233,7 +233,9 @@
 		vec3 prefilteredColor = textureLod(prefilterMap, NewR, roughness * MAX_REFLECTION_LOD).rgb; // R Set to world-space. Reflect, reflect 360 degrees around my brother
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
-		float shadow = ShadowCalculation(FragPos, N);
+		float shadow = 0.0;
+		if(useShadowMap)
+			shadow = ShadowCalculation(FragPos, N);
 		
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		vec3 indirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
