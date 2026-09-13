@@ -34,13 +34,14 @@ namespace utils {
 		return result;
 	}
 
-	static Shader* makeShader(const std::string vertex, const std::string frag) {
+	static Shader* makeShader(const std::string vertex, const std::string frag, const std::string geometry = "") {
 		// Load the main vertex and fragment shaders
 		std::string vertexShaderSource = loadShader(std::string(ASSET_DIR) + "/shaders/" + vertex);
 		std::string fragmentShaderSource = loadShader(std::string(ASSET_DIR) + "/shaders/" + frag);
+		std::string geometryShaderSource = loadShader(std::string(ASSET_DIR) + "/shaders/" + geometry);
 
 		// Build and compile our shader program
-		return new Shader(vertexShaderSource, fragmentShaderSource);
+		return new Shader(vertexShaderSource, fragmentShaderSource, geometryShaderSource);
 	}
 
 	static void bindTexture(int glTexture, Shader* inShader, GLuint colorBuffer, std::string name, int type = GL_TEXTURE_2D) {

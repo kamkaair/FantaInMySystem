@@ -52,6 +52,7 @@ public:
 		// Loads and computes all the HDRI maps
 		// TODO: move HDRI shaders into HDRI class
 		m_HDRI = m_scene->createHDRI(m_cubemapShader, m_BackgroundShader, m_IrradianceShader, m_Prefilter, m_brdf);
+		glViewport(0, 0, width, height); // Added glViewport just in case... I don't know if the viewports assigned in HDRI class are problematic
 
 		// Class containing rendering for shadows
 		m_shadowRendering = new ShadowRendering();
@@ -70,7 +71,7 @@ public:
 
 		// Setup the default save, load the scene from a file
 		setupDefaultSave();
-		m_resoManager->fileLoad("demoScene.bin");
+		m_resoManager->fileLoad("PointShadow.bin");
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);
@@ -135,9 +136,9 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			//useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
-			useValue<float>(1.0),											// 5. Opacity
-			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal*/
+			useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
+			//useValue<float>(1.0),											// 5. Opacity
+			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
 			useTexture<glm::vec3>("/textures/OldLantern/Lantern_Diffuse.jpg"),
@@ -208,6 +209,7 @@ public:
 		checkGLError();
 
 		glUseProgram(0); // Unbind any active shader
+		checkGLError();
 
 		// 1. Render the shadow depth map, the shadow fb is bound
 		if (m_screenSpace->getShadow_Settings().useTimeSpin) {
@@ -215,10 +217,11 @@ public:
 			m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
 			m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
 		}
+		//if (m_screenSpace->getShadow_Settings().useShadowMap)
+			//m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
 		if (m_screenSpace->getShadow_Settings().useShadowMap)
-			m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
+			m_shadowRendering->renderPointLightShadows(m_scene->getModels(), m_scene->getLights()[0].pos);
 
-		checkGLError();
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeForwardFBO()); // Render into a composite fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
@@ -231,6 +234,10 @@ public:
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
 				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight(),
 					m_shadowRendering->getLightSpaceMatrix(), m_shadowRendering->getCameraDepthBuffer());
+
+				glActiveTexture(GL_TEXTURE10);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowRendering->getPointShadowCubeMap());  // NormalMap
+				m_GBuffer->getForwardShader()->setUniform("shadowCubeMap", 10);
 			}
 		}
 

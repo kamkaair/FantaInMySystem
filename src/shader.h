@@ -6,7 +6,7 @@
 
 class Shader : public kgfw::Object {
 public:
-	Shader(const std::string& vertexShaderString, const std::string& fragmentShaderString);
+	Shader(const std::string& vertexShaderString, const std::string& fragmentShaderString, const std::string& geometryShaderString = "");
 	~Shader();
 
 	void bind();

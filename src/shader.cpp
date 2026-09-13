@@ -3,7 +3,7 @@
 #include <kgfw/GLUtils.h>	// Include GLUtils for checkGLError
 #include <iostream>
 
-Shader::Shader(const std::string& vertexShaderString, const std::string& fragmentShaderString)
+Shader::Shader(const std::string& vertexShaderString, const std::string& fragmentShaderString, const std::string& geometryShaderString)
 	: Object(__FUNCTION__)
 	, m_shaderProgram(0) {
 
@@ -11,18 +11,16 @@ Shader::Shader(const std::string& vertexShaderString, const std::string& fragmen
 	int vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	checkGLError();
 
+	// Vertex shader creation
 	// Convert std::string to const GLchar* 
 	const char* vertexShaderSource = vertexShaderString.c_str();
 	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	checkGLError();
 	glCompileShader(vertexShader);
-	checkGLError();
 
 	// check for shader compile errors
 	int success;
 	char infoLog[512];
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	checkGLError();
 	if (!success) {
 		// If failed, get error string using glGetShaderInfoLog-function.
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
@@ -34,46 +32,53 @@ Shader::Shader(const std::string& vertexShaderString, const std::string& fragmen
 	int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
 	checkGLError();
 
-	// Convert std::string to const GLchar* 
+	// Fragment shader creation
 	const char* fragmentShaderSource = fragmentShaderString.c_str();
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	checkGLError();
 	glCompileShader(fragmentShader);
-	checkGLError();
-	// check for shader compile errors
+
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	checkGLError();
 	if (!success) {
-		// If failed, get error string using glGetShaderInfoLog-function.
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-		checkGLError();
 		printf("ERROR: Shader compilation failed: \"%s\"\n", infoLog);
 	}
 
+	// Geometry shader creation
+	int geometryShader = 0;
+	if (geometryShaderString != "") {
+		geometryShader = glCreateShader(GL_GEOMETRY_SHADER);
+		const char* geometryShaderSource = geometryShaderString.c_str();
+		glShaderSource(geometryShader, 1, &geometryShaderSource, NULL);
+		glCompileShader(geometryShader);
+
+		glGetShaderiv(geometryShader, GL_COMPILE_STATUS, &success);
+		if (!success) {
+			glGetShaderInfoLog(geometryShader, 512, NULL, infoLog);
+			printf("ERROR: Shader compilation failed: \"%s\"\n", infoLog);
+		}
+	}	
+
 	// link shaders
 	m_shaderProgram = glCreateProgram();
-	checkGLError();
 	glAttachShader(m_shaderProgram, vertexShader);
-	checkGLError();
 	glAttachShader(m_shaderProgram, fragmentShader);
-	checkGLError();
+	if(geometryShader != 0) { 
+		glAttachShader(m_shaderProgram, geometryShader); }
 	glLinkProgram(m_shaderProgram);
-	checkGLError();
+
 	// check for linking errors
 	glGetProgramiv(m_shaderProgram, GL_LINK_STATUS, &success);
-	checkGLError();
 	if (!success) {
 		// If failed, get error string using glGetProgramInfoLog-function.
 		glGetProgramInfoLog(m_shaderProgram, 512, NULL, infoLog);
-		checkGLError();
 		printf("ERROR: Shader link failed: \"%s\"\n", infoLog);
 	}
 
 	// After linking, the shaders can be deleted.
 	glDeleteShader(vertexShader);
-	checkGLError();
 	glDeleteShader(fragmentShader);
-	checkGLError();
+	if(geometryShader != 0) { 
+		glDeleteShader(geometryShader); }
 }
 
 Shader::~Shader() {
