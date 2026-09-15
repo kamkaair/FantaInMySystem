@@ -9,13 +9,15 @@
 	in vec2 texCoord;
 	in vec3 normal;
 	in vec4 fragPosLightSpace;
-
+	
+	#define MAX_POINT_LIGHTS 12
+	uniform int NUM_POINT_LIGHTS;
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
 	uniform sampler2D brdfLUT;
 	// PBR
 	uniform sampler2D DiffuseMap, MetallicMap, RoughnessMap, EmissionMap, NormalMap, OpacityMap, shadowMap;
-	uniform samplerCube shadowCubeMap;
+	uniform samplerCube shadowCubeMap[MAX_POINT_LIGHTS];
 	
 	// Use textures or basic colors/values?
 	uniform bool useDiffuseTexture = true, useMetallicTexture = true, useRoughnessTexture = true, useEmissionTexture = false, useOpacityTexture = false, useShadowMap = true;
@@ -23,7 +25,6 @@
 	uniform vec3 u_DiffuseColor, objectColor, HDRIHue = vec3(1.0f), FinalColorHue = vec3(1.0f), sunDir;
 	uniform float u_Roughness, u_Metallic, u_emissionStrength, u_opacity;
 	uniform float HDRIExposure = 1.0f, HDRIContrast = 1.0f, FinalColorExposure = 1.0f, FinalColorContrast = 2.2f;
-	uniform int NUM_POINT_LIGHTS;
 	
 	const float far_plane = 25.0f;
 
@@ -37,10 +38,8 @@
 		float strength;
 	};
 	
-	//#define NUM_POINT_LIGHTS 4  // Adjust this as needed
-	
 	// Array of point lights
-	uniform PointLight pointLights[12];
+	uniform PointLight pointLights[MAX_POINT_LIGHTS];
 	
 	uniform vec3 viewPos;
 	const float PI = 3.14159265359;
@@ -123,7 +122,7 @@
 		return color;
 	}
 
-	float ShadowCalculation(vec4 fragPosLightSpace) {
+	float DirShadowCalculation(vec4 fragPosLightSpace) {
 		// perform perspective divide, transform to NDC [-1,1] (gl_Position would automatically do this transform, but it was passed in as clip-space)
 		vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w; // Light-space position in range of [-1,1]
 		projCoords = projCoords * 0.5 + 0.5; // transform to [0,1] range
@@ -167,38 +166,15 @@
 	   vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
 	);
 
-	float ShadowCalculation2(vec3 fragPos)
+	float PointShadowCalculation(vec3 fragPos, int lightIndex)
 	{
 		// get vector between fragment position and light position
-		vec3 fragToLight = fragPos - pointLights[0].position;
-		// use the fragment to light vector to sample from the depth map    
-		// float closestDepth = texture(depthMap, fragToLight).r;
-		// it is currently in linear range between [0,1], let's re-transform it back to original depth value
-		// closestDepth *= far_plane;
+		vec3 fragToLight = fragPos - pointLights[lightIndex].position;
+
 		// now get current linear depth as the length between the fragment and light position
 		float currentDepth = length(fragToLight);
-		// test for shadows
-		// float bias = 0.05; // we use a much larger bias since depth is now in [near_plane, far_plane] range
-		// float shadow = currentDepth -  bias > closestDepth ? 1.0 : 0.0;
-		// PCF
-		// float shadow = 0.0;
-		// float bias = 0.05; 
-		// float samples = 4.0;
-		// float offset = 0.1;
-		// for(float x = -offset; x < offset; x += offset / (samples * 0.5))
-		// {
-			// for(float y = -offset; y < offset; y += offset / (samples * 0.5))
-			// {
-				// for(float z = -offset; z < offset; z += offset / (samples * 0.5))
-				// {
-					// float closestDepth = texture(depthMap, fragToLight + vec3(x, y, z)).r; // use lightdir to lookup cubemap
-					// closestDepth *= far_plane;   // Undo mapping [0;1]
-					// if(currentDepth - bias > closestDepth)
-						// shadow += 1.0;
-				// }
-			// }
-		// }
-		// shadow /= (samples * samples * samples);
+		
+		// PCF with grid sampling
 		float shadow = 0.0;
 		float bias = 0.15;
 		int samples = 20;
@@ -206,16 +182,13 @@
 		float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
 		for(int i = 0; i < samples; ++i)
 		{
-			float closestDepth = texture(shadowCubeMap, fragToLight + gridSamplingDisk[i] * diskRadius).r;
+			float closestDepth = texture(shadowCubeMap[lightIndex], fragToLight + gridSamplingDisk[i] * diskRadius).r;
 			closestDepth *= far_plane;   // undo mapping [0;1]
 			if(currentDepth - bias > closestDepth)
 				shadow += 1.0;
 		}
 		shadow /= float(samples);
-			
-		// display closestDepth as debug (to visualize depth cubemap)
-		// FragColor = vec4(vec3(closestDepth / far_plane), 1.0);    
-			
+		
 		return shadow;
 	}
 
@@ -264,8 +237,14 @@
 
 		//For loop
 		vec3 Lo = vec3(0.0);
+		float pointShadow = 0.0;
+		float shadowAverages[MAX_POINT_LIGHTS];
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
+			// Skip the pixels, that are out of range
+			if(length(pointLights[i].position - fragPos) > 50.0) // Hard coded distance = 50 (because linear 0.09, quadratic 0.032)
+				continue;
+		
 			// calculate per-light radiance - light calculations
 			vec3 L = normalize(pointLights[i].position - fragPos);
 			vec3 H = normalize(V + L);
@@ -292,8 +271,14 @@
 			float NdotL = max(dot(N, L), 0.0);
 
 			Lo += (kD * albedo / PI + specular) * radiance * NdotL;
-
+			
+			if(useShadowMap)
+				pointShadow += PointShadowCalculation(fragPos, i);
 		}
+		
+		if(pointShadow > 0.0)
+			pointShadow /= NUM_POINT_LIGHTS;
+		
 		//vec3 kS = fresnelSchlick(max(dot(N, V), 0.0), F0);
 		// ambient lighting (we now use IBL as the ambient term)
 		vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
@@ -318,12 +303,11 @@
 		vec3 ambient = (kD * diffuse + specular) * HDRIExposure;
 		ambient = gammaCorrect(ambient, HDRIExposure, HDRIContrast); // Ambient lighting tone mapping 
 		
-		float shadow = 0.0;
+		float dirShadow = 0.0;
 		if(useShadowMap)
-			shadow = ShadowCalculation2(fragPos);
-			//shadow = ShadowCalculation(fragPosLightSpace);
-			
-		vec3 color = (ambient + Lo * (1.0 - shadow)) + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
+			dirShadow = DirShadowCalculation(fragPosLightSpace);		
+		
+		vec3 color = (ambient + Lo * ((1.0 - pointShadow) * (1.0 - dirShadow))) + (emission * u_emissionStrength); 	//Ambient + point lights + emissive
 		
 		// Fun things
 		//color = vec3(1.0) - color; // inverted colors
@@ -345,4 +329,5 @@
 		
 		//Color out
 		FragColor = vec4(color, opacity);
+		//FragColor = vec4(pointShadow, 0.0, 0.0, opacity);
 	};

@@ -548,10 +548,10 @@ void UI::ImGuiDraw()
 				ImGui::Text("Amount of existing lamps: %zu", m_resoManager->getScene()->getLights().size());
 
 				// Point light addition
-				if (ImGui::Button("Add new point light") && m_resoManager->getScene()->getLights().size() < 12) {
+				if (ImGui::Button("Add new point light") && m_resoManager->getScene()->getLights().size() < MAX_POINT_LIGHTS) {
 					m_resoManager->getScene()->getLights().push_back(FileLights{ glm::vec3(0.0, 0.0, 2.0), glm::vec3(1.0f, 0.5f, 0.31f), 5.0f });
 				}
-				else if (m_resoManager->getScene()->getLights().size() == 12) {
+				else if (m_resoManager->getScene()->getLights().size() == MAX_POINT_LIGHTS) {
 					ImGui::Text("Maximum amount of lamps reached!!!");
 				}
 

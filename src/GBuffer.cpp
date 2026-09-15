@@ -197,12 +197,12 @@ void GBuffer::constructForwardShaders() {
 }
 
 void GBuffer::deconstructDeferredShaders() {
-	if (m_geometryPass != 0) { utils::deleteObject(m_geometryPass); }
-	if (m_lightPass != 0) { utils::deleteObject(m_lightPass); }
-	if (m_compositePass != 0) { utils::deleteObject(m_compositePass); }
+	utils::deleteObject(m_geometryPass);
+	utils::deleteObject(m_lightPass);
+	utils::deleteObject(m_compositePass);
 }
 
 void GBuffer::deconstructForwardShaders() {
-	if (m_shader != 0) { utils::deleteObject(m_shader); }
-	if (m_forwardComposite != 0) { utils::deleteObject(m_forwardComposite); }
+	utils::deleteObject(m_shader);
+	utils::deleteObject(m_forwardComposite);
 }

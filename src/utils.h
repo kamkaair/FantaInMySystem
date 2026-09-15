@@ -57,8 +57,10 @@ namespace utils {
 	// Lambda  helper for deletion of objects. TODO: add the if(ptr != 0) check in here. Less repeated code
 	template<typename T>
 	inline void deleteObject(T*& ptr) {
-		delete ptr;
-		ptr = nullptr;
+		if (ptr != 0) {
+			delete ptr;
+			ptr = nullptr;
+		}
 	}
 
 	class utils {

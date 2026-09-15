@@ -71,7 +71,8 @@ public:
 
 		// Setup the default save, load the scene from a file
 		setupDefaultSave();
-		m_resoManager->fileLoad("PointShadow.bin");
+		m_resoManager->fileLoad("demoScene.bin");
+		m_shadowRendering->updatePointLights(m_scene->getLights());
 
 		// Icon class initialization
 		m_iconClass = new Icon(m_meshRender, m_resoManager, m_camera);
@@ -217,10 +218,11 @@ public:
 			m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
 			m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
 		}
-		//if (m_screenSpace->getShadow_Settings().useShadowMap)
-			//m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
-		if (m_screenSpace->getShadow_Settings().useShadowMap)
-			m_shadowRendering->renderPointLightShadows(m_scene->getModels(), m_scene->getLights()[0].pos);
+
+		if (m_screenSpace->getShadow_Settings().useShadowMap) {
+			m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
+			m_shadowRendering->renderPointLightShadows(m_scene->getModels(), m_scene->getLights());
+		}		
 
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeForwardFBO()); // Render into a composite fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -230,15 +232,20 @@ public:
 		// 2. Render opaque objects
 		if (!m_scene->getModels().empty()) {
 			m_scene->sortTransparentMeshes();
+			for (int i = 0; i < m_shadowRendering->getPointShadowCubeMap().size(); i++) {
+				int texUnit = 10 + i;
+				glActiveTexture(GL_TEXTURE0 + texUnit);
+				glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowRendering->getPointShadowCubeMap()[i]);  // NormalMap					
+				m_GBuffer->getForwardShader()->setUniform("shadowCubeMap[" + std::to_string(i) + "]", texUnit);
+				//m_GBuffer->getForwardShader()->setUniform("shadowCubeMap", 10);
+			}
+
 			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
 				m_HDRI->setHDRITextures(m_GBuffer->getForwardShader());
 				mesh->Render(m_GBuffer->getForwardShader(), m_camera, m_scene->getLights(), m_scene->getDirectionalLight(),
 					m_shadowRendering->getLightSpaceMatrix(), m_shadowRendering->getCameraDepthBuffer());
-
-				glActiveTexture(GL_TEXTURE10);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowRendering->getPointShadowCubeMap());  // NormalMap
-				m_GBuffer->getForwardShader()->setUniform("shadowCubeMap", 10);
 			}
+			
 		}
 
 		// Render za bloom into it's own colorbuffer
@@ -318,8 +325,10 @@ public:
 			m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
 			m_scene->getDirectionalLight().y = 5.0 + cos(glfwGetTime()) * 1.0f;
 		}
-		if (m_screenSpace->getShadow_Settings().useShadowMap)
+		if (m_screenSpace->getShadow_Settings().useShadowMap) {
 			m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
+			//m_shadowRendering->renderPointLightShadows(m_scene->getModels(), m_scene->getLights());
+		}	
 
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
 		glViewport(0, 0, width, height);
