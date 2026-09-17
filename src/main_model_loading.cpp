@@ -35,7 +35,7 @@ public:
 		, m_camera(nullptr)
 	{
 		bindShaders();
-
+		
 		// Creates GBuffer
 		m_GBuffer = new GBuffer(width, height);
 
@@ -207,12 +207,9 @@ public:
 
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		checkGLError();
-
 		glUseProgram(0); // Unbind any active shader
-		checkGLError();
 
-		// 1. Render the shadow depth map, the shadow fb is bound
+		// 1. Render the shadow depth map, the shadow fb is bound	
 		if (m_screenSpace->getShadow_Settings().useTimeSpin) {
 			m_scene->getDirectionalLight().x = sin(glfwGetTime()) * 3.0f;
 			m_scene->getDirectionalLight().z = cos(glfwGetTime()) * 2.0f;
@@ -223,7 +220,7 @@ public:
 			m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
 			m_shadowRendering->renderPointLightShadows(m_scene->getModels(), m_scene->getLights());
 		}		
-
+		
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeForwardFBO()); // Render into a composite fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glViewport(0, 0, width, height);
@@ -237,7 +234,6 @@ public:
 				glActiveTexture(GL_TEXTURE0 + texUnit);
 				glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowRendering->getPointShadowCubeMap()[i]);  // NormalMap					
 				m_GBuffer->getForwardShader()->setUniform("shadowCubeMap[" + std::to_string(i) + "]", texUnit);
-				//m_GBuffer->getForwardShader()->setUniform("shadowCubeMap", 10);
 			}
 
 			for (Mesh* mesh : m_scene->getOpaqueMeshes()) {
@@ -251,7 +247,7 @@ public:
 		// Render za bloom into it's own colorbuffer
 		if (m_screenSpace->getBloom_Settings().useBloom)
 			m_screenSpace->renderBloom(m_meshRender, m_GBuffer->getForwardHDRBuffer());
-	
+
 		// Render and display the final image
 		glBindFramebuffer(GL_FRAMEBUFFER, m_GBuffer->getCompositeFBO());
 		glClear(GL_COLOR_BUFFER_BIT);
@@ -293,6 +289,8 @@ public:
 		// 4. Render icons and UI
 		if (!g_input->getImGuiVisibility())
 			m_uiDraw->ImGuiDraw();
+
+		std::cout << "/--------------------/" << std::endl;
 	}
 
 	void renderForwardComposite() {
@@ -527,8 +525,6 @@ private:
 	void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
 	// Pointers to the Shader objects
-	//Shader* m_shader;				
-
 	Shader* m_cubemapShader;
 	Shader* m_BackgroundShader;
 	Shader* m_IrradianceShader;
@@ -588,6 +584,9 @@ int main(void) {
 
 	// Load GL functions using glad
 	gladLoadGL(glfwGetProcAddress);
+
+	// VSync
+	glfwSwapInterval(1); // 0 = off, 1 = on
 
 	// OpenGL debug output
 	//glEnable(GL_DEBUG_OUTPUT);
@@ -658,25 +657,38 @@ int main(void) {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 
+	utils::utils utility;
+
 	// Get time using glfwGetTime-function, for delta time calculation.
 	float prevTime = (float)glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
+		/*GLuint query;
+		glGenQueries(1, &query);
+		glBeginQuery(GL_TIME_ELAPSED, query);*/
+
+		// Maybe measure the execution time of different render operations: https://stackoverflow.com/questions/22387586/measuring-execution-time-of-a-function-in-c
+		utility.startTimer("Total time CPU");
 
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
-		// Maybe measure the execution time of different render operations: https://stackoverflow.com/questions/22387586/measuring-execution-time-of-a-function-in-c
 		g_app->render(window);
-
-		//g_app->deferredRendering(window);
+			
 		glfwSwapBuffers(window);
 
 		// Poll other window events.
 		glfwPollEvents();
-
+		
 		// Compute application frame time (delta time) and update application
 		float curTime = (float)glfwGetTime();
 		float deltaTime = curTime - prevTime;
 		prevTime = curTime;
 		g_app->update(deltaTime, window);
+
+		utility.endTimer();
+
+		//glEndQuery(GL_TIME_ELAPSED);
+		//GLuint elapsedTime;
+		//glGetQueryObjectuiv(query, GL_QUERY_RESULT, &elapsedTime);
+		//std::cout << "Total time GPU: " << double(elapsedTime) / 1000000.0f << " milliseconds" << std::endl; // elapsedTime is now in nanoseconds
 	}
 
 	// Delete application

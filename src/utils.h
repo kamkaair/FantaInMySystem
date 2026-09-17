@@ -67,6 +67,36 @@ namespace utils {
 	public:
 		utils() : t0(glfwGetTime()), nbFrames(0), result(0.0f) {}
 
+		// Timer methods for (non-overlapping) CPU execution time tests
+		void startTimer(const std::string& task) {
+			// Record starting time
+			if (currentTask != "") {
+				std::cout << "WARNING: timer IS still running! Task Running: " << currentTask << "- Task Executed: " << task << std::endl;
+				return;
+			}			
+
+			currentTask = task;
+			start = std::chrono::steady_clock::now();
+		}
+		void endTimer() {
+			if (currentTask == "") {
+				std::cout << "WARNING: timer NOT running" << std::endl;
+				return;
+			}				
+
+			// Record ending time
+			auto stop =
+				std::chrono::steady_clock::now();
+
+			double duration =
+				std::chrono::duration<double, std::milli>( stop - start ).count();
+
+			std::cout << "Task: " << currentTask << " Time taken: "
+				<< duration << " ms" << std::endl;
+
+			currentTask = "";
+		}
+
 		float calculateFPS() {
 			// Get current time
 			double currentTime = glfwGetTime();
@@ -100,5 +130,8 @@ namespace utils {
 		double t0;        // Time at the start of the current second
 		float nbFrames;   // Number of frames since the last update
 		float result;     // Last calculated FPS
+
+		std::chrono::steady_clock::time_point start;
+		std::string currentTask;
 	};
 }

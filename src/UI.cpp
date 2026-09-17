@@ -693,7 +693,7 @@ void UI::ImGuiDraw()
 			{
 				BLOOM_SETTINGS& bloom = m_SSAO->getBloom_Settings();
 				if (ImGui::Checkbox("Use Bloom", &bloom.useBloom))
-					m_SSAO->recreateColorBuffer();
+					m_SSAO->recreateGaussianBlur();
 				ImGui::InputInt("Gaussian Blur Repetitions", &bloom.amount);
 				if (ImGui::SliderInt("Bloom Distance", &bloom.distance, 1, 5)) // Min: 1, Max: 5... currently there's a fixed array of five gaussian weights
 					bloom.dirty = true;
