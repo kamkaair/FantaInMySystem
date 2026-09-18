@@ -1,13 +1,13 @@
 	// Fragment shader (lighting.frag)
 	#version 330 core
-	//out vec4 FragColor;
 	
 	layout (location = 0) out vec3 oLightPass;
 	layout (location = 1) out vec3 oIndirectDiff;
 	layout (location = 2) out vec3 oIndirectSpec;
 
 	in vec2 texCoords;
-	//in vec4 fragPosLightSpace;
+	
+	#define MAX_POINT_LIGHTS 8
 	
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
@@ -17,11 +17,12 @@
 	uniform sampler2D gPosition, gNormal, gAlbedoSpec, gMetallicRoughness;
 	// SSAO
 	uniform sampler2D uSSAO, shadowMap;
+	uniform samplerCube shadowCubeMap[MAX_POINT_LIGHTS];
 	// General ImGui uniforms
 	uniform float aoStrength = 10.0f;
 	uniform mat4 inverseView, lightMatrix;
 	uniform int NUM_POINT_LIGHTS;
-	uniform vec3 sunDir;
+	uniform vec3 sunDir, viewPos;
 
 	struct PointLight {
 		vec3 position;
@@ -31,13 +32,14 @@
 		float quadratic;
 		float strength;
 	};
-	uniform PointLight pointLights[12];
+	uniform PointLight pointLights[MAX_POINT_LIGHTS];
 
 	// Camera is always at (0.0f, 0.0f, 0.0f), even after viewMatrix * cameraPos.
 	// Works, but the IBL reflections have the same rotation in every angle.
 	const vec3 view = vec3(0.0f, 0.0f, 0.0f);
 	const float PI = 3.14159265359;
 	const float exposure = 1.5;
+	const float far_plane = 25.0f;
 
 	//1-----
 	float DistributionGGX(vec3 N, vec3 H, float roughness)
@@ -96,7 +98,7 @@
 		return color;
 	}
 	
-	float ShadowCalculation(vec3 gFragPos, vec3 gNormal) {
+	float DirShadowCalculation(vec3 gFragPos, vec3 gNormal) {
 		//vec3 fragPos = mat3(inverseView) * gFragPos;
 		vec3 fragPos = vec3(inverseView * vec4(gFragPos, 1.0));
 	
@@ -137,6 +139,43 @@
 		return shadow;
 	}
 	
+	// array of offset direction for sampling
+	vec3 gridSamplingDisk[20] = vec3[]
+	(
+	   vec3(1, 1,  1), vec3( 1, -1,  1), vec3(-1, -1,  1), vec3(-1, 1,  1), 
+	   vec3(1, 1, -1), vec3( 1, -1, -1), vec3(-1, -1, -1), vec3(-1, 1, -1),
+	   vec3(1, 1,  0), vec3( 1, -1,  0), vec3(-1, -1,  0), vec3(-1, 1,  0),
+	   vec3(1, 0,  1), vec3(-1,  0,  1), vec3( 1,  0, -1), vec3(-1, 0, -1),
+	   vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
+	);
+
+	float PointShadowCalculation(vec3 gFragPos, int lightIndex)
+	{
+		// get vector between fragment position and light position
+		vec3 fragPos = vec3(inverseView * vec4(gFragPos, 1.0));
+		vec3 fragToLight = fragPos - vec3(inverseView * vec4(pointLights[lightIndex].position, 1.0));
+		
+		// now get current linear depth as the length between the fragment and light position
+		float currentDepth = length(fragToLight);
+		
+		// PCF with grid sampling
+		float shadow = 0.0;
+		float bias = 0.15;
+		int samples = 20;
+		float viewDistance = length(viewPos - fragPos);
+		float diskRadius = (1.0 + (viewDistance / far_plane)) / 25.0;
+		for(int i = 0; i < samples; ++i)
+		{
+			float closestDepth = texture(shadowCubeMap[lightIndex], fragToLight + gridSamplingDisk[i] * diskRadius).r;
+			closestDepth *= far_plane;   // undo mapping [0;1]
+			if(currentDepth - bias > closestDepth)
+				shadow += 1.0;
+		}
+		shadow /= float(samples);
+		
+		return shadow;
+	}
+	
 	void main()
 	{             
 		// Retrieve data from gbuffer
@@ -173,6 +212,7 @@
 		//vec3 Lo = vec3(0.0);
 		vec3 directDiff = vec3(0.0);
 		vec3 directSpec = vec3(0.0);
+		float dirShadow = 0.0, pointShadow = 0.0;
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
 			// Skip the pixels, that are out of range
@@ -208,12 +248,17 @@
 			vec3 kD = vec3(1.0) - kS;
 			kD *= 1.0 - metallic;
 			float NdotL = max(dot(N, L), 0.0);
-
+			
 			//Lo += (kD * diffuse / PI + specular) * radiance * NdotL;
 			//oDirectDiff += kD * diffuse / PI * radiance * NdotL;
 			directDiff += kD * albedo / PI * radiance * NdotL;
 			directSpec += specular * radiance * NdotL;
-		}
+			
+			if(useShadowMap)
+				pointShadow += PointShadowCalculation(FragPos, i);
+		}		
+		if(pointShadow > 0.0)
+			pointShadow /= NUM_POINT_LIGHTS;
 		
 		// ambient lighting (we now use IBL as the ambient term)
 		vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
@@ -233,9 +278,8 @@
 		vec3 prefilteredColor = textureLod(prefilterMap, NewR, roughness * MAX_REFLECTION_LOD).rgb; // R Set to world-space. Reflect, reflect 360 degrees around my brother
 		vec2 brdf = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
 		
-		float shadow = 0.0;
 		if(useShadowMap)
-			shadow = ShadowCalculation(FragPos, N);
+			dirShadow = DirShadowCalculation(FragPos, N);
 		
 		//vec3 specular = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
 		vec3 indirectSpec = prefilteredColor * (F * brdf.x + brdf.y) * exposure;
@@ -252,5 +296,6 @@
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		oIndirectDiff = indirectDiff;
 		
-		oLightPass = vec3(directDiff + directSpec * (1.0 - shadow));
+		//oLightPass = vec3(directDiff + directSpec * ((1.0 - pointShadow) * (1.0 - dirShadow)));
+		oLightPass = vec3(pointShadow, 0.0, 0.0);
 	}

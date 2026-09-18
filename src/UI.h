@@ -100,7 +100,7 @@ private:
 	int backgroundMode = 0;
 	
 	const char* backgroundOptions[2] = { "HDRI","Texture" };
-	const int MAX_POINT_LIGHTS = 12;
+	const int MAX_POINT_LIGHTS = 8;
 
 	bool meshRotationEnabled = false, doOnce = true, meshHide = false, windowDisabled = false, lightOrientationOn = true, useFolderFiltering = false;
 

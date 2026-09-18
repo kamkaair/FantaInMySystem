@@ -289,8 +289,6 @@ public:
 		// 4. Render icons and UI
 		if (!g_input->getImGuiVisibility())
 			m_uiDraw->ImGuiDraw();
-
-		std::cout << "/--------------------/" << std::endl;
 	}
 
 	void renderForwardComposite() {
@@ -325,7 +323,7 @@ public:
 		}
 		if (m_screenSpace->getShadow_Settings().useShadowMap) {
 			m_shadowRendering->renderShadowMapping(m_scene->getModels(), m_scene->getDirectionalLight());
-			//m_shadowRendering->renderPointLightShadows(m_scene->getModels(), m_scene->getLights());
+			m_shadowRendering->renderPointLightShadows(m_scene->getModels(), m_scene->getLights());
 		}	
 
 		// 1. Geometry pass: render scene's geometry/color data into gbuffer
@@ -421,6 +419,12 @@ public:
 		utils::bindTexture(GL_TEXTURE6, m_GBuffer->getLightPass(), m_GBuffer->getGMetallicRoughness(), "gMetallicRoughness");
 		utils::bindTexture(GL_TEXTURE7, m_GBuffer->getLightPass(), m_screenSpace->getSsaoBlurColorBuffer(), "uSSAO");
 		utils::bindTexture(GL_TEXTURE8, m_GBuffer->getLightPass(), m_shadowRendering->getCameraDepthBuffer(), "shadowMap");
+		for (int i = 0; i < m_shadowRendering->getPointShadowCubeMap().size(); i++) { // Point shadow cube maps
+			int texUnit = 9 + i;
+			glActiveTexture(GL_TEXTURE0 + texUnit);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowRendering->getPointShadowCubeMap()[i]);  // NormalMap					
+			m_GBuffer->getLightPass()->setUniform("shadowCubeMap[" + std::to_string(i) + "]", texUnit);
+		}
 
 		// Set light uniforms + view
 		for (int i = 0; i < m_scene->getLights().size(); i++) {
@@ -443,6 +447,9 @@ public:
 		m_GBuffer->getLightPass()->setUniform("lightMatrix", m_shadowRendering->getLightSpaceMatrix());
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_scene->getLights().size());
 		m_GBuffer->getLightPass()->setUniform("sunDir", m_scene->getDirectionalLight());
+
+		m_GBuffer->getLightPass()->setUniform("viewPos", m_camera->getPosition().x, m_camera->getPosition().y, m_camera->getPosition().z);
+
 
 		// Render quad, applies the lighting pass
 		m_meshRender->renderQuad();
@@ -657,18 +664,9 @@ int main(void) {
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
 
-	utils::utils utility;
-
 	// Get time using glfwGetTime-function, for delta time calculation.
 	float prevTime = (float)glfwGetTime();
 	while (!glfwWindowShouldClose(window)) {
-		/*GLuint query;
-		glGenQueries(1, &query);
-		glBeginQuery(GL_TIME_ELAPSED, query);*/
-
-		// Maybe measure the execution time of different render operations: https://stackoverflow.com/questions/22387586/measuring-execution-time-of-a-function-in-c
-		utility.startTimer("Total time CPU");
-
 		// Render the game frame and swap OpenGL back buffer to be as front buffer.
 		g_app->render(window);
 			
@@ -682,13 +680,6 @@ int main(void) {
 		float deltaTime = curTime - prevTime;
 		prevTime = curTime;
 		g_app->update(deltaTime, window);
-
-		utility.endTimer();
-
-		//glEndQuery(GL_TIME_ELAPSED);
-		//GLuint elapsedTime;
-		//glGetQueryObjectuiv(query, GL_QUERY_RESULT, &elapsedTime);
-		//std::cout << "Total time GPU: " << double(elapsedTime) / 1000000.0f << " milliseconds" << std::endl; // elapsedTime is now in nanoseconds
 	}
 
 	// Delete application

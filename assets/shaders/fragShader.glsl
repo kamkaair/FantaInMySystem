@@ -10,7 +10,7 @@
 	in vec3 normal;
 	in vec4 fragPosLightSpace;
 	
-	#define MAX_POINT_LIGHTS 12
+	#define MAX_POINT_LIGHTS 8
 	uniform int NUM_POINT_LIGHTS;
 	// HDRI
 	uniform samplerCube irradianceMap, prefilterMap;
@@ -328,6 +328,6 @@
 		color = vec3(color.r * FinalColorHue.r, color.g * FinalColorHue.g, color.b * FinalColorHue.b);
 		
 		//Color out
-		FragColor = vec4(color, opacity);
-		//FragColor = vec4(pointShadow, 0.0, 0.0, opacity);
+		//FragColor = vec4(color, opacity);
+		FragColor = vec4(pointShadow, 0.0, 0.0, opacity);
 	};
