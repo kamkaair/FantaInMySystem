@@ -9,7 +9,6 @@ Shader::Shader(const std::string& vertexShaderString, const std::string& fragmen
 
 	// Create and compile vertex shader
 	int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	checkGLError();
 
 	// Vertex shader creation
 	// Convert std::string to const GLchar* 
@@ -24,13 +23,11 @@ Shader::Shader(const std::string& vertexShaderString, const std::string& fragmen
 	if (!success) {
 		// If failed, get error string using glGetShaderInfoLog-function.
 		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		checkGLError();
 		printf("ERROR: Shader compilation failed: \"%s\"\n", infoLog);
 	}
 
 	// Create and compile fragment shader
 	int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	checkGLError();
 
 	// Fragment shader creation
 	const char* fragmentShaderSource = fragmentShaderString.c_str();
@@ -85,18 +82,15 @@ Shader::~Shader() {
 	// Delete shader program
 	if (m_shaderProgram) {
 		glDeleteProgram(m_shaderProgram);
-		checkGLError();
 	}
 }
 
 void Shader::bind() {
 	glUseProgram(m_shaderProgram);
-	checkGLError();
 }
 
 void Shader::deleteShader() {
 	glDeleteProgram(m_shaderProgram);
-	checkGLError();
 }
 
 void Shader::setUniform(const std::string& name, float x, float y, float z) {
@@ -106,7 +100,6 @@ void Shader::setUniform(const std::string& name, float x, float y, float z) {
 		return; // Don't set the uniform value, if it not found
 	}
 	glUniform3f(loc, x, y, z);
-	checkGLError();
 }
 
 void Shader::setUniform(const std::string& name, float x, float y, float z, float w) {
@@ -120,18 +113,7 @@ void Shader::setUniform(const std::string& name, float x, float y, float z, floa
 	if (err != GL_NO_ERROR) {
 		glUniform3f(loc, x, y, z); // Set as 3 component value in case of 4 component set failed.
 	}
-
-	checkGLError();
 }
-
-//void Shader::setUniform(const std::string& name, const glm::mat4& m) {
-//    GLint loc = glGetUniformLocation(m_shaderProgram, name.c_str());
-//    if (loc < 0) {
-//        return; // Don't set the uniform value, if it not found
-//    }
-//    glUniformMatrix4fv(loc, 1, GL_FALSE, &m[0][0]);
-//    checkGLError();
-//}
 
 void Shader::setUniform(const std::string& name, const glm::mat4& m) {
 	GLint loc = glGetUniformLocation(m_shaderProgram, name.c_str());
@@ -140,7 +122,6 @@ void Shader::setUniform(const std::string& name, const glm::mat4& m) {
 		return; // Don't set the uniform value if not found
 	}
 	glUniformMatrix4fv(loc, 1, GL_FALSE, &m[0][0]);
-	checkGLError();
 }
 
 void Shader::setUniform(const std::string& name, const glm::mat3& m) {
@@ -150,7 +131,6 @@ void Shader::setUniform(const std::string& name, const glm::mat3& m) {
 		return; // Don't set the uniform value if not found
 	}
 	glUniformMatrix3fv(loc, 1, GL_FALSE, &m[0][0]);
-	checkGLError();
 }
 
 
@@ -161,7 +141,6 @@ void Shader::setUniform(const std::string& name, int value) {
 		return; // Don't set the uniform value, if it not found
 	}
 	glUniform1i(loc, value);
-	checkGLError();
 }
 
 void Shader::setUniform(const std::string& name, float value) {
@@ -171,7 +150,6 @@ void Shader::setUniform(const std::string& name, float value) {
 		return; // Don't set the uniform value if it's not found
 	}
 	glUniform1f(loc, value);
-	checkGLError();
 }
 
 // Removing the `index` parameter from setUniform since we're handling array uniforms differently.
@@ -180,7 +158,6 @@ void Shader::setUniform(const std::string& name, const glm::vec3& value, int ind
 	GLint loc = glGetUniformLocation(m_shaderProgram, uniformName.c_str());
 	if (loc >= 0) {
 		glUniform3fv(loc, 1, &value[0]);
-		checkGLError();
 	}
 	else {
 		printf("Uniform not found: %s\n", uniformName.c_str());
@@ -196,22 +173,11 @@ void Shader::setUniform(const std::string& name, float value, int index) {
 	GLint loc = glGetUniformLocation(m_shaderProgram, uniformName.c_str());
 	if (loc >= 0) {
 		glUniform1f(loc, value);
-		checkGLError();
 	}
 	else {
 		printf("Uniform not found: %s\n", uniformName.c_str());
 	}
 }
-
-//void Shader::setUniform(const std::string& name, const glm::vec3& value) {
-//	GLint loc = glGetUniformLocation(m_shaderProgram, name.c_str());
-//	if (loc < 0) {
-//		printf("Uniform not found: %s\n", name.c_str());
-//		return; // Don't set the uniform value if it's not found
-//	}
-//	glUniform3fv(loc, 1, &value[0]);
-//	checkGLError();
-//}
 
 void Shader::setUniform(const std::string& name, const glm::vec3& value) {
 	bind();  // Ensure shader is active
@@ -221,7 +187,6 @@ void Shader::setUniform(const std::string& name, const glm::vec3& value) {
 		return;
 	}
 	glUniform3fv(loc, 1, &value[0]);
-	checkGLError();
 }
 
 void Shader::setUniform(const std::string& name, const glm::vec2& value) {
@@ -232,7 +197,6 @@ void Shader::setUniform(const std::string& name, const glm::vec2& value) {
 		return;
 	}
 	glUniform2fv(loc, 1, &value[0]);
-	checkGLError();
 }
 
 bool Shader::IsValid() const {

@@ -238,7 +238,6 @@
 		//For loop
 		vec3 Lo = vec3(0.0);
 		float pointShadow = 0.0;
-		float shadowAverages[MAX_POINT_LIGHTS];
 		for (int i = 0; i < NUM_POINT_LIGHTS; ++i)
 		{
 			// Skip the pixels, that are out of range
@@ -328,6 +327,6 @@
 		color = vec3(color.r * FinalColorHue.r, color.g * FinalColorHue.g, color.b * FinalColorHue.b);
 		
 		//Color out
-		//FragColor = vec4(color, opacity);
-		FragColor = vec4(pointShadow, 0.0, 0.0, opacity);
+		FragColor = vec4(color, opacity);
+		//FragColor = vec4(pointShadow, 0.0, 0.0, opacity);
 	};

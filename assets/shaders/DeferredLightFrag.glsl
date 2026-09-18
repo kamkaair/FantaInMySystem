@@ -99,11 +99,7 @@
 	}
 	
 	float DirShadowCalculation(vec3 gFragPos, vec3 gNormal) {
-		//vec3 fragPos = mat3(inverseView) * gFragPos;
 		vec3 fragPos = vec3(inverseView * vec4(gFragPos, 1.0));
-	
-		//vec3 N = gNormal * mat3(inverseView);
-		//vec3 N = mat3(inverseView) * gNormal;
 		vec3 N = normalize(mat3(inverseView) * gNormal);
 		vec4 fragPosLightSpace = lightMatrix * vec4(fragPos, 1.0);
 	
@@ -149,11 +145,11 @@
 	   vec3(0, 1,  1), vec3( 0, -1,  1), vec3( 0, -1, -1), vec3( 0, 1, -1)
 	);
 
-	float PointShadowCalculation(vec3 gFragPos, int lightIndex)
-	{
+	float PointShadowCalculation(vec3 gFragPos, int lightIndex) {
 		// get vector between fragment position and light position
 		vec3 fragPos = vec3(inverseView * vec4(gFragPos, 1.0));
-		vec3 fragToLight = fragPos - vec3(inverseView * vec4(pointLights[lightIndex].position, 1.0));
+		vec3 lightPosWorld = vec3(inverseView * vec4(pointLights[lightIndex].position, 1.0));
+		vec3 fragToLight = fragPos - lightPosWorld;
 		
 		// now get current linear depth as the length between the fragment and light position
 		float currentDepth = length(fragToLight);
@@ -170,6 +166,8 @@
 			closestDepth *= far_plane;   // undo mapping [0;1]
 			if(currentDepth - bias > closestDepth)
 				shadow += 1.0;
+				//return 1.0;
+				//shadow += 1.0;
 		}
 		shadow /= float(samples);
 		
@@ -296,6 +294,6 @@
 		vec3 indirectDiff = (kD * (diffuse * ao)); //kD * diffuse * albedo * ao
 		oIndirectDiff = indirectDiff;
 		
-		//oLightPass = vec3(directDiff + directSpec * ((1.0 - pointShadow) * (1.0 - dirShadow)));
-		oLightPass = vec3(pointShadow, 0.0, 0.0);
+		oLightPass = vec3(directDiff + directSpec * ((1.0 - pointShadow) * (1.0 - dirShadow)));
+		//oLightPass = vec3(pointShadow, 0.0, 0.0);
 	}

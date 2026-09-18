@@ -137,8 +137,8 @@ public:
 			useTexture<float>("/textures/checkerboard.png"),				// 2. Metallic
 			useTexture<float>("/textures/checkerboard.png"),				// 3. Roughness
 			useValue<float>(0.0f),											// 4. Emission
-			useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
-			//useValue<float>(1.0),											// 5. Opacity
+			//useTexture<float>("/textures/blending_window.png"),			// 5. Opacity
+			useValue<float>(1.0),											// 5. Opacity
 			useTexture<std::string>("/textures/checkerboardNormal.png") });	// 6. Normal
 
 		materialPath.push_back(MaterialPaths{ std::string("Lantern"),
@@ -308,7 +308,6 @@ public:
 		m_camera->setAspectRatio(width, height);
 		m_GBuffer->setResolution(width, height);
 		framebuffer_size_callback(window, width, height);
-		checkGLError();
 
 		// Clear everything from the default fb
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -442,7 +441,7 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_scene->getLights()[i].strength);
 		}
 
-		if (m_uiDraw->getLightOrientation())
+		if (m_uiDraw->getLightOrientation()) // TODO: inverse is being used in point lights as well, light orientation not conditional anymore
 			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 		m_GBuffer->getLightPass()->setUniform("lightMatrix", m_shadowRendering->getLightSpaceMatrix());
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_scene->getLights().size());

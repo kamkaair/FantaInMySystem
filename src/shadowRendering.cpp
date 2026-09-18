@@ -13,8 +13,6 @@ ShadowRendering::ShadowRendering() : Object(__FUNCTION__) {
 
 	glGenFramebuffers(1, &m_depthDirFBO);
 	constructDirectionalLight();
-
-	checkGLError();
 }
 
 ShadowRendering::~ShadowRendering() {
@@ -41,14 +39,12 @@ void ShadowRendering::constructDirectionalLight() {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
 	float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); // Set the border color 1.0f, should return a shadow value of 0.0f
-	checkGLError();
 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_depthDirFBO);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_depthDirBuffer, 0);
 	glDrawBuffer(GL_NONE); // "Explicitly tell OpenGL this framebuffer object does not render to a color buffer". Only the depth values are important when generating a depth cubemap
 	glReadBuffer(GL_NONE);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	checkGLError();
 }
 
 void ShadowRendering::constructPointLight() {
@@ -123,7 +119,6 @@ void ShadowRendering::renderShadowMapping(const std::vector<Model*>& models, con
 	glViewport(0, 0, m_shadowWidth, m_shadowHeight);
 	glBindFramebuffer(GL_FRAMEBUFFER, getCameraDepthFBO());
 	glClear(GL_DEPTH_BUFFER_BIT);
-	checkGLError();
 
 	// Shader and Matrices:
 	// Light POV, matrices
@@ -132,7 +127,6 @@ void ShadowRendering::renderShadowMapping(const std::vector<Model*>& models, con
 		glm::vec3(0.0f, 0.0f, 0.0f),
 		glm::vec3(0.0f, 1.0f, 0.0f));
 	m_lightSpaceMatrix = lightProjection * lightView;
-	checkGLError();
 
 	// Directional lighting
 	glCullFace(GL_FRONT); // Render the scene's meshes
