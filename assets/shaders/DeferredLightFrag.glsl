@@ -166,8 +166,6 @@
 			closestDepth *= far_plane;   // undo mapping [0;1]
 			if(currentDepth - bias > closestDepth)
 				shadow += 1.0;
-				//return 1.0;
-				//shadow += 1.0;
 		}
 		shadow /= float(samples);
 		

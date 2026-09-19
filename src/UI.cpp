@@ -363,6 +363,11 @@ void UI::ImGuiStyleSetup()
 	style.ChildRounding = 4;
 }
 
+void UI::updateResolution() {
+	m_GBuffer->updateResolution();
+	m_GBuffer->getRenderMode() ? m_SSAO->recreateColorBuffer() : m_SSAO->recreateGaussianBlur();
+}
+
 void UI::ImGuiDraw()
 {
 	ImGui_ImplOpenGL3_NewFrame();
@@ -430,11 +435,11 @@ void UI::ImGuiDraw()
 			m_SSAO->constructDeferredRendering();
 		else if (!m_GBuffer->getRenderMode())
 			m_SSAO->constructForwardRendering();
+		updateResolution();
 	}
 
 	if(ImGui::Button("Set Resolution")) {
-		m_GBuffer->updateResolution();
-		m_GBuffer->getRenderMode() ? m_SSAO->recreateColorBuffer() : m_SSAO->recreateGaussianBlur();
+		updateResolution();
 	}
 
 	if (ImGui::Checkbox("Wireframe mode", &m_wireFrame)) {
@@ -614,15 +619,7 @@ void UI::ImGuiDraw()
 				}
 
 				// Padding
-				ImGui::Dummy(ImVec2(0.0f, 7.5f));
-
-				if (m_GBuffer->getRenderMode()) {
-					if (ImGui::Checkbox("Lighting Orientation (only for deferred!)", &lightOrientationOn)) {
-						if (!m_GBuffer->getLightPass() == 0) {
-							shaderSet("worldCoords", lightOrientationOn);
-						}
-					}
-				}				
+				ImGui::Dummy(ImVec2(0.0f, 7.5f));				
 
 				renderPostProcessSliders(pp_HDRI, m_GBuffer->getForwardShader(), m_GBuffer->getCompositeShader());
 				ImGui::Dummy(ImVec2(0.0f, 10.0f));

@@ -28,7 +28,6 @@ void GameObject::setRotation(const glm::vec3& eulerAngles) {
 }
 
 void GameObject::setScaling(const glm::vec3& scale) { m_scale = scale; }
-void GameObject::setViewMatrix(const glm::vec3& to, const glm::vec3& up) { m_viewMatrix = glm::lookAt(m_position, to, up); }
 void GameObject::setLookAt(const glm::vec3& to, const glm::vec3& up) { m_oritentation = glm::inverse(glm::lookAtRH(getPosition(), to, up)); }
 
 // GETS
@@ -39,7 +38,6 @@ float GameObject::getRotationX() const { return m_angleXInRadians; }
 glm::vec3 GameObject::getRotation() const { return glm::vec3(m_angleXInRadians, m_angleYInRadians, m_angleZInRadians); }
 const glm::vec3& GameObject::getScaling() const { return m_scale; }
 glm::mat4 GameObject::getLookAt() const { return m_oritentation; }
-glm::mat4 GameObject::getViewMatrix() const { return m_viewMatrix; }
 
 glm::mat4 GameObject::getModelMatrix() const {
     return glm::translate(glm::mat4(1.0f), m_position)

@@ -15,7 +15,6 @@ public:
     void setScaling(const glm::vec3& scale);
 
     void setLookAt(const glm::vec3& to, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f));
-    void setViewMatrix(const glm::vec3& to, const glm::vec3& up = glm::vec3(0.0f, 1.0f, 0.0f));
 
     const glm::vec3& getPosition() const;
     float getRotationZ() const;
@@ -26,7 +25,6 @@ public:
 
     glm::mat4 GameObject::getLookAt() const;
     glm::mat4 getModelMatrix() const;
-    glm::mat4 GameObject::getViewMatrix() const;
 
 private:
     // Model position, rotation and scale
@@ -35,7 +33,6 @@ private:
     glm::vec3 m_rotation;
     glm::vec3 m_axis;
 	glm::mat4 m_oritentation;
-    glm::mat4 m_viewMatrix;
     float m_angleZInRadians;        // Store Z-angle of plane here
     float m_angleYInRadians;        // Store X-angle of plane here
     float m_angleXInRadians;        // Store X-angle of plane here

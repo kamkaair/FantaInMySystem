@@ -51,8 +51,6 @@ public:
 
 	int getBackgroundMode() const { return backgroundMode; }
 
-	bool getLightOrientation() { return lightOrientationOn; }
-
 	template<typename T> void shaderSet(const char* uniform, T value) {
 		m_GBuffer->getCurrentShader()->setUniform(uniform, value);
 	}
@@ -83,6 +81,7 @@ private:
 	void renderMaterialOptions(SettingsMaterial& SetMat, static int currentItem[]);
 	void renderMeshTreeNode(Model* model, std::uint16_t nameIndex);
 	void changeMaterial(Mesh* mesh);
+	void updateResolution();
 	template<typename T> void meshTransformationUI(T* meshes, glm::vec3 values[3], std::string name);
 
 	Shader* m_backImage;
@@ -102,7 +101,7 @@ private:
 	const char* backgroundOptions[2] = { "HDRI","Texture" };
 	const int MAX_POINT_LIGHTS = 8;
 
-	bool meshRotationEnabled = false, doOnce = true, meshHide = false, windowDisabled = false, lightOrientationOn = true, useFolderFiltering = false;
+	bool meshRotationEnabled = false, doOnce = true, meshHide = false, windowDisabled = false, useFolderFiltering = false;
 
 	// UI settings
 	bool m_useAutomaticTextures = false, m_wireFrame = false;

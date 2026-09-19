@@ -73,9 +73,7 @@ void ResourceManager::fileSave(std::string saveName) {
 						filePaths[i] = foundTexture->getFilePath();
 					else
 						filePaths[i] = "";
-
 				}
-
 				
 				materialPath.push_back(createMaterialPaths(filePaths, mesh));
 				texIndex++;

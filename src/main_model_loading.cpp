@@ -232,7 +232,7 @@ public:
 			for (int i = 0; i < m_shadowRendering->getPointShadowCubeMap().size(); i++) {
 				int texUnit = 10 + i;
 				glActiveTexture(GL_TEXTURE0 + texUnit);
-				glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowRendering->getPointShadowCubeMap()[i]);  // NormalMap					
+				glBindTexture(GL_TEXTURE_CUBE_MAP, m_shadowRendering->getPointShadowCubeMap()[i]);  // NormalMap
 				m_GBuffer->getForwardShader()->setUniform("shadowCubeMap[" + std::to_string(i) + "]", texUnit);
 			}
 
@@ -440,9 +440,7 @@ public:
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].quadratic", 0.032f);
 			m_GBuffer->getLightPass()->setUniform("pointLights[" + std::to_string(i) + "].strength", m_scene->getLights()[i].strength);
 		}
-
-		if (m_uiDraw->getLightOrientation()) // TODO: inverse is being used in point lights as well, light orientation not conditional anymore
-			m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
+		m_GBuffer->getLightPass()->setUniform("inverseView", glm::inverse(m_camera->getViewMatrix()));
 		m_GBuffer->getLightPass()->setUniform("lightMatrix", m_shadowRendering->getLightSpaceMatrix());
 		m_GBuffer->getLightPass()->setUniform("NUM_POINT_LIGHTS", (int)m_scene->getLights().size());
 		m_GBuffer->getLightPass()->setUniform("sunDir", m_scene->getDirectionalLight());
