@@ -408,6 +408,11 @@ std::vector<std::pair<std::string, std::string>> TextureLoading::FileSystemTuple
 	return filenames;
 }
 
+void TextureLoading::createDirectory(std::string& path) {
+	if (std::filesystem::create_directory(path)) // Create directory, if not existing
+		std::cout << path << " folder does not exist, creating new..." << std::endl;
+}
+
 Texture* TextureLoading::findTexture(GLuint textureID) {
 	auto it = m_textureMap.find(textureID); // m_textureMap.at(textureID) works as well
 	if (it == m_textureMap.end())

@@ -34,7 +34,7 @@ public:
 		, m_HDRI(nullptr)
 		, m_camera(nullptr)
 	{
-		bindShaders();
+		bindShaders();		
 		
 		// Creates GBuffer
 		m_GBuffer = new GBuffer(width, height);
@@ -47,6 +47,7 @@ public:
 
 		// Resource manager
 		m_resoManager = new ResourceManager();
+		m_resoManager->createDirectory(std::string(ASSET_DIR) + "/Saves/");
 		m_scene = m_resoManager->getScene();
 
 		// Loads and computes all the HDRI maps
